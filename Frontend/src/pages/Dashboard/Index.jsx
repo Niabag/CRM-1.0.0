@@ -56,12 +56,15 @@ const Dashboard = () => {
     }
   };
 
+  // ✅ FONCTION CENTRALISÉE POUR RECHARGER LES CLIENTS
   const fetchClients = async () => {
     setLoading(true);
     setError(null);
     try {
+      console.log("🔄 Rechargement des clients...");
       const data = await apiRequest(API_ENDPOINTS.CLIENTS.BASE);
       setClients(Array.isArray(data) ? data : []);
+      console.log("✅ Clients rechargés:", data.length);
     } catch (err) {
       console.error("Erreur lors de la récupération des clients:", err);
       setError("Erreur lors de la récupération des clients.");
@@ -153,11 +156,11 @@ const Dashboard = () => {
       <div className="dashboard-container">
         {activeTab === "dashboard" && <Analytics />}
 
-        {/* ✅ NOUVELLE PAGE PROSPECTS MODERNE */}
+        {/* ✅ NOUVELLE PAGE PROSPECTS MODERNE AVEC REFRESH */}
         {activeTab === "clients" && (
           <ProspectsPage 
             clients={clients}
-            onRefresh={fetchClients}
+            onRefresh={fetchClients} // ✅ Passer la fonction de rechargement
             onViewClientDevis={handleViewClientDevis}
           />
         )}

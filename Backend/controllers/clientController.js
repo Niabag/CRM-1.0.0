@@ -63,19 +63,24 @@ exports.updateClientStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
+    console.log(`🔄 Tentative de mise à jour du statut pour le client ${id} vers ${status}`);
+
     // ✅ VÉRIFIER QUE LE STATUT EST VALIDE (AVEC "NOUVEAU")
     if (!['active', 'inactive', 'pending', 'nouveau'].includes(status)) {
+      console.error("❌ Statut invalide:", status);
       return res.status(400).json({ message: "Statut invalide" });
     }
 
     // Vérifier que le client appartient à l'utilisateur
     const client = await Client.findOne({ _id: id, userId: req.userId });
     if (!client) {
+      console.error("❌ Client introuvable ou non autorisé");
       return res.status(404).json({ message: "Client introuvable ou non autorisé" });
     }
 
     // Mettre à jour le statut
     client.status = status;
+    client.updatedAt = new Date();
     await client.save();
 
     console.log(`✅ Statut du client ${client.name} mis à jour: ${status}`);
@@ -84,7 +89,8 @@ exports.updateClientStatus = async (req, res) => {
       client: {
         _id: client._id,
         name: client.name,
-        status: client.status
+        status: client.status,
+        updatedAt: client.updatedAt
       }
     });
 
@@ -100,9 +106,12 @@ exports.updateClient = async (req, res) => {
     const { id } = req.params;
     const { name, email, phone, company, notes, status } = req.body;
 
+    console.log(`🔄 Tentative de mise à jour du client ${id}:`, { name, email, phone, company, notes, status });
+
     // Vérifier que le client appartient à l'utilisateur
     const client = await Client.findOne({ _id: id, userId: req.userId });
     if (!client) {
+      console.error("❌ Client introuvable ou non autorisé");
       return res.status(404).json({ message: "Client introuvable ou non autorisé" });
     }
 
@@ -114,6 +123,7 @@ exports.updateClient = async (req, res) => {
         _id: { $ne: id } 
       });
       if (existingClient) {
+        console.error("❌ Email déjà utilisé par un autre client");
         return res.status(400).json({ message: "Cet email est déjà utilisé par un autre client" });
       }
     }
@@ -129,6 +139,7 @@ exports.updateClient = async (req, res) => {
       client.status = status;
     }
 
+    client.updatedAt = new Date();
     await client.save();
 
     console.log(`✅ Client ${client.name} mis à jour avec succès`);
@@ -159,6 +170,7 @@ exports.deleteClient = async (req, res) => {
     // 🔥 Supprime le client
     await Client.findByIdAndDelete(clientId);
 
+    console.log(`✅ Client ${client.name} et ses devis supprimés`);
     res.status(200).json({ message: "✅ Client et ses devis supprimés" });
   } catch (err) {
     console.error("❌ Erreur suppression client :", err);

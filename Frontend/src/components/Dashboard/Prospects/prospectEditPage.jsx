@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
 import './prospectEdit.scss';
 
-const ProspectEditPage = ({ clients = [], onRefresh }) => {
+const ProspectEditPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [prospect, setProspect] = useState(null);
@@ -11,21 +11,36 @@ const ProspectEditPage = ({ clients = [], onRefresh }) => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
-  // Trouver le prospect dans la liste
+  // ✅ CHARGER LE PROSPECT DEPUIS L'API
   useEffect(() => {
-    if (id && clients.length > 0) {
-      const foundProspect = clients.find(c => c._id === id);
-      if (foundProspect) {
-        setProspect({
-          ...foundProspect,
-          company: foundProspect.company || '',
-          notes: foundProspect.notes || ''
-        });
-      } else {
-        setError("Prospect introuvable");
+    const fetchProspect = async () => {
+      if (!id) return;
+      
+      setLoading(true);
+      try {
+        // Récupérer tous les clients et trouver celui qui correspond
+        const clients = await apiRequest(API_ENDPOINTS.CLIENTS.BASE);
+        const foundProspect = clients.find(c => c._id === id);
+        
+        if (foundProspect) {
+          setProspect({
+            ...foundProspect,
+            company: foundProspect.company || '',
+            notes: foundProspect.notes || ''
+          });
+        } else {
+          setError("Prospect introuvable");
+        }
+      } catch (err) {
+        console.error("Erreur chargement prospect:", err);
+        setError("Erreur lors du chargement du prospect");
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [id, clients]);
+    };
+
+    fetchProspect();
+  }, [id]);
 
   const handleInputChange = (field, value) => {
     setProspect(prev => ({
@@ -65,9 +80,6 @@ const ProspectEditPage = ({ clients = [], onRefresh }) => {
       // Mettre à jour l'état local
       setProspect(prev => ({ ...prev, status: newStatus }));
       
-      // Rafraîchir la liste des clients
-      onRefresh && onRefresh();
-      
       const statusText = getStatusLabel(newStatus);
       alert(`✅ Statut changé vers "${statusText}" avec succès`);
     } catch (err) {
@@ -96,7 +108,6 @@ const ProspectEditPage = ({ clients = [], onRefresh }) => {
         }),
       });
 
-      onRefresh && onRefresh();
       alert("✅ Prospect modifié avec succès");
       navigate(-1); // Retour à la page précédente
     } catch (err) {
@@ -121,7 +132,6 @@ const ProspectEditPage = ({ clients = [], onRefresh }) => {
         method: "DELETE",
       });
 
-      onRefresh && onRefresh();
       alert("✅ Prospect supprimé avec succès");
       navigate(-1); // Retour à la page précédente
     } catch (err) {
@@ -186,12 +196,26 @@ const ProspectEditPage = ({ clients = [], onRefresh }) => {
     );
   }
 
-  if (!prospect) {
+  if (loading && !prospect) {
     return (
       <div className="prospect-edit-page">
         <div className="loading-container">
           <div className="loading-spinner">⏳</div>
           <p>Chargement du prospect...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!prospect) {
+    return (
+      <div className="prospect-edit-page">
+        <div className="error-container">
+          <h2>❌ Prospect introuvable</h2>
+          <p>Le prospect demandé n'existe pas ou a été supprimé.</p>
+          <button onClick={() => navigate(-1)} className="btn-back">
+            ← Retour
+          </button>
         </div>
       </div>
     );

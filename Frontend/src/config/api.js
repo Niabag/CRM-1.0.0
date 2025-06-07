@@ -58,16 +58,21 @@ export const apiRequest = async (url, options = {}) => {
   };
 
   try {
+    console.log(`🌐 API Request: ${config.method || 'GET'} ${url}`);
+    
     const response = await fetch(url, config);
     
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
+      console.error(`❌ API Error ${response.status}:`, errorData);
       throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
     }
     
-    return await response.json();
+    const data = await response.json();
+    console.log(`✅ API Success:`, data);
+    return data;
   } catch (error) {
-    console.error('Erreur API:', error);
+    console.error('❌ Erreur API:', error);
     throw error;
   }
 };
