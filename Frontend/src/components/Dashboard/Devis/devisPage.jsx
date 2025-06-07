@@ -180,17 +180,16 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ GÉNÉRATION PDF PARFAITEMENT IDENTIQUE AU PREVIEW
+  // ✅ GÉNÉRATION PDF OPTIMISÉE - IDENTIQUE AU PREVIEW ET TIENT SUR UNE PAGE
   const handleDownloadPDF = async (devis) => {
     try {
       setLoading(true);
       
-      console.log("🔍 Début génération PDF identique au preview pour:", devis.title);
+      console.log("🔍 Génération PDF optimisé identique au preview");
       
-      // Importer jsPDF
       const { default: jsPDF } = await import('jspdf');
 
-      // ✅ Obtenir les informations du client (exactement comme dans le preview)
+      // ✅ Obtenir les informations du client
       const clientInfo = clients.find(c => c._id === devis.clientId) || {};
       
       // ✅ Calculer les totaux par taux de TVA (EXACTEMENT comme dans devisPreview.jsx)
@@ -216,357 +215,310 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
       const totalTTC = totalHT + totalTVA;
 
-      // ✅ Créer le PDF avec le MÊME DESIGN EXACT que devisPreview.jsx
+      // ✅ Créer le PDF A4 optimisé
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       // Configuration des couleurs EXACTES du CSS
-      const primaryGradientStart = [102, 126, 234]; // #667eea
-      const primaryGradientEnd = [118, 75, 162]; // #764ba2
+      const primaryColor = [102, 126, 234]; // #667eea
       const textDark = [45, 55, 72]; // #2d3748
       const textGray = [113, 128, 150]; // #718096
       const backgroundLight = [248, 249, 250]; // #f8f9fa
-      const backgroundGray = [233, 236, 239]; // #e9ecef
-      const borderGray = [226, 232, 240]; // #e2e8f0
       const successGreen = [72, 187, 120]; // #48bb78
+      const borderColor = [226, 232, 240]; // #e2e8f0
       
-      let yPosition = 20;
+      let yPos = 15;
       const pageWidth = 210;
       const margin = 15;
       const contentWidth = pageWidth - (margin * 2);
 
-      // ✅ EN-TÊTE EXACTEMENT COMME LE PREVIEW
-      // Logo section (gauche) - EXACTEMENT comme dans devisPreview.jsx
+      // ✅ EN-TÊTE COMPACT - EXACTEMENT comme le preview
+      // Logo (gauche)
       if (devis.logoUrl) {
         try {
-          pdf.addImage(devis.logoUrl, 'JPEG', margin, yPosition, 60, 30);
+          pdf.addImage(devis.logoUrl, 'JPEG', margin, yPos, 50, 25);
         } catch (e) {
-          // Placeholder exactement comme dans le CSS
+          // Placeholder compact
           pdf.setFillColor(...backgroundLight);
-          pdf.setDrawColor(...borderGray);
-          pdf.setLineWidth(0.5);
-          pdf.roundedRect(margin, yPosition, 60, 30, 3, 3, 'FD');
-          pdf.setFontSize(10);
+          pdf.setDrawColor(...borderColor);
+          pdf.rect(margin, yPos, 50, 25, 'FD');
+          pdf.setFontSize(8);
           pdf.setTextColor(...textGray);
-          pdf.text('📷 Cliquez pour ajouter un logo', margin + 30, yPosition + 18, { align: 'center' });
+          pdf.text('📷 Logo', margin + 25, yPos + 15, { align: 'center' });
         }
       } else {
-        // Placeholder EXACTEMENT comme dans le CSS
+        // Placeholder compact
         pdf.setFillColor(...backgroundLight);
-        pdf.setDrawColor(...borderGray);
-        pdf.setLineWidth(0.5);
-        pdf.roundedRect(margin, yPosition, 60, 30, 3, 3, 'FD');
-        pdf.setFontSize(10);
+        pdf.setDrawColor(...borderColor);
+        pdf.rect(margin, yPos, 50, 25, 'FD');
+        pdf.setFontSize(8);
         pdf.setTextColor(...textGray);
-        pdf.text('📷 Cliquez pour ajouter un logo', margin + 30, yPosition + 18, { align: 'center' });
+        pdf.text('📷 Logo', margin + 25, yPos + 15, { align: 'center' });
       }
       
-      // Titre DEVIS (droite) - EXACTEMENT comme dans le CSS
-      pdf.setFontSize(48);
+      // Titre DEVIS (droite) - Plus compact
+      pdf.setFontSize(36);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textDark);
-      pdf.text('DEVIS', pageWidth - margin, yPosition + 20, { align: 'right' });
+      pdf.text('DEVIS', pageWidth - margin, yPos + 18, { align: 'right' });
 
-      // ✅ INFORMATIONS ÉMETTEUR ET DESTINATAIRE - EXACTEMENT comme le preview
-      yPosition = 65;
+      // ✅ INFORMATIONS ÉMETTEUR ET DESTINATAIRE - Layout compact
+      yPos = 50;
       
-      // Émetteur (gauche) - Design EXACT du CSS
+      const colWidth = (contentWidth - 10) / 2;
+      
+      // Émetteur (gauche)
       pdf.setFillColor(...backgroundLight);
-      pdf.roundedRect(margin, yPosition, (contentWidth / 2) - 5, 55, 3, 3, 'F');
-      
-      // Bordure gauche colorée comme dans le CSS
-      pdf.setFillColor(...primaryGradientStart);
-      pdf.rect(margin, yPosition, 2, 55, 'F');
-      
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...textDark);
-      pdf.text('Émetteur', margin + 8, yPosition + 10);
-      
-      yPosition += 18;
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...textDark);
-      pdf.text(devis.entrepriseName || 'Nom de l\'entreprise', margin + 8, yPosition);
-      
-      yPosition += 6;
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(...textGray);
-      pdf.text(devis.entrepriseAddress || 'Adresse', margin + 8, yPosition);
-      yPosition += 5;
-      pdf.text(devis.entrepriseCity || 'Code postal et ville', margin + 8, yPosition);
-      yPosition += 5;
-      pdf.text(devis.entreprisePhone || 'Téléphone', margin + 8, yPosition);
-      yPosition += 5;
-      pdf.text(devis.entrepriseEmail || 'Email', margin + 8, yPosition);
-
-      // Destinataire (droite) - Design EXACT du CSS
-      const clientColumnX = margin + (contentWidth / 2) + 5;
-      yPosition = 65;
-      
-      pdf.setFillColor(...backgroundLight);
-      pdf.roundedRect(clientColumnX, yPosition, (contentWidth / 2) - 5, 55, 3, 3, 'F');
-      
-      // Bordure gauche colorée comme dans le CSS
-      pdf.setFillColor(...primaryGradientStart);
-      pdf.rect(clientColumnX, yPosition, 2, 55, 'F');
-      
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...textDark);
-      pdf.text('Destinataire', clientColumnX + 8, yPosition + 10);
-      
-      yPosition += 18;
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...textDark);
-      pdf.text(clientInfo.name || devis.clientName || 'Nom du client', clientColumnX + 8, yPosition);
-      
-      yPosition += 6;
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(...textGray);
-      pdf.text(clientInfo.email || devis.clientEmail || 'Email du client', clientColumnX + 8, yPosition);
-      yPosition += 5;
-      pdf.text(clientInfo.phone || devis.clientPhone || 'Téléphone du client', clientColumnX + 8, yPosition);
-      yPosition += 5;
-      pdf.text(devis.clientAddress || 'Adresse du client', clientColumnX + 8, yPosition);
-
-      // ✅ MÉTADONNÉES DU DEVIS - EXACTEMENT comme dans le CSS
-      yPosition = 135;
-      
-      // Fond dégradé simulé EXACTEMENT comme dans le CSS
-      pdf.setFillColor(...primaryGradientStart);
-      pdf.roundedRect(margin, yPosition, contentWidth, 25, 3, 3, 'F');
+      pdf.rect(margin, yPos, colWidth, 35, 'F');
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(margin, yPos, 2, 35, 'F');
       
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(255, 255, 255);
-      
-      // Grid layout EXACTEMENT comme dans le CSS
-      const metadataY = yPosition + 8;
-      pdf.text(`Date du devis : ${formatDate(devis.dateDevis)}`, margin + 8, metadataY);
-      pdf.text(`Numéro de devis : ${devis._id?.slice(-8) || 'À définir'}`, margin + 8 + (contentWidth / 2), metadataY);
-      
-      const metadataY2 = yPosition + 16;
-      pdf.text(`Date de validité : ${formatDate(devis.dateValidite)}`, margin + 8, metadataY2);
-      pdf.text(`Client : ${clientInfo.name || devis.clientName || 'N/A'}`, margin + 8 + (contentWidth / 2), metadataY2);
-
-      // ✅ TABLEAU DES PRESTATIONS - EXACTEMENT comme dans le CSS
-      yPosition = 175;
-      
-      pdf.setFontSize(13);
-      pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textDark);
-      pdf.text('Détail des prestations', margin, yPosition);
-
-      yPosition += 10;
-      
-      // En-têtes du tableau EXACTEMENT comme dans le CSS
-      const tableHeaders = ['Description', 'Unité', 'Qté', 'Prix unitaire HT', 'TVA', 'Total HT'];
-      const colWidths = [65, 15, 15, 30, 15, 25];
-      let xPosition = margin;
-      
-      // Fond de l'en-tête EXACTEMENT comme dans le CSS
-      pdf.setFillColor(...textDark);
-      pdf.rect(margin, yPosition, contentWidth, 10, 'F');
+      pdf.text('Émetteur', margin + 5, yPos + 7);
       
       pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(devis.entrepriseName || 'Nom de l\'entreprise', margin + 5, yPos + 14);
+      
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...textGray);
+      pdf.text(devis.entrepriseAddress || 'Adresse', margin + 5, yPos + 19);
+      pdf.text(devis.entrepriseCity || 'Ville', margin + 5, yPos + 23);
+      pdf.text(devis.entreprisePhone || 'Téléphone', margin + 5, yPos + 27);
+      pdf.text(devis.entrepriseEmail || 'Email', margin + 5, yPos + 31);
+
+      // Destinataire (droite)
+      const rightX = margin + colWidth + 10;
+      pdf.setFillColor(...backgroundLight);
+      pdf.rect(rightX, yPos, colWidth, 35, 'F');
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(rightX, yPos, 2, 35, 'F');
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...textDark);
+      pdf.text('Destinataire', rightX + 5, yPos + 7);
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(clientInfo.name || devis.clientName || 'Nom du client', rightX + 5, yPos + 14);
+      
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setTextColor(...textGray);
+      pdf.text(clientInfo.email || devis.clientEmail || 'Email', rightX + 5, yPos + 19);
+      pdf.text(clientInfo.phone || devis.clientPhone || 'Téléphone', rightX + 5, yPos + 23);
+      pdf.text(devis.clientAddress || 'Adresse', rightX + 5, yPos + 27);
+
+      // ✅ MÉTADONNÉES COMPACTES
+      yPos = 95;
+      
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(margin, yPos, contentWidth, 15, 'F');
+      
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      
+      pdf.text(`Date : ${formatDate(devis.dateDevis)}`, margin + 5, yPos + 6);
+      pdf.text(`N° : ${devis._id?.slice(-8) || 'N/A'}`, margin + 5, yPos + 11);
+      
+      pdf.text(`Validité : ${formatDate(devis.dateValidite)}`, margin + colWidth, yPos + 6);
+      pdf.text(`Client : ${clientInfo.name || 'N/A'}`, margin + colWidth, yPos + 11);
+
+      // ✅ TABLEAU DES PRESTATIONS - Optimisé pour tenir sur une page
+      yPos = 120;
+      
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...textDark);
+      pdf.text('Détail des prestations', margin, yPos);
+
+      yPos += 8;
+      
+      // En-têtes du tableau - Colonnes optimisées
+      const tableHeaders = ['Description', 'Qté', 'Prix HT', 'TVA', 'Total HT'];
+      const colWidths = [80, 20, 25, 20, 25];
+      let xPos = margin;
+      
+      pdf.setFillColor(...textDark);
+      pdf.rect(margin, yPos, contentWidth, 8, 'F');
+      
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(255, 255, 255);
       
       tableHeaders.forEach((header, index) => {
         const textAlign = index === 0 ? 'left' : 'center';
-        const textX = index === 0 ? xPosition + 2 : xPosition + (colWidths[index] / 2);
-        pdf.text(header, textX, yPosition + 6, { align: textAlign });
-        xPosition += colWidths[index];
+        const textX = index === 0 ? xPos + 2 : xPos + (colWidths[index] / 2);
+        pdf.text(header, textX, yPos + 5, { align: textAlign });
+        xPos += colWidths[index];
       });
 
-      yPosition += 10;
+      yPos += 8;
 
-      // ✅ LIGNES DU TABLEAU - EXACTEMENT comme dans le CSS
+      // ✅ LIGNES DU TABLEAU - Compactes
       pdf.setTextColor(...textDark);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(9);
+      pdf.setFontSize(8);
 
-      devis.articles.forEach((article, index) => {
+      const maxArticles = Math.min(devis.articles.length, 8); // Limiter pour tenir sur une page
+      
+      for (let i = 0; i < maxArticles; i++) {
+        const article = devis.articles[i];
         const price = parseFloat(article.unitPrice || 0);
         const qty = parseFloat(article.quantity || 0);
         const total = price * qty;
         
-        // Fond alterné EXACTEMENT comme dans le CSS
-        if (index % 2 === 0) {
+        if (i % 2 === 0) {
           pdf.setFillColor(...backgroundLight);
-          pdf.rect(margin, yPosition, contentWidth, 8, 'F');
+          pdf.rect(margin, yPos, contentWidth, 6, 'F');
         }
         
-        xPosition = margin;
+        xPos = margin;
         
-        // Description (alignée à gauche)
-        const description = article.description || '';
-        const splitDescription = pdf.splitTextToSize(description, colWidths[0] - 4);
-        pdf.text(splitDescription, xPosition + 2, yPosition + 5);
-        xPosition += colWidths[0];
+        // Description (tronquée si nécessaire)
+        const description = (article.description || '').substring(0, 50);
+        pdf.text(description, xPos + 2, yPos + 4);
+        xPos += colWidths[0];
         
-        // Unité (centrée)
-        pdf.text(article.unit || 'u', xPosition + (colWidths[1] / 2), yPosition + 5, { align: 'center' });
-        xPosition += colWidths[1];
+        // Quantité
+        pdf.text(`${qty} ${article.unit || ''}`, xPos + (colWidths[1] / 2), yPos + 4, { align: 'center' });
+        xPos += colWidths[1];
         
-        // Quantité (centrée)
-        pdf.text(qty.toString(), xPosition + (colWidths[2] / 2), yPosition + 5, { align: 'center' });
-        xPosition += colWidths[2];
+        // Prix unitaire
+        pdf.text(`${price.toFixed(2)} €`, xPos + (colWidths[2] / 2), yPos + 4, { align: 'center' });
+        xPos += colWidths[2];
         
-        // Prix unitaire (centré)
-        pdf.text(`${price.toFixed(2)} €`, xPosition + (colWidths[3] / 2), yPosition + 5, { align: 'center' });
-        xPosition += colWidths[3];
+        // TVA
+        pdf.text(`${article.tvaRate || 20}%`, xPos + (colWidths[3] / 2), yPos + 4, { align: 'center' });
+        xPos += colWidths[3];
         
-        // TVA (centrée)
-        pdf.text(`${article.tvaRate || 20}%`, xPosition + (colWidths[4] / 2), yPosition + 5, { align: 'center' });
-        xPosition += colWidths[4];
-        
-        // Total (centré et en gras comme dans le CSS)
+        // Total
         pdf.setFont('helvetica', 'bold');
         pdf.setTextColor(...successGreen);
-        pdf.text(`${total.toFixed(2)} €`, xPosition + (colWidths[5] / 2), yPosition + 5, { align: 'center' });
+        pdf.text(`${total.toFixed(2)} €`, xPos + (colWidths[4] / 2), yPos + 4, { align: 'center' });
         pdf.setFont('helvetica', 'normal');
         pdf.setTextColor(...textDark);
         
-        yPosition += Math.max(8, splitDescription.length * 4);
-      });
+        yPos += 6;
+      }
 
-      // ✅ RÉCAPITULATIF TVA ET TOTAUX - EXACTEMENT comme dans le CSS
-      yPosition += 15;
+      // ✅ RÉCAPITULATIF TVA ET TOTAUX - Layout compact en 2 colonnes
+      yPos += 10;
       
-      // Layout en 2 colonnes EXACTEMENT comme dans le CSS
-      const leftColumnWidth = contentWidth * 0.6;
-      const rightColumnWidth = contentWidth * 0.4;
-      const totalsColumnX = margin + leftColumnWidth + 10;
-      
-      // Récapitulatif TVA (gauche) - EXACTEMENT comme dans le CSS
-      pdf.setFontSize(12);
+      // Récapitulatif TVA (gauche)
+      pdf.setFontSize(10);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textDark);
-      pdf.text('Récapitulatif TVA', margin, yPosition);
+      pdf.text('Récapitulatif TVA', margin, yPos);
       
-      yPosition += 8;
+      yPos += 6;
       
-      // Tableau TVA EXACTEMENT comme dans le CSS
-      const tvaTableHeaders = ['Base HT', 'Taux TVA', 'Montant TVA', 'Total TTC'];
-      const tvaColWidths = [25, 20, 25, 25];
+      // Tableau TVA compact
+      const tvaHeaders = ['Base HT', 'TVA', 'Montant', 'TTC'];
+      const tvaColWidths = [20, 15, 20, 20];
       
-      xPosition = margin;
-      pdf.setFillColor(...primaryGradientStart);
-      pdf.rect(margin, yPosition, leftColumnWidth - 10, 8, 'F');
+      xPos = margin;
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(margin, yPos, 75, 6, 'F');
       
-      pdf.setFontSize(8);
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(255, 255, 255);
       
-      tvaTableHeaders.forEach((header, index) => {
-        pdf.text(header, xPosition + 2, yPosition + 5);
-        xPosition += tvaColWidths[index];
+      tvaHeaders.forEach((header, index) => {
+        pdf.text(header, xPos + 1, yPos + 4);
+        xPos += tvaColWidths[index];
       });
       
-      yPosition += 8;
+      yPos += 6;
       
-      // Lignes TVA EXACTEMENT comme dans le CSS
+      // Lignes TVA
       pdf.setTextColor(...textDark);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(8);
+      pdf.setFontSize(7);
       
       Object.entries(tauxTVA)
         .filter(([, { ht }]) => ht > 0)
         .forEach(([rate, { ht, tva }], index) => {
           if (index % 2 === 0) {
             pdf.setFillColor(...backgroundLight);
-            pdf.rect(margin, yPosition, leftColumnWidth - 10, 6, 'F');
+            pdf.rect(margin, yPos, 75, 5, 'F');
           }
           
-          xPosition = margin;
-          pdf.text(`${ht.toFixed(2)} €`, xPosition + 2, yPosition + 4);
-          xPosition += tvaColWidths[0];
-          pdf.text(`${rate}%`, xPosition + 2, yPosition + 4);
-          xPosition += tvaColWidths[1];
-          pdf.text(`${tva.toFixed(2)} €`, xPosition + 2, yPosition + 4);
-          xPosition += tvaColWidths[2];
-          pdf.text(`${(ht + tva).toFixed(2)} €`, xPosition + 2, yPosition + 4);
+          xPos = margin;
+          pdf.text(`${ht.toFixed(2)} €`, xPos + 1, yPos + 3);
+          xPos += tvaColWidths[0];
+          pdf.text(`${rate}%`, xPos + 1, yPos + 3);
+          xPos += tvaColWidths[1];
+          pdf.text(`${tva.toFixed(2)} €`, xPos + 1, yPos + 3);
+          xPos += tvaColWidths[2];
+          pdf.text(`${(ht + tva).toFixed(2)} €`, xPos + 1, yPos + 3);
           
-          yPosition += 6;
+          yPos += 5;
         });
 
-      // Totaux finaux (droite) - EXACTEMENT comme dans le CSS
-      const totalBoxY = yPosition - (Object.keys(tauxTVA).filter(k => tauxTVA[k].ht > 0).length * 6) - 8;
+      // Totaux finaux (droite) - Compact
+      const totalsX = margin + 90;
+      const totalsY = yPos - (Object.keys(tauxTVA).filter(k => tauxTVA[k].ht > 0).length * 5) - 6;
       
-      // Fond et bordure EXACTEMENT comme dans le CSS
       pdf.setFillColor(255, 255, 255);
-      pdf.setDrawColor(...primaryGradientStart);
+      pdf.setDrawColor(...primaryColor);
       pdf.setLineWidth(1);
-      pdf.roundedRect(totalsColumnX, totalBoxY, rightColumnWidth, 30, 3, 3, 'FD');
+      pdf.rect(totalsX, totalsY, 70, 20, 'FD');
       
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(...textDark);
-      pdf.text(`Total HT :`, totalsColumnX + 5, totalBoxY + 8);
-      pdf.text(`${totalHT.toFixed(2)} €`, totalsColumnX + rightColumnWidth - 5, totalBoxY + 8, { align: 'right' });
-      
-      pdf.text(`Total TVA :`, totalsColumnX + 5, totalBoxY + 15);
-      pdf.text(`${totalTVA.toFixed(2)} €`, totalsColumnX + rightColumnWidth - 5, totalBoxY + 15, { align: 'right' });
-      
-      // Total TTC en gras et coloré EXACTEMENT comme dans le CSS
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...successGreen);
-      pdf.text(`Total TTC :`, totalsColumnX + 5, totalBoxY + 24);
-      pdf.text(`${totalTTC.toFixed(2)} €`, totalsColumnX + rightColumnWidth - 5, totalBoxY + 24, { align: 'right' });
-
-      // ✅ CONDITIONS ET SIGNATURE - EXACTEMENT comme dans le CSS
-      yPosition += 25;
-      
-      // Fond EXACTEMENT comme dans le CSS
-      pdf.setFillColor(...backgroundLight);
-      pdf.roundedRect(margin, yPosition, contentWidth, 40, 3, 3, 'F');
-      
-      // Bordure gauche colorée comme dans le CSS
-      pdf.setFillColor(...primaryGradientStart);
-      pdf.rect(margin, yPosition, 2, 40, 'F');
-      
-      pdf.setFontSize(12);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...textDark);
-      pdf.text('Conditions :', margin + 8, yPosition + 10);
-      
-      yPosition += 15;
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
-      pdf.setTextColor(...textGray);
-      pdf.text(`• Devis valable jusqu'au ${formatDate(devis.dateValidite) || 'date à définir'}`, margin + 8, yPosition);
-      yPosition += 5;
-      pdf.text('• Règlement à 30 jours fin de mois', margin + 8, yPosition);
-      yPosition += 5;
-      pdf.text('• TVA non applicable, art. 293 B du CGI (si applicable)', margin + 8, yPosition);
+      pdf.setTextColor(...textDark);
+      pdf.text(`Total HT :`, totalsX + 3, totalsY + 6);
+      pdf.text(`${totalHT.toFixed(2)} €`, totalsX + 67, totalsY + 6, { align: 'right' });
       
-      yPosition += 10;
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'italic');
-      pdf.setTextColor(...textGray);
-      pdf.text('Bon pour accord - Date et signature du client :', margin + 8, yPosition);
+      pdf.text(`Total TVA :`, totalsX + 3, totalsY + 11);
+      pdf.text(`${totalTVA.toFixed(2)} €`, totalsX + 67, totalsY + 11, { align: 'right' });
       
-      // Zone de signature EXACTEMENT comme dans le CSS
-      yPosition += 8;
+      // Total TTC en gras
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...successGreen);
+      pdf.text(`Total TTC :`, totalsX + 3, totalsY + 17);
+      pdf.text(`${totalTTC.toFixed(2)} €`, totalsX + 67, totalsY + 17, { align: 'right' });
+
+      // ✅ CONDITIONS ET SIGNATURE - Compact en bas de page
+      yPos = Math.max(yPos + 10, 250);
+      
+      pdf.setFillColor(...backgroundLight);
+      pdf.rect(margin, yPos, contentWidth, 25, 'F');
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(margin, yPos, 2, 25, 'F');
+      
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...textDark);
+      pdf.text('Conditions :', margin + 5, yPos + 6);
+      
+      pdf.setFontSize(7);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Date : _______________', margin + 20, yPosition);
-      pdf.text('Signature :', margin + 100, yPosition);
+      pdf.setTextColor(...textGray);
+      pdf.text(`• Devis valable jusqu'au ${formatDate(devis.dateValidite) || 'date à définir'}`, margin + 5, yPos + 11);
+      pdf.text('• Règlement à 30 jours fin de mois', margin + 5, yPos + 15);
       
-      // Ligne de signature
-      pdf.setDrawColor(...textGray);
-      pdf.setLineWidth(0.5);
-      pdf.line(margin + 120, yPosition + 2, margin + 160, yPosition + 2);
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'italic');
+      pdf.text('Bon pour accord - Date et signature :', margin + 5, yPos + 21);
+      
+      // Zone de signature compacte
+      pdf.setFont('helvetica', 'normal');
+      pdf.text('Date : ________', margin + 100, yPos + 21);
+      pdf.text('Signature :', margin + 140, yPos + 21);
 
       // ✅ Télécharger le PDF
       const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
       pdf.save(`${fileName}.pdf`);
       
-      console.log("✅ PDF généré IDENTIQUE au preview:", fileName);
+      console.log("✅ PDF optimisé généré - IDENTIQUE au preview et tient sur une page");
 
     } catch (error) {
       console.error('❌ Erreur génération PDF:', error);
