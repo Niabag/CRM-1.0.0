@@ -32,85 +32,6 @@
   font-size: 1rem;
 }
 
-/* ✅ NOUVEAU: Statut des actions */
-.actions-status {
-  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
-  border: 2px solid #38b2ac;
-  border-radius: 12px;
-  padding: 1.5rem;
-  margin-bottom: 20px;
-}
-
-.actions-status h4 {
-  margin: 0 0 1rem 0;
-  color: #234e52;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.actions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.action-status {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-
-.action-status.completed {
-  background: rgba(72, 187, 120, 0.2);
-  border-left: 4px solid #48bb78;
-}
-
-.action-status.pending {
-  background: rgba(237, 137, 54, 0.2);
-  border-left: 4px solid #ed8936;
-}
-
-.action-icon {
-  font-size: 1.2rem;
-  width: 30px;
-  text-align: center;
-}
-
-.action-label {
-  flex: 1;
-  font-weight: 500;
-  color: #2d3748;
-}
-
-.action-timing {
-  font-size: 0.8rem;
-  color: #718096;
-  font-style: italic;
-}
-
-/* Notice de téléchargement */
-.download-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
-  color: #22543d;
-  padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  border: 1px solid #68d391;
-  font-weight: 500;
-  text-align: center;
-  justify-content: center;
-}
-
-.download-icon {
-  font-size: 1.2rem;
-}
-
 /* Sections du formulaire */
 .form-section {
   margin-bottom: 30px;
@@ -262,16 +183,6 @@
     padding: 12px;
     font-size: 16px;
   }
-  
-  .actions-status {
-    padding: 1rem;
-  }
-  
-  .action-status {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.5rem;
-  }
 }
 
 @media (max-width: 480px) {
@@ -284,10 +195,6 @@
   }
   
   .form-section h3 {
-    font-size: 1rem;
-  }
-  
-  .actions-status h4 {
     font-size: 1rem;
   }
 }
@@ -306,23 +213,4 @@
 
 .register-form {
   animation: fadeInUp 0.6s ease-out;
-}
-
-.actions-status {
-  animation: fadeInUp 0.4s ease-out;
-}
-
-.action-status.completed {
-  animation: slideInLeft 0.5s ease-out;
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
