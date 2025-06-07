@@ -1,10 +1,10 @@
-# Dépendances
+# Dependencies
 node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Variables d'environnement (IMPORTANT: Ne jamais commiter ces fichiers)
+# Environment variables
 .env
 .env.local
 .env.development.local
@@ -15,32 +15,41 @@ yarn-error.log*
 logs
 *.log
 
-# Fichiers temporaires
-.tmp/
-temp/
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
 
-# Fichiers de build
-dist/
-build/
+# Coverage directory used by tools like istanbul
+coverage/
 
-# Fichiers de cache
-.cache/
-.parcel-cache/
+# nyc test coverage
+.nyc_output
 
-# Fichiers IDE
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env
+
+# IDE
 .vscode/
 .idea/
-*.swp
-*.swo
 
-# Fichiers système
+# OS
 .DS_Store
 Thumbs.db
-
-# Vercel
-.vercel
-
-# Fichiers de base de données locaux
-*.db
-*.sqlite
-*.sqlite3

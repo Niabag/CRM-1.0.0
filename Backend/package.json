@@ -1,29 +1,26 @@
 {
-  "name": "backend",
+  "name": "crm-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "Backend for CRM Application",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "seed": "node scripts/seedData.js",
-    "seed:dev": "NODE_ENV=development node scripts/seedData.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "echo 'No build step needed'"
+    "dev": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "keywords": ["crm", "backend", "api"],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^6.4.0",
-    "@fortawesome/free-solid-svg-icons": "^6.4.0",
-    "@fortawesome/react-fontawesome": "^0.2.0",
-    "bcrypt": "^5.1.0",
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.5",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.0",
-    "mongoose": "^7.2.1",
-    "mongoose-unique-validator": "^4.0.0",
-    "nodemon": "^3.0.1",
-    "vercel": "^37.14.0"
+    "mongoose": "^7.5.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^9.0.2",
+    "express-validator": "^7.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
   }
 }
