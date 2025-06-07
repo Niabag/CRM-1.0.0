@@ -97,7 +97,7 @@ const DevisPreview = ({
     <div className="devis-preview">
       <div className="preview-toolbar">
         <button onClick={onAddArticle}>➕ Ajouter une ligne</button>
-        <button onClick={onReset}>🔁 Réinitialiser</button>
+        <button onClick={onReset}>🔄 Réinitialiser</button>
         <button className="pdf-download-button" onClick={handleDownload}>
           📄 Télécharger en PDF
         </button>
@@ -239,7 +239,7 @@ const DevisPreview = ({
               <th>Prix unitaire</th>
               <th>TVA</th>
               <th>Total HT</th>
-              <th>Actions</th>
+              <th className="actions-column">Actions</th>
             </tr>
           </thead>
           <tbody>
@@ -302,7 +302,7 @@ const DevisPreview = ({
                     </select>
                   </td>
                   <td>{total.toFixed(2)} €</td>
-                  <td>
+                  <td className="actions-column">
                     <button 
                       className="remove-article-btn"
                       onClick={() => onRemoveArticle && onRemoveArticle(index)}

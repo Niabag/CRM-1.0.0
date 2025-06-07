@@ -1,4 +1,4 @@
-/* Design moderne pour l'aperçu du devis */
+/* Design moderne pour l'aperçu du devis avec édition directe */
 
 .devis-preview {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -134,21 +134,25 @@
   margin-left: 0;
 }
 
-.company input {
+.company input,
+.company .editable-input {
   display: block;
   border: 1px dashed #cbd5e0;
   width: 100%;
   padding: 0.5rem;
-  background-color: transparent;
+  background-color: rgba(248, 249, 250, 0.8);
   border-radius: 6px;
   font-size: 0.9rem;
   transition: all 0.3s ease;
 }
 
-.company input:focus {
+.company input:focus,
+.company .editable-input:focus {
   border-color: #667eea;
   background: rgba(102, 126, 234, 0.05);
   outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 /* Métadonnées du devis */
@@ -178,6 +182,24 @@
   font-weight: 600;
 }
 
+.client-meta input,
+.client-meta .editable-input {
+  border: 1px dashed #cbd5e0;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  width: 120px;
+  transition: all 0.3s ease;
+}
+
+.client-meta input:focus,
+.client-meta .editable-input:focus {
+  border-color: #667eea;
+  background: white;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
 /* Informations client */
 .client-info {
   position: absolute;
@@ -193,19 +215,23 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.client-info input {
+.client-info input,
+.client-info .editable-input {
   width: 280px;
   border: 1px dashed #cbd5e0;
   padding: 0.5rem;
-  background: transparent;
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 6px;
   transition: all 0.3s ease;
 }
 
-.client-info input:focus {
+.client-info input:focus,
+.client-info .editable-input:focus {
   border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
+  background: white;
   outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
 /* Tableau des articles */
@@ -250,18 +276,26 @@
 .editable-input {
   width: 100%;
   border: 1px dashed #cbd5e0;
-  background: transparent;
-  padding: 0.25rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem;
   text-align: center;
   margin: 0;
   border-radius: 4px;
   transition: all 0.3s ease;
+  font-size: 0.9rem;
 }
 
 .editable-input:focus {
   border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
+  background: white;
   outline: none;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.editable-input:hover {
+  border-color: #a0aec0;
+  background: rgba(255, 255, 255, 0.95);
 }
 
 /* Sélecteur TVA */
@@ -272,17 +306,48 @@
 .tva-select {
   width: 70px;
   border: 1px dashed #cbd5e0;
-  background: transparent;
-  padding: 0.25rem;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem;
   text-align: center;
   border-radius: 4px;
   transition: all 0.3s ease;
+  cursor: pointer;
 }
 
 .tva-select:focus {
   border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
+  background: white;
   outline: none;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.tva-select:hover {
+  border-color: #a0aec0;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+/* Bouton de suppression d'article */
+.remove-article-btn {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+.remove-article-btn:hover {
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+}
+
+.actions-column {
+  width: 60px;
 }
 
 /* Totaux */
@@ -383,6 +448,7 @@
   border: none !important;
   outline: none !important;
   background: transparent !important;
+  box-shadow: none !important;
 }
 
 .pdf-mode .logo {
@@ -403,6 +469,14 @@
 
 .pdf-mode .tva-text-only {
   display: inline !important;
+}
+
+.pdf-mode .remove-article-btn {
+  display: none !important;
+}
+
+.pdf-mode .actions-column {
+  display: none !important;
 }
 
 /* Responsive design */
@@ -434,7 +508,8 @@
     margin: 2rem 0;
   }
   
-  .client-info input {
+  .client-info input,
+  .client-info .editable-input {
     width: 100%;
   }
   
@@ -488,6 +563,27 @@
 
 .preview-content {
   animation: slideInFromTop 0.5s ease-out;
+}
+
+/* Effets de focus améliorés */
+.editable-input:focus,
+.company input:focus,
+.client-info input:focus,
+.client-meta input:focus,
+.tva-select:focus {
+  animation: focusPulse 0.3s ease-out;
+}
+
+@keyframes focusPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 /* Scrollbar personnalisée */
