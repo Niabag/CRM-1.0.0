@@ -26,7 +26,7 @@ const calculateTTC = (devis) => {
   }, 0);
 };
 
-const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
+const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de onCreateDevis
   const [devisList, setDevisList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -449,11 +449,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                 : "Aucun devis créé pour le moment"
               }
             </p>
-            {onCreateDevis && (
-              <button onClick={onCreateDevis} className="cta-button">
-                🆕 Créer un nouveau devis
-              </button>
-            )}
+            {/* ✅ SUPPRESSION DU BOUTON "Créer un nouveau devis" */}
           </div>
         ) : (
           <div className="clients-devis-groups">
