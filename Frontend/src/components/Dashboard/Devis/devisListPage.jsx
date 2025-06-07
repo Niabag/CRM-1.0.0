@@ -30,10 +30,8 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
   const [devisList, setDevisList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [groupedDevis, setGroupedDevis] = useState({});
-  const [orphanDevis, setOrphanDevis] = useState([]);
   
-  // ✅ NOUVEAUX ÉTATS: Filtres et recherche comme la page prospects
+  // ✅ NOUVEAUX ÉTATS: Filtres et recherche
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('date');
@@ -65,57 +63,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
       const devisArray = Array.isArray(data) ? data : [];
       setDevisList(devisArray);
       
-      // ✅ NOUVEAU: Séparer les devis valides et orphelins
-      const validDevis = [];
-      const orphanDevisList = [];
-      
-      devisArray.forEach(devis => {
-        const clientId = typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId;
-        
-        if (clientId && clientId !== null) {
-          const clientExists = clients.find(c => c._id === clientId);
-          if (clientExists) {
-            validDevis.push(devis);
-          } else {
-            orphanDevisList.push({
-              ...devis,
-              orphanReason: `Client supprimé (ID: ${clientId})`
-            });
-          }
-        } else {
-          orphanDevisList.push({
-            ...devis,
-            orphanReason: 'Aucun client associé'
-          });
-        }
-      });
-
-      // ✅ GROUPER LES DEVIS VALIDES PAR CLIENT
-      const grouped = validDevis.reduce((acc, devis) => {
-        const clientId = typeof devis.clientId === "object" ? devis.clientId._id : devis.clientId;
-        const client = clients.find(c => c._id === clientId);
-        
-        if (client) {
-          if (!acc[client.name]) {
-            acc[client.name] = {
-              client: client,
-              devis: []
-            };
-          }
-          acc[client.name].devis.push(devis);
-        }
-        return acc;
-      }, {});
-      
-      setGroupedDevis(grouped);
-      setOrphanDevis(orphanDevisList);
-      
-      console.log("📋 Devis groupés par client:", grouped);
-      console.log("🔍 Devis valides:", validDevis.length);
-      
-      if (orphanDevisList.length > 0) {
-        console.warn(`⚠️ ${orphanDevisList.length} devis orphelins trouvés:`, orphanDevisList);
-      }
+      console.log("📋 Devis récupérés:", devisArray.length);
       
     } catch (err) {
       console.error("Erreur récupération des devis:", err);
@@ -125,14 +73,8 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     }
   };
 
-  // ✅ NOUVEAU: Fonction pour obtenir tous les devis (valides + orphelins) pour les filtres
-  const getAllDevis = () => {
-    const validDevis = Object.values(groupedDevis).flatMap(group => group.devis);
-    return [...validDevis, ...orphanDevis];
-  };
-
-  // ✅ NOUVEAU: Filtrer et trier les devis comme la page prospects
-  const filteredDevis = getAllDevis()
+  // ✅ NOUVEAU: Filtrer et trier les devis
+  const filteredDevis = devisList
     .filter(devis => {
       const client = clients.find(c => c._id === (typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId));
       const clientName = client?.name || "Client inconnu";
@@ -142,8 +84,10 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                            devis.description?.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'orphan' && devis.orphanReason) ||
-                           (statusFilter === 'valid' && !devis.orphanReason);
+                           (statusFilter === 'nouveau' && devis.status === 'nouveau') ||
+                           (statusFilter === 'en_attente' && devis.status === 'en_attente') ||
+                           (statusFilter === 'fini' && devis.status === 'fini') ||
+                           (statusFilter === 'inactif' && devis.status === 'inactif');
       
       return matchesSearch && matchesStatus;
     })
@@ -169,11 +113,19 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
   const endIndex = startIndex + ITEMS_PER_PAGE;
   const currentDevis = filteredDevis.slice(startIndex, endIndex);
 
-  // ✅ NOUVEAU: Statistiques pour l'en-tête
-  const allDevis = getAllDevis();
-  const validDevisCount = allDevis.filter(d => !d.orphanReason).length;
-  const orphanDevisCount = allDevis.filter(d => d.orphanReason).length;
-  const totalRevenue = allDevis.reduce((sum, d) => sum + calculateTTC(d), 0);
+  // ✅ NOUVEAU: Statistiques pour l'en-tête avec CA réalisé et potentiel
+  const caRealise = devisList
+    .filter(d => d.status === 'fini')
+    .reduce((sum, d) => sum + calculateTTC(d), 0);
+  
+  const caPotentiel = devisList
+    .filter(d => ['nouveau', 'en_attente'].includes(d.status))
+    .reduce((sum, d) => sum + calculateTTC(d), 0);
+
+  const nouveauCount = devisList.filter(d => d.status === 'nouveau').length;
+  const enAttenteCount = devisList.filter(d => d.status === 'en_attente').length;
+  const finiCount = devisList.filter(d => d.status === 'fini').length;
+  const inactifCount = devisList.filter(d => d.status === 'inactif').length;
 
   const handleDelete = async (id) => {
     const confirm = window.confirm("❗ Supprimer ce devis ?");
@@ -197,6 +149,45 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     } catch (err) {
       console.error("Erreur suppression:", err);
       alert(`❌ Erreur lors de la suppression: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ NOUVEAU: Changer le statut d'un devis
+  const handleStatusClick = async (devisId, currentStatus) => {
+    let newStatus;
+    
+    // ✅ CYCLE: nouveau -> en_attente -> fini -> inactif -> nouveau
+    switch (currentStatus) {
+      case 'nouveau':
+        newStatus = 'en_attente';
+        break;
+      case 'en_attente':
+        newStatus = 'fini';
+        break;
+      case 'fini':
+        newStatus = 'inactif';
+        break;
+      case 'inactif':
+        newStatus = 'nouveau';
+        break;
+      default:
+        newStatus = 'en_attente';
+    }
+    
+    setLoading(true);
+    try {
+      await apiRequest(API_ENDPOINTS.DEVIS.UPDATE_STATUS(devisId), {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      await fetchAllDevis();
+      console.log(`✅ Statut changé: ${currentStatus} → ${newStatus}`);
+    } catch (err) {
+      console.error("Erreur changement statut:", err);
+      alert(`❌ Erreur lors du changement de statut: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -294,44 +285,44 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
     return pages;
   };
 
-  // ✅ NOUVELLE FONCTION: Associer un devis orphelin à un client
-  const handleAssignClient = async (devisId) => {
-    if (clients.length === 0) {
-      alert("❌ Aucun client disponible. Créez d'abord des clients.");
-      return;
+  // ✅ FONCTIONS POUR LES STATUTS
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'nouveau': return '#4299e1'; // Bleu
+      case 'en_attente': return '#9f7aea'; // Violet
+      case 'fini': return '#48bb78'; // Vert
+      case 'inactif': return '#f56565'; // Rouge
+      default: return '#4299e1';
     }
+  };
 
-    const clientOptions = clients.map(c => `${c.name} (${c.email})`).join('\n');
-    const selectedClientName = prompt(
-      `Sélectionnez un client pour ce devis :\n\n${clientOptions}\n\nEntrez le nom exact du client :`
-    );
-
-    if (!selectedClientName) return;
-
-    const selectedClient = clients.find(c => 
-      c.name.toLowerCase() === selectedClientName.toLowerCase() ||
-      selectedClientName.toLowerCase().includes(c.name.toLowerCase())
-    );
-
-    if (!selectedClient) {
-      alert("❌ Client non trouvé. Vérifiez l'orthographe.");
-      return;
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'nouveau': return 'Nouveau';
+      case 'en_attente': return 'En attente';
+      case 'fini': return 'Fini';
+      case 'inactif': return 'Inactif';
+      default: return 'Nouveau';
     }
+  };
 
-    setLoading(true);
-    try {
-      await apiRequest(API_ENDPOINTS.DEVIS.UPDATE(devisId), {
-        method: "PUT",
-        body: JSON.stringify({ clientId: selectedClient._id }),
-      });
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'nouveau': return '🔵';
+      case 'en_attente': return '🟣';
+      case 'fini': return '🟢';
+      case 'inactif': return '🔴';
+      default: return '🔵';
+    }
+  };
 
-      alert(`✅ Devis associé à ${selectedClient.name}`);
-      await fetchAllDevis();
-    } catch (err) {
-      console.error("Erreur association client:", err);
-      alert(`❌ Erreur lors de l'association: ${err.message}`);
-    } finally {
-      setLoading(false);
+  const getNextStatusLabel = (status) => {
+    switch (status) {
+      case 'nouveau': return 'Cliquer pour passer en Attente';
+      case 'en_attente': return 'Cliquer pour marquer Fini';
+      case 'fini': return 'Cliquer pour passer en Inactif';
+      case 'inactif': return 'Cliquer pour remettre en Nouveau';
+      default: return 'Cliquer pour changer le statut';
     }
   };
 
@@ -468,10 +459,10 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
           <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">DESTINATAIRE</h3>
           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Client orphelin'}</div>
-            <div>${clientInfo.email || devis.clientEmail || 'Email non défini'}</div>
-            <div>${clientInfo.phone || devis.clientPhone || 'Téléphone non défini'}</div>
-            <div>${devis.clientAddress || 'Adresse non définie'}</div>
+            <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Nom du client'}</div>
+            <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
+            <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
+            <div>${devis.clientAddress || 'Adresse du client'}</div>
           </div>
         </div>
       </div>
@@ -497,7 +488,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
           </div>
           <div>
             <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Client :</div>
-            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${clientInfo.name || devis.clientName || 'Client orphelin'}</div>
+            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${clientInfo.name || devis.clientName || 'Client non défini'}</div>
           </div>
         </div>
       </div>
@@ -627,13 +618,13 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
 
   return (
     <div className="prospects-page">
-      {/* ✅ NOUVEAU: En-tête avec titre et statistiques comme la page prospects */}
+      {/* ✅ En-tête avec titre et statistiques métier */}
       <div className="prospects-header">
         <div className="header-content">
           <h1 className="page-title">📄 Mes Devis</h1>
           <div className="stats-summary">
             <div className="stat-item">
-              <span className="stat-number">{allDevis.length}</span>
+              <span className="stat-number">{devisList.length}</span>
               <span className="stat-label">Total</span>
             </div>
             <div className="stat-item">
@@ -645,22 +636,34 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
               <span className="stat-label">Sélectionnés</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{validDevisCount}</span>
-              <span className="stat-label">✅ Valides</span>
+              <span className="stat-number">{nouveauCount}</span>
+              <span className="stat-label">🔵 Nouveaux</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{orphanDevisCount}</span>
-              <span className="stat-label">⚠️ Orphelins</span>
+              <span className="stat-number">{enAttenteCount}</span>
+              <span className="stat-label">🟣 En attente</span>
             </div>
             <div className="stat-item">
-              <span className="stat-number">{totalRevenue.toFixed(0)} €</span>
-              <span className="stat-label">💰 CA Total</span>
+              <span className="stat-number">{finiCount}</span>
+              <span className="stat-label">🟢 Finis</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{inactifCount}</span>
+              <span className="stat-label">🔴 Inactifs</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{caRealise.toFixed(0)} €</span>
+              <span className="stat-label">💰 CA Réalisé</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{caPotentiel.toFixed(0)} €</span>
+              <span className="stat-label">🎯 CA Potentiel</span>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ NOUVEAU: Barre de recherche et filtres comme la page prospects */}
+      {/* ✅ Barre de recherche et filtres */}
       <div className="filters-section">
         <div className="search-bar">
           <div className="search-input-wrapper">
@@ -692,8 +695,10 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
               className="filter-select"
             >
               <option value="all">Tous</option>
-              <option value="valid">✅ Valides</option>
-              <option value="orphan">⚠️ Orphelins</option>
+              <option value="nouveau">🔵 Nouveaux</option>
+              <option value="en_attente">🟣 En attente</option>
+              <option value="fini">🟢 Finis</option>
+              <option value="inactif">🔴 Inactifs</option>
             </select>
           </div>
 
@@ -724,7 +729,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
           )}
         </div>
 
-        {/* ✅ NOUVEAU: Informations de pagination */}
+        {/* ✅ Informations de pagination */}
         {filteredDevis.length > 0 && (
           <div className="pagination-info">
             <span>
@@ -735,7 +740,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         )}
       </div>
 
-      {/* ✅ NOUVEAU: Actions en masse */}
+      {/* ✅ Actions en masse */}
       {currentDevis.length > 0 && (
         <div className="bulk-select-bar">
           <label className="select-all-checkbox">
@@ -781,18 +786,17 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         </div>
       ) : (
         <>
-          {/* ✅ NOUVEAU: Grille des cartes devis avec sélection */}
+          {/* ✅ Grille des cartes devis avec statuts métier */}
           <div className="prospects-grid">
             {currentDevis.map((devisItem) => {
               const client = clients.find(c => c._id === (typeof devisItem.clientId === "object" ? devisItem.clientId?._id : devisItem.clientId));
-              const isOrphan = !!devisItem.orphanReason;
               
               return (
                 <div 
                   key={devisItem._id} 
-                  className={`prospect-card ${selectedDevis.includes(devisItem._id) ? 'selected' : ''} ${isOrphan ? 'orphan-card' : ''}`}
+                  className={`prospect-card ${selectedDevis.includes(devisItem._id) ? 'selected' : ''}`}
                 >
-                  {/* ✅ NOUVEAU: Checkbox de sélection */}
+                  {/* ✅ Checkbox de sélection */}
                   <div className="card-select">
                     <input
                       type="checkbox"
@@ -801,17 +805,18 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                     />
                   </div>
 
-                  {/* Avatar et indicateur */}
+                  {/* Avatar et indicateur de statut cliquable */}
                   <div className="card-header">
                     <div className="prospect-avatar">
                       {devisItem.title ? devisItem.title.charAt(0).toUpperCase() : "D"}
                     </div>
                     <div 
-                      className="status-indicator"
-                      style={{ backgroundColor: isOrphan ? '#f56565' : '#48bb78' }}
-                      title={isOrphan ? 'Devis orphelin' : 'Devis valide'}
+                      className="status-indicator clickable"
+                      style={{ backgroundColor: getStatusColor(devisItem.status) }}
+                      title={getNextStatusLabel(devisItem.status)}
+                      onClick={() => handleStatusClick(devisItem._id, devisItem.status)}
                     >
-                      {isOrphan ? '⚠️' : '✅'}
+                      {getStatusIcon(devisItem.status)}
                     </div>
                   </div>
 
@@ -834,39 +839,22 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                       </div>
                     </div>
 
-                    {isOrphan && (
-                      <div className="notes-preview">
-                        <span className="notes-icon">⚠️</span>
-                        <span className="notes-text">{devisItem.orphanReason}</span>
-                      </div>
-                    )}
-
                     {/* Statut en texte */}
                     <div className="status-text">
                       <span 
                         className="status-badge"
                         style={{ 
-                          backgroundColor: isOrphan ? '#f56565' : '#48bb78',
+                          backgroundColor: getStatusColor(devisItem.status),
                           color: 'white'
                         }}
                       >
-                        {isOrphan ? '⚠️ Orphelin' : '✅ Valide'}
+                        {getStatusIcon(devisItem.status)} {getStatusLabel(devisItem.status)}
                       </span>
                     </div>
                   </div>
 
                   {/* Actions */}
                   <div className="card-actions">
-                    {isOrphan && (
-                      <button 
-                        onClick={() => handleAssignClient(devisItem._id)}
-                        className="action-btn primary-action"
-                        title="Associer à un client"
-                      >
-                        🔗
-                      </button>
-                    )}
-                    
                     <button 
                       onClick={() => onEditDevis && onEditDevis(devisItem)}
                       className="action-btn edit-action"
@@ -904,7 +892,7 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
             })}
           </div>
 
-          {/* ✅ NOUVEAU: Contrôles de pagination */}
+          {/* ✅ Contrôles de pagination */}
           {totalPages > 1 && (
             <div className="pagination-controls">
               <div className="pagination-wrapper">
