@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import Devis from "../../components/Dashboard/Devis/devisPage";
-import DevisListPage from "../../components/Dashboard/Devis/devisListPage"; // ✅ NOUVEAU
+import DevisListPage from "../../components/Dashboard/Devis/devisListPage";
+import ProspectsPage from "../../components/Dashboard/Prospects/prospectsPage"; // ✅ NOUVEAU
 import Analytics from "../../components/Dashboard/Analytics/analytics";
 import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
@@ -19,7 +20,7 @@ const Dashboard = () => {
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState({});
   const [selectedClientForDevis, setSelectedClientForDevis] = useState(null);
-  const [editingDevis, setEditingDevis] = useState(null); // ✅ NOUVEAU
+  const [editingDevis, setEditingDevis] = useState(null);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -55,21 +56,21 @@ const Dashboard = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchClients = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const data = await apiRequest(API_ENDPOINTS.CLIENTS.BASE);
-        setClients(Array.isArray(data) ? data : []);
-      } catch (err) {
-        console.error("Erreur lors de la récupération des clients:", err);
-        setError("Erreur lors de la récupération des clients.");
-      } finally {
-        setLoading(false);
-      }
-    };
+  const fetchClients = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await apiRequest(API_ENDPOINTS.CLIENTS.BASE);
+      setClients(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error("Erreur lors de la récupération des clients:", err);
+      setError("Erreur lors de la récupération des clients.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchClients();
   }, []);
 
@@ -83,29 +84,11 @@ const Dashboard = () => {
     }
   };
 
-  const handleDeleteClient = async (clientId) => {
-    const confirmDelete = window.confirm("❗ Supprimer ce client et tous ses devis ?");
-    if (!confirmDelete) return;
-
-    try {
-      await apiRequest(API_ENDPOINTS.CLIENTS.DELETE(clientId), {
-        method: "DELETE",
-      });
-
-      setClients((prev) => prev.filter((c) => c._id !== clientId));
-      alert("✅ Client supprimé avec succès");
-    } catch (err) {
-      console.error("Erreur suppression client:", err);
-      alert(`❌ Échec suppression client: ${err.message}`);
-    }
-  };
-
   const handleViewClientDevis = (client) => {
     setSelectedClientForDevis(client);
-    setActiveTab("devis-creation"); // ✅ NOUVEAU TAB
+    setActiveTab("devis-creation");
   };
 
-  // ✅ NOUVELLES FONCTIONS POUR LA GESTION DES DEVIS
   const handleEditDevisFromList = (devis) => {
     setEditingDevis(devis);
     setActiveTab("devis-creation");
@@ -120,7 +103,7 @@ const Dashboard = () => {
   const menuItems = [
     { id: "dashboard", icon: "📊", label: "Tableau de bord" },
     { id: "clients", icon: "👤", label: "Prospects" },
-    { id: "devis", icon: "📄", label: "Devis" }, // ✅ LISTE DES DEVIS
+    { id: "devis", icon: "📄", label: "Devis" },
     { id: "notifications", icon: "🔔", label: "Notifications" },
     { id: "carte", icon: "💼", label: "Carte" },
     { id: "settings", icon: "⚙️", label: "Paramètres" }
@@ -153,7 +136,6 @@ const Dashboard = () => {
                 className={`menu-item ${activeTab === item.id || activeTab === "devis-creation" && item.id === "devis" ? "active" : ""}`}
                 onClick={() => {
                   setActiveTab(item.id);
-                  // ✅ Réinitialiser les sélections quand on change d'onglet
                   if (item.id !== "devis" && item.id !== "devis-creation") {
                     setSelectedClientForDevis(null);
                     setEditingDevis(null);
@@ -171,56 +153,15 @@ const Dashboard = () => {
       <div className="dashboard-container">
         {activeTab === "dashboard" && <Analytics />}
 
+        {/* ✅ NOUVELLE PAGE PROSPECTS MODERNE */}
         {activeTab === "clients" && (
-          <>
-            <h2>👥 Mes Prospects</h2>
-            {loading ? (
-              <p>Chargement des clients...</p>
-            ) : error ? (
-              <p className="error-message">{error}</p>
-            ) : clients.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-icon">👥</div>
-                <h3>Aucun client trouvé</h3>
-                <p>Utilisez votre QR code pour permettre à vos prospects de s'inscrire !</p>
-                <button onClick={() => setActiveTab("carte")} className="cta-button">
-                  Générer mon QR code
-                </button>
-              </div>
-            ) : (
-              <div className="clients-grid">
-                {clients.map((client) => (
-                  <div key={client._id} className="client-card">
-                    <div className="client-avatar">
-                      {client.name ? client.name.charAt(0).toUpperCase() : "?"}
-                    </div>
-                    <div className="client-info">
-                      <h3>{client.name || "N/A"}</h3>
-                      <p>📧 {client.email || "N/A"}</p>
-                      <p>📞 {client.phone || "N/A"}</p>
-                    </div>
-                    <div className="client-actions">
-                      <button 
-                        onClick={() => handleViewClientDevis(client)}
-                        className="primary-btn"
-                      >
-                        📄 Voir ses devis
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteClient(client._id)}
-                        className="danger-btn"
-                      >
-                        🗑 Supprimer
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </>
+          <ProspectsPage 
+            clients={clients}
+            onRefresh={fetchClients}
+            onViewClientDevis={handleViewClientDevis}
+          />
         )}
 
-        {/* ✅ NOUVELLE PAGE: LISTE DES DEVIS TRIÉS PAR CLIENT */}
         {activeTab === "devis" && (
           <DevisListPage 
             clients={clients}
@@ -229,11 +170,10 @@ const Dashboard = () => {
           />
         )}
 
-        {/* ✅ PAGE DE CRÉATION/ÉDITION DE DEVIS */}
         {activeTab === "devis-creation" && (
           <Devis 
             clients={clients}
-            initialDevisFromClient={editingDevis} // ✅ Passer le devis à éditer
+            initialDevisFromClient={editingDevis}
             selectedClientId={selectedClientForDevis?._id}
             onBack={selectedClientForDevis ? () => {
               setSelectedClientForDevis(null);
