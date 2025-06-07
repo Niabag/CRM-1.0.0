@@ -234,7 +234,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     <div className="prospects-page">
       {/* Modal d'édition */}
       {editingProspect && (
-        <div className="modal-overlay" onClick={() => setEditingProspect(null)}>
+        <div className="modal-overlay\" onClick={() => setEditingProspect(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>✏️ Modifier le prospect</h3>
