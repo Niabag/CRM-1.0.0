@@ -34,6 +34,7 @@ const BusinessCard = ({ userId, user }) => {
 >>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   const [loading, setLoading] = useState(false);
 <<<<<<< HEAD
+<<<<<<< HEAD
   const [showCardPreview, setShowCardPreview] = useState(false);
   const cardRef = useRef(null);
 
@@ -62,6 +63,8 @@ const BusinessCard = ({ userId, user }) => {
 
   const fetchUserData = async () => {
 =======
+=======
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
   
   // ✅ NOUVEAU: Statistiques en temps réel
   const [stats, setStats] = useState({
@@ -272,6 +275,7 @@ const BusinessCard = ({ userId, user }) => {
     <div className="business-card-container">
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       <div className="card-header">
         <h2>💼 Carte de visite digitale</h2>
         <p className="card-subtitle">Créez et téléchargez votre carte de visite avec QR code intégré</p>
@@ -279,12 +283,17 @@ const BusinessCard = ({ userId, user }) => {
       {/* ✅ NOUVEAU: Statistiques en haut de page */}
       <div className="stats-header">
 =======
+=======
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
       {/* ✅ NOUVEAU: Statistiques sous le titre */}
       <div className="card-header">
         <h2>💼 Carte de Visite Numérique</h2>
         <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
         
         {/* ✅ Statistiques intégrées dans l'en-tête */}
+<<<<<<< HEAD
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
+=======
 >>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
         <div className="stats-overview">
           <div className="stat-card highlight">
@@ -421,6 +430,7 @@ const BusinessCard = ({ userId, user }) => {
         </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         {/* Section génération */}
         <div className="generation-section">
           <div className="generation-info">
@@ -431,6 +441,8 @@ const BusinessCard = ({ userId, user }) => {
               ✨ Créer ma carte de visite
 =======
 
+=======
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 =======
 >>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
           {/* ✅ NOUVEAU: Section actions multiples */}
@@ -559,8 +571,13 @@ const BusinessCard = ({ userId, user }) => {
         </div>
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         {/* Aperçu */}
         <div className="card-preview">
+=======
+        {/* ✅ Aperçu fixe */}
+        <div className="card-preview fixed-preview">
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 =======
         {/* ✅ Aperçu fixe */}
         <div className="card-preview fixed-preview">
@@ -713,6 +730,7 @@ const BusinessCard = ({ userId, user }) => {
                   fgColor="black"
                 />
               )}
+<<<<<<< HEAD
 >>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
             </div>
           </div>
@@ -753,6 +771,10 @@ const BusinessCard = ({ userId, user }) => {
                 <h5>Récupérez vos prospects</h5>
                 <p>Vos prospects scannent le QR code, s'inscrivent et apparaissent dans votre CRM</p>
 =======
+=======
+            </div>
+            
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
             <div className="qr-info">
               <div className="qr-details">
                 <h4>Actions configurées :</h4>
@@ -790,6 +812,9 @@ const BusinessCard = ({ userId, user }) => {
                 <button onClick={generateQRCode} className="btn-refresh">
                   🔄 Régénérer
                 </button>
+<<<<<<< HEAD
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
+=======
 >>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
               </div>
             </div>
