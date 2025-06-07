@@ -186,11 +186,9 @@ const DevisPreview = ({
               />
             </div>
             <div className="metadata-item">
-              <label>Client :</label>
-              {/* ✅ CORRECTION: Afficher le nom du client au lieu de l'ID */}
-              <span className="client-id">
-                {clientInfo.name || devisData.clientName || "Client non défini"}
-              </span>
+              <label>ID Client :</label>
+              {/* ✅ CORRECTION: Garder l'affichage de l'ID client */}
+              <span className="client-id">{devisData.clientId || "N/A"}</span>
             </div>
           </div>
         </div>
@@ -247,16 +245,18 @@ const DevisPreview = ({
                       />
                     </td>
                     <td>
-                      {/* ✅ CORRECTION: € à gauche du champ */}
-                      €{" "}
-                      <EditableInput 
-                        name="article-unitPrice" 
-                        value={article.unitPrice || ""} 
-                        onChange={onFieldChange} 
-                        index={index} 
-                        type="number"
-                        placeholder="0"
-                      />
+                      {/* ✅ CORRECTION: € en dessous ou en haut, pas à droite */}
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                        <span style={{ fontSize: '0.8em', color: '#666' }}>€</span>
+                        <EditableInput 
+                          name="article-unitPrice" 
+                          value={article.unitPrice || ""} 
+                          onChange={onFieldChange} 
+                          index={index} 
+                          type="number"
+                          placeholder="0"
+                        />
+                      </div>
                     </td>
                     <td>
                       <span className="tva-text-only">{article.tvaRate || "20"}%</span>
