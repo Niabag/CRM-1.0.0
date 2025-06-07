@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
+import Devis from "../../components/Dashboard/Devis/devisPage";
 import Analytics from "../../components/Dashboard/Analytics/analytics";
 import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
@@ -97,12 +98,10 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ SUPPRIMÉ: handleCreateDevis et handleViewClientDevis car plus d'onglet devis
-
   const menuItems = [
     { id: "dashboard", icon: "📊", label: "Tableau de bord" },
     { id: "clients", icon: "👤", label: "Prospects" },
-    // ✅ SUPPRIMÉ: onglet devis
+    { id: "devis", icon: "📄", label: "Devis" }, // ✅ GARDÉ
     { id: "notifications", icon: "🔔", label: "Notifications" },
     { id: "carte", icon: "💼", label: "Carte" },
     { id: "settings", icon: "⚙️", label: "Paramètres" }
@@ -175,7 +174,6 @@ const Dashboard = () => {
                       <p>📞 {client.phone || "N/A"}</p>
                     </div>
                     <div className="client-actions">
-                      {/* ✅ SUPPRIMÉ: boutons pour créer/voir devis */}
                       <button 
                         onClick={() => handleDeleteClient(client._id)}
                         className="danger-btn"
@@ -190,7 +188,13 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* ✅ SUPPRIMÉ: section devis */}
+        {/* ✅ SECTION DEVIS GARDÉE - Affiche tous les devis */}
+        {activeTab === "devis" && (
+          <Devis 
+            clients={clients}
+            // ✅ Pas de filtre client spécifique = affiche tous les devis
+          />
+        )}
 
         {activeTab === "notifications" && <Notifications />}
 
