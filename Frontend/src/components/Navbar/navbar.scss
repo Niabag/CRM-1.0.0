@@ -1,0 +1,20 @@
+nav {
+    display: flex;
+    justify-content: space-around;
+    background: #007bff;
+    padding: 15px;
+  
+    a, button {
+      color: white;
+      text-decoration: none;
+      font-size: 18px;
+      border: none;
+      background: none;
+      cursor: pointer;
+  
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+  }
+  
