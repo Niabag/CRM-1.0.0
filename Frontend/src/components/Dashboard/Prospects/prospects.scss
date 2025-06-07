@@ -136,6 +136,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 1rem;
+  margin-bottom: 1rem;
 }
 
 .filter-group {
@@ -192,6 +193,21 @@
   cursor: not-allowed;
 }
 
+/* ✅ NOUVEAU: Informations de pagination */
+.pagination-info {
+  text-align: center;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+}
+
+.pagination-info span {
+  font-size: 0.9rem;
+  color: #4a5568;
+  font-weight: 500;
+}
+
 /* Sélection en masse */
 .bulk-select-bar {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -220,6 +236,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .prospect-card {
@@ -276,7 +293,7 @@
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
 }
 
-/* ✅ INDICATEUR DE STATUT CLIQUABLE */
+/* Indicateur de statut cliquable */
 .status-indicator {
   width: 28px;
   height: 28px;
@@ -473,6 +490,115 @@
   font-style: italic;
 }
 
+/* ✅ NOUVEAU: Contrôles de pagination */
+.pagination-controls {
+  background: white;
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
+}
+
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.pagination-btn {
+  padding: 0.75rem 1.5rem;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #4a5568;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-btn:hover:not(:disabled) {
+  border-color: #667eea;
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8f9fa;
+  color: #a0aec0;
+}
+
+.pagination-numbers {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.pagination-number {
+  width: 40px;
+  height: 40px;
+  border: 2px solid #e2e8f0;
+  background: white;
+  color: #4a5568;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pagination-number:hover {
+  border-color: #667eea;
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.pagination-number.active {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  transform: translateY(-2px);
+}
+
+.pagination-ellipsis {
+  padding: 0 0.5rem;
+  color: #a0aec0;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+}
+
+.pagination-details {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.pagination-details span {
+  font-size: 0.9rem;
+  color: #718096;
+  font-weight: 500;
+}
+
 /* États */
 .loading-state {
   display: flex;
@@ -600,6 +726,26 @@
   .prospect-name {
     font-size: 1.1rem;
   }
+
+  /* ✅ NOUVEAU: Pagination responsive */
+  .pagination-wrapper {
+    gap: 0.25rem;
+  }
+  
+  .pagination-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+  }
+  
+  .pagination-number {
+    width: 35px;
+    height: 35px;
+    font-size: 0.8rem;
+  }
+  
+  .pagination-details span {
+    font-size: 0.8rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -627,6 +773,30 @@
     padding: 0.75rem;
     min-width: auto;
   }
+
+  /* ✅ NOUVEAU: Pagination mobile */
+  .pagination-wrapper {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .pagination-numbers {
+    order: 1;
+  }
+  
+  .pagination-prev {
+    order: 0;
+  }
+  
+  .pagination-next {
+    order: 2;
+  }
+  
+  .pagination-btn {
+    width: 100%;
+    max-width: 200px;
+    justify-content: center;
+  }
 }
 
 /* Animations */
@@ -651,4 +821,29 @@
 
 .prospect-card:nth-child(3n) {
   animation-delay: 0.2s;
+}
+
+/* ✅ NOUVEAU: Animation pour les contrôles de pagination */
+.pagination-controls {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.pagination-number {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+.pagination-number:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.pagination-number:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.pagination-number:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.pagination-number:nth-child(5) {
+  animation-delay: 0.4s;
 }

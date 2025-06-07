@@ -10,6 +10,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
   const [sortBy, setSortBy] = useState('name');
   const [loading, setLoading] = useState(false);
   const [selectedProspects, setSelectedProspects] = useState([]);
+  
+  // ✅ NOUVEAU: États pour la pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9; // Maximum 9 clients par page
 
   // Filtrer et trier les prospects
   const filteredProspects = clients
@@ -38,6 +42,22 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       }
     });
 
+  // ✅ NOUVEAU: Calculs de pagination
+  const totalPages = Math.ceil(filteredProspects.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentProspects = filteredProspects.slice(startIndex, endIndex);
+
+  // ✅ NOUVEAU: Réinitialiser la page quand les filtres changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortBy]);
+
+  // ✅ NOUVEAU: Réinitialiser la sélection quand on change de page
+  useEffect(() => {
+    setSelectedProspects([]);
+  }, [currentPage]);
+
   const handleDeleteClient = async (clientId) => {
     const client = clients.find(c => c._id === clientId);
     const confirmDelete = window.confirm(
@@ -53,6 +73,13 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
 
       onRefresh && onRefresh();
       alert("✅ Prospect supprimé avec succès");
+      
+      // ✅ NOUVEAU: Ajuster la page si nécessaire après suppression
+      const newFilteredLength = filteredProspects.length - 1;
+      const newTotalPages = Math.ceil(newFilteredLength / ITEMS_PER_PAGE);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
     } catch (err) {
       console.error("Erreur suppression prospect:", err);
       alert(`❌ Échec suppression: ${err.message}`);
@@ -61,11 +88,9 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ FONCTION: Changer le statut en cliquant sur l'indicateur (SANS POPUP)
   const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
-    // ✅ CYCLE: nouveau -> actif -> inactif -> nouveau
     switch (currentStatus) {
       case 'nouveau':
         newStatus = 'active';
@@ -88,8 +113,6 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       });
 
       onRefresh && onRefresh();
-      
-      // ✅ SUPPRESSION DU POPUP - Changement silencieux
       console.log(`✅ Statut changé: ${currentStatus} → ${newStatus}`);
     } catch (err) {
       console.error("Erreur changement statut:", err);
@@ -99,7 +122,6 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Aller à la page de modification
   const handleEditProspect = (prospect) => {
     navigate(`/prospect/edit/${prospect._id}`);
   };
@@ -113,10 +135,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
   };
 
   const handleSelectAll = () => {
-    if (selectedProspects.length === filteredProspects.length) {
+    if (selectedProspects.length === currentProspects.length) {
       setSelectedProspects([]);
     } else {
-      setSelectedProspects(filteredProspects.map(p => p._id));
+      setSelectedProspects(currentProspects.map(p => p._id));
     }
   };
 
@@ -139,6 +161,13 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       setSelectedProspects([]);
       onRefresh && onRefresh();
       alert(`✅ ${selectedProspects.length} prospect(s) supprimé(s)`);
+      
+      // ✅ NOUVEAU: Ajuster la page après suppression en masse
+      const newFilteredLength = filteredProspects.length - selectedProspects.length;
+      const newTotalPages = Math.ceil(newFilteredLength / ITEMS_PER_PAGE);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
     } catch (err) {
       console.error("Erreur suppression en masse:", err);
       alert(`❌ Erreur lors de la suppression: ${err.message}`);
@@ -147,7 +176,46 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ FONCTIONS POUR LE STATUT
+  // ✅ NOUVEAU: Fonctions de navigation de pagination
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // ✅ NOUVEAU: Générer les numéros de pages à afficher
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
+  };
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
@@ -285,6 +353,16 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
             </div>
           )}
         </div>
+
+        {/* ✅ NOUVEAU: Informations de pagination */}
+        {filteredProspects.length > 0 && (
+          <div className="pagination-info">
+            <span>
+              Affichage de {startIndex + 1} à {Math.min(endIndex, filteredProspects.length)} sur {filteredProspects.length} prospects
+              {totalPages > 1 && ` (Page ${currentPage} sur ${totalPages})`}
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Liste des prospects */}
@@ -320,22 +398,22 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       ) : (
         <>
           {/* Actions en masse */}
-          {filteredProspects.length > 0 && (
+          {currentProspects.length > 0 && (
             <div className="bulk-select-bar">
               <label className="select-all-checkbox">
                 <input
                   type="checkbox"
-                  checked={selectedProspects.length === filteredProspects.length}
+                  checked={selectedProspects.length === currentProspects.length && currentProspects.length > 0}
                   onChange={handleSelectAll}
                 />
-                <span>Sélectionner tout ({filteredProspects.length})</span>
+                <span>Sélectionner tout sur cette page ({currentProspects.length})</span>
               </label>
             </div>
           )}
 
           {/* Grille des cartes prospects */}
           <div className="prospects-grid">
-            {filteredProspects.map((prospect) => (
+            {currentProspects.map((prospect) => (
               <div 
                 key={prospect._id} 
                 className={`prospect-card ${selectedProspects.includes(prospect._id) ? 'selected' : ''}`}
@@ -354,7 +432,6 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                   <div className="prospect-avatar">
                     {prospect.name ? prospect.name.charAt(0).toUpperCase() : "?"}
                   </div>
-                  {/* ✅ INDICATEUR DE STATUT CLIQUABLE (SANS POPUP) */}
                   <div 
                     className="status-indicator clickable"
                     style={{ backgroundColor: getStatusColor(prospect.status) }}
@@ -444,6 +521,77 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
               </div>
             ))}
           </div>
+
+          {/* ✅ NOUVEAU: Contrôles de pagination */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <div className="pagination-wrapper">
+                {/* Bouton Précédent */}
+                <button 
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="pagination-btn pagination-prev"
+                  title="Page précédente"
+                >
+                  ← Précédent
+                </button>
+
+                {/* Numéros de pages */}
+                <div className="pagination-numbers">
+                  {currentPage > 3 && totalPages > 5 && (
+                    <>
+                      <button 
+                        onClick={() => goToPage(1)}
+                        className="pagination-number"
+                      >
+                        1
+                      </button>
+                      {currentPage > 4 && <span className="pagination-ellipsis">...</span>}
+                    </>
+                  )}
+
+                  {getPageNumbers().map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  {currentPage < totalPages - 2 && totalPages > 5 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
+                      <button 
+                        onClick={() => goToPage(totalPages)}
+                        className="pagination-number"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Bouton Suivant */}
+                <button 
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn pagination-next"
+                  title="Page suivante"
+                >
+                  Suivant →
+                </button>
+              </div>
+
+              {/* Informations de pagination détaillées */}
+              <div className="pagination-details">
+                <span>
+                  Page {currentPage} sur {totalPages} • {filteredProspects.length} prospect{filteredProspects.length > 1 ? 's' : ''} au total
+                </span>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
