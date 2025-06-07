@@ -112,9 +112,6 @@ const DevisPreview = ({
         <button onClick={onAddArticle} className="toolbar-btn add-btn">
           ➕ Ajouter une ligne
         </button>
-        <button onClick={onReset} className="toolbar-btn reset-btn">
-          🔄 Nouveau devis
-        </button>
         <button className="toolbar-btn pdf-btn" onClick={handleDownload}>
           📄 Télécharger PDF
         </button>
