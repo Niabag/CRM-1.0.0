@@ -19,7 +19,8 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       
       const matchesStatus = statusFilter === 'all' || 
                            (statusFilter === 'active' && client.status === 'active') ||
-                           (statusFilter === 'inactive' && client.status === 'inactive');
+                           (statusFilter === 'inactive' && client.status === 'inactive') ||
+                           (statusFilter === 'nouveau' && client.status === 'nouveau'); // ✅ NOUVEAU FILTRE
       
       return matchesSearch && matchesStatus;
     })
@@ -59,10 +60,25 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Changer le statut actif/inactif
+  // ✅ FONCTION AMÉLIORÉE: Changer le statut avec cycle nouveau -> actif -> inactif
   const handleToggleStatus = async (clientId) => {
     const client = clients.find(c => c._id === clientId);
-    const newStatus = client.status === 'active' ? 'inactive' : 'active';
+    let newStatus;
+    
+    // ✅ CYCLE: nouveau -> actif -> inactif -> nouveau
+    switch (client.status) {
+      case 'nouveau':
+        newStatus = 'active';
+        break;
+      case 'active':
+        newStatus = 'inactive';
+        break;
+      case 'inactive':
+        newStatus = 'nouveau';
+        break;
+      default:
+        newStatus = 'active';
+    }
     
     setLoading(true);
     try {
@@ -73,8 +89,8 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
 
       onRefresh && onRefresh();
       
-      const statusText = newStatus === 'active' ? 'activé' : 'désactivé';
-      alert(`✅ Prospect ${statusText} avec succès`);
+      const statusText = getStatusLabel(newStatus);
+      alert(`✅ Prospect passé en "${statusText}" avec succès`);
     } catch (err) {
       console.error("Erreur changement statut:", err);
       alert(`❌ Erreur lors du changement de statut: ${err.message}`);
@@ -164,11 +180,13 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
+  // ✅ FONCTIONS AMÉLIORÉES AVEC LE STATUT "NOUVEAU"
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
       case 'pending': return '#ed8936';
+      case 'nouveau': return '#4299e1'; // ✅ BLEU POUR NOUVEAU
       default: return '#4299e1';
     }
   };
@@ -178,6 +196,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'active': return 'Actif';
       case 'inactive': return 'Inactif';
       case 'pending': return 'En attente';
+      case 'nouveau': return 'Nouveau'; // ✅ LABEL NOUVEAU
       default: return 'Nouveau';
     }
   };
@@ -187,7 +206,27 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'active': return '🟢';
       case 'inactive': return '🔴';
       case 'pending': return '🟡';
+      case 'nouveau': return '🔵'; // ✅ ICÔNE BLEUE POUR NOUVEAU
       default: return '🔵';
+    }
+  };
+
+  // ✅ NOUVELLE FONCTION: Obtenir le texte du bouton selon le statut
+  const getToggleButtonText = (status) => {
+    switch (status) {
+      case 'nouveau': return '▶️'; // Passer à actif
+      case 'active': return '⏸️'; // Passer à inactif
+      case 'inactive': return '🔄'; // Retour à nouveau
+      default: return '▶️';
+    }
+  };
+
+  const getToggleButtonTitle = (status) => {
+    switch (status) {
+      case 'nouveau': return 'Passer en actif';
+      case 'active': return 'Passer en inactif';
+      case 'inactive': return 'Remettre en nouveau';
+      default: return 'Changer le statut';
     }
   };
 
@@ -195,7 +234,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     <div className="prospects-page">
       {/* Modal d'édition */}
       {editingProspect && (
-        <div className="modal-overlay\" onClick={() => setEditingProspect(null)}>
+        <div className="modal-overlay" onClick={() => setEditingProspect(null)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3>✏️ Modifier le prospect</h3>
@@ -245,6 +284,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                     value={editingProspect.status}
                     onChange={(e) => setEditingProspect(prev => ({...prev, status: e.target.value}))}
                   >
+                    <option value="nouveau">🔵 Nouveau</option>
                     <option value="active">🟢 Actif</option>
                     <option value="inactive">🔴 Inactif</option>
                     <option value="pending">🟡 En attente</option>
@@ -311,6 +351,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
               <span className="stat-label">Sélectionnés</span>
             </div>
             <div className="stat-item">
+              <span className="stat-number">{clients.filter(c => c.status === 'nouveau').length}</span>
+              <span className="stat-label">🔵 Nouveaux</span>
+            </div>
+            <div className="stat-item">
               <span className="stat-number">{clients.filter(c => c.status === 'active').length}</span>
               <span className="stat-label">🟢 Actifs</span>
             </div>
@@ -354,6 +398,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
               className="filter-select"
             >
               <option value="all">Tous</option>
+              <option value="nouveau">🔵 Nouveaux</option>
               <option value="active">🟢 Actifs</option>
               <option value="inactive">🔴 Inactifs</option>
             </select>
@@ -515,13 +560,14 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                     📄
                   </button>
                   
+                  {/* ✅ BOUTON AMÉLIORÉ AVEC CYCLE NOUVEAU -> ACTIF -> INACTIF */}
                   <button 
                     onClick={() => handleToggleStatus(prospect._id)}
                     className="action-btn secondary-action"
-                    title={prospect.status === 'active' ? 'Désactiver' : 'Activer'}
+                    title={getToggleButtonTitle(prospect.status)}
                     disabled={loading}
                   >
-                    {prospect.status === 'active' ? '⏸️' : '▶️'}
+                    {getToggleButtonText(prospect.status)}
                   </button>
                   
                   <button 

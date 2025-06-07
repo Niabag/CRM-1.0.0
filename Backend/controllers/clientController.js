@@ -29,7 +29,7 @@ exports.registerClient = async (req, res) => {
       phone,
       company,
       notes,
-      status: 'active', // ✅ Statut par défaut
+      status: 'nouveau', // ✅ Statut par défaut "nouveau"
       userId: new mongoose.Types.ObjectId(userId),
     });
 
@@ -63,8 +63,8 @@ exports.updateClientStatus = async (req, res) => {
     const { id } = req.params;
     const { status } = req.body;
 
-    // Vérifier que le statut est valide
-    if (!['active', 'inactive', 'pending'].includes(status)) {
+    // ✅ VÉRIFIER QUE LE STATUT EST VALIDE (AVEC "NOUVEAU")
+    if (!['active', 'inactive', 'pending', 'nouveau'].includes(status)) {
       return res.status(400).json({ message: "Statut invalide" });
     }
 
@@ -124,7 +124,8 @@ exports.updateClient = async (req, res) => {
     if (phone) client.phone = phone;
     if (company !== undefined) client.company = company;
     if (notes !== undefined) client.notes = notes;
-    if (status && ['active', 'inactive', 'pending'].includes(status)) {
+    // ✅ VÉRIFIER LE NOUVEAU STATUT "NOUVEAU"
+    if (status && ['active', 'inactive', 'pending', 'nouveau'].includes(status)) {
       client.status = status;
     }
 

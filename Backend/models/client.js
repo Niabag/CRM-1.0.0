@@ -7,8 +7,8 @@ const clientSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   status: { 
     type: String, 
-    enum: ['active', 'inactive', 'pending'], 
-    default: 'active' 
+    enum: ['active', 'inactive', 'pending', 'nouveau'], // ✅ AJOUT DU STATUT "NOUVEAU"
+    default: 'nouveau' // ✅ STATUT PAR DÉFAUT "NOUVEAU"
   },
   company: { type: String },
   notes: { type: String },
