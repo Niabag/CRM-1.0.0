@@ -1,0 +1,389 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { API_ENDPOINTS, apiRequest } from '../../../config/api';
+import './prospectEdit.scss';
+
+const ProspectEditPage = ({ clients = [], onRefresh }) => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [prospect, setProspect] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Trouver le prospect dans la liste
+  useEffect(() => {
+    if (id && clients.length > 0) {
+      const foundProspect = clients.find(c => c._id === id);
+      if (foundProspect) {
+        setProspect({
+          ...foundProspect,
+          company: foundProspect.company || '',
+          notes: foundProspect.notes || ''
+        });
+      } else {
+        setError("Prospect introuvable");
+      }
+    }
+  }, [id, clients]);
+
+  const handleInputChange = (field, value) => {
+    setProspect(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  // ✅ FONCTION PRINCIPALE: Changer le statut en cliquant sur l'indicateur
+  const handleStatusClick = async () => {
+    if (!prospect) return;
+    
+    let newStatus;
+    
+    // ✅ CYCLE: nouveau -> actif -> inactif -> nouveau
+    switch (prospect.status) {
+      case 'nouveau':
+        newStatus = 'active';
+        break;
+      case 'active':
+        newStatus = 'inactive';
+        break;
+      case 'inactive':
+        newStatus = 'nouveau';
+        break;
+      default:
+        newStatus = 'active';
+    }
+    
+    setLoading(true);
+    try {
+      await apiRequest(API_ENDPOINTS.CLIENTS.UPDATE_STATUS(prospect._id), {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      // Mettre à jour l'état local
+      setProspect(prev => ({ ...prev, status: newStatus }));
+      
+      // Rafraîchir la liste des clients
+      onRefresh && onRefresh();
+      
+      const statusText = getStatusLabel(newStatus);
+      alert(`✅ Statut changé vers "${statusText}" avec succès`);
+    } catch (err) {
+      console.error("Erreur changement statut:", err);
+      alert(`❌ Erreur lors du changement de statut: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    if (!prospect) return;
+
+    setSaving(true);
+    try {
+      await apiRequest(API_ENDPOINTS.CLIENTS.UPDATE(prospect._id), {
+        method: "PUT",
+        body: JSON.stringify({
+          name: prospect.name,
+          email: prospect.email,
+          phone: prospect.phone,
+          company: prospect.company,
+          notes: prospect.notes,
+          status: prospect.status
+        }),
+      });
+
+      onRefresh && onRefresh();
+      alert("✅ Prospect modifié avec succès");
+      navigate(-1); // Retour à la page précédente
+    } catch (err) {
+      console.error("Erreur modification prospect:", err);
+      alert(`❌ Erreur lors de la modification: ${err.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!prospect) return;
+    
+    const confirmDelete = window.confirm(
+      `❗ Supprimer définitivement le prospect "${prospect.name}" et tous ses devis ?`
+    );
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    try {
+      await apiRequest(API_ENDPOINTS.CLIENTS.DELETE(prospect._id), {
+        method: "DELETE",
+      });
+
+      onRefresh && onRefresh();
+      alert("✅ Prospect supprimé avec succès");
+      navigate(-1); // Retour à la page précédente
+    } catch (err) {
+      console.error("Erreur suppression prospect:", err);
+      alert(`❌ Échec suppression: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ FONCTIONS POUR LE STATUT
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'active': return '#48bb78';
+      case 'inactive': return '#f56565';
+      case 'pending': return '#ed8936';
+      case 'nouveau': return '#4299e1';
+      default: return '#4299e1';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'active': return 'Actif';
+      case 'inactive': return 'Inactif';
+      case 'pending': return 'En attente';
+      case 'nouveau': return 'Nouveau';
+      default: return 'Nouveau';
+    }
+  };
+
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'active': return '🟢';
+      case 'inactive': return '🔴';
+      case 'pending': return '🟡';
+      case 'nouveau': return '🔵';
+      default: return '🔵';
+    }
+  };
+
+  const getNextStatusLabel = (status) => {
+    switch (status) {
+      case 'nouveau': return 'Passer en Actif';
+      case 'active': return 'Passer en Inactif';
+      case 'inactive': return 'Remettre en Nouveau';
+      default: return 'Changer le statut';
+    }
+  };
+
+  if (error) {
+    return (
+      <div className="prospect-edit-page">
+        <div className="error-container">
+          <h2>❌ Erreur</h2>
+          <p>{error}</p>
+          <button onClick={() => navigate(-1)} className="btn-back">
+            ← Retour
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!prospect) {
+    return (
+      <div className="prospect-edit-page">
+        <div className="loading-container">
+          <div className="loading-spinner">⏳</div>
+          <p>Chargement du prospect...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="prospect-edit-page">
+      <div className="edit-container">
+        {/* En-tête avec avatar et statut */}
+        <div className="edit-header">
+          <button onClick={() => navigate(-1)} className="btn-back">
+            ← Retour
+          </button>
+          
+          <div className="prospect-header-info">
+            <div className="prospect-avatar-large">
+              {prospect.name ? prospect.name.charAt(0).toUpperCase() : "?"}
+            </div>
+            
+            <div className="prospect-title">
+              <h1>{prospect.name}</h1>
+              <p className="prospect-subtitle">Modification du prospect</p>
+            </div>
+
+            {/* ✅ INDICATEUR DE STATUT CLIQUABLE */}
+            <div 
+              className="status-indicator-large clickable"
+              style={{ backgroundColor: getStatusColor(prospect.status) }}
+              onClick={handleStatusClick}
+              title={getNextStatusLabel(prospect.status)}
+            >
+              <div className="status-icon">{getStatusIcon(prospect.status)}</div>
+              <div className="status-text">{getStatusLabel(prospect.status)}</div>
+              <div className="status-hint">Cliquer pour changer</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Formulaire de modification */}
+        <form onSubmit={handleSave} className="edit-form">
+          <div className="form-section">
+            <h3>📋 Informations principales</h3>
+            
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="name">Nom complet *</label>
+                <input
+                  type="text"
+                  id="name"
+                  value={prospect.name}
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  required
+                  placeholder="Nom et prénom"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="email">Email *</label>
+                <input
+                  type="email"
+                  id="email"
+                  value={prospect.email}
+                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  required
+                  placeholder="email@exemple.com"
+                />
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="phone">Téléphone *</label>
+                <input
+                  type="tel"
+                  id="phone"
+                  value={prospect.phone}
+                  onChange={(e) => handleInputChange('phone', e.target.value)}
+                  required
+                  placeholder="06 12 34 56 78"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="company">Entreprise</label>
+                <input
+                  type="text"
+                  id="company"
+                  value={prospect.company}
+                  onChange={(e) => handleInputChange('company', e.target.value)}
+                  placeholder="Nom de l'entreprise"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>📝 Notes et commentaires</h3>
+            
+            <div className="form-group">
+              <label htmlFor="notes">Notes internes</label>
+              <textarea
+                id="notes"
+                value={prospect.notes}
+                onChange={(e) => handleInputChange('notes', e.target.value)}
+                placeholder="Notes sur le prospect, besoins, historique des échanges..."
+                rows={4}
+              />
+            </div>
+          </div>
+
+          <div className="form-section">
+            <h3>⚙️ Paramètres</h3>
+            
+            <div className="form-group">
+              <label htmlFor="status">Statut du prospect</label>
+              <select
+                id="status"
+                value={prospect.status}
+                onChange={(e) => handleInputChange('status', e.target.value)}
+              >
+                <option value="nouveau">🔵 Nouveau</option>
+                <option value="active">🟢 Actif</option>
+                <option value="inactive">🔴 Inactif</option>
+                <option value="pending">🟡 En attente</option>
+              </select>
+            </div>
+
+            <div className="info-section">
+              <div className="info-item">
+                <span className="info-label">Date d'inscription :</span>
+                <span className="info-value">
+                  {new Date(prospect.createdAt || Date.now()).toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              </div>
+              
+              <div className="info-item">
+                <span className="info-label">Dernière modification :</span>
+                <span className="info-value">
+                  {new Date(prospect.updatedAt || prospect.createdAt || Date.now()).toLocaleDateString('fr-FR', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}
+                </span>
+              </div>
+              
+              <div className="info-item">
+                <span className="info-label">ID Prospect :</span>
+                <span className="info-value">{prospect._id}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="form-actions">
+            <button 
+              type="button" 
+              onClick={() => navigate(-1)}
+              className="btn-cancel"
+            >
+              Annuler
+            </button>
+            
+            <button 
+              type="button" 
+              onClick={handleDelete}
+              className="btn-delete"
+              disabled={loading}
+            >
+              {loading ? "Suppression..." : "🗑️ Supprimer"}
+            </button>
+            
+            <button 
+              type="submit" 
+              className="btn-save"
+              disabled={saving}
+            >
+              {saving ? "Enregistrement..." : "💾 Enregistrer"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default ProspectEditPage;

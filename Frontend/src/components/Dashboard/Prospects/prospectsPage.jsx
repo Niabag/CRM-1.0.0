@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { API_ENDPOINTS, apiRequest } from '../../../config/api';
 import './prospects.scss';
 
 const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [loading, setLoading] = useState(false);
   const [selectedProspects, setSelectedProspects] = useState([]);
-  const [editingProspect, setEditingProspect] = useState(null);
 
   // Filtrer et trier les prospects
   const filteredProspects = clients
@@ -20,7 +21,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       const matchesStatus = statusFilter === 'all' || 
                            (statusFilter === 'active' && client.status === 'active') ||
                            (statusFilter === 'inactive' && client.status === 'inactive') ||
-                           (statusFilter === 'nouveau' && client.status === 'nouveau'); // ✅ NOUVEAU FILTRE
+                           (statusFilter === 'nouveau' && client.status === 'nouveau');
       
       return matchesSearch && matchesStatus;
     })
@@ -60,13 +61,12 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ FONCTION AMÉLIORÉE: Changer le statut avec cycle nouveau -> actif -> inactif
-  const handleToggleStatus = async (clientId) => {
-    const client = clients.find(c => c._id === clientId);
+  // ✅ FONCTION: Changer le statut en cliquant sur l'indicateur
+  const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
     // ✅ CYCLE: nouveau -> actif -> inactif -> nouveau
-    switch (client.status) {
+    switch (currentStatus) {
       case 'nouveau':
         newStatus = 'active';
         break;
@@ -99,42 +99,9 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Modifier un prospect
+  // ✅ NOUVELLE FONCTION: Aller à la page de modification
   const handleEditProspect = (prospect) => {
-    setEditingProspect({
-      ...prospect,
-      company: prospect.company || '',
-      notes: prospect.notes || ''
-    });
-  };
-
-  const handleSaveProspect = async (e) => {
-    e.preventDefault();
-    if (!editingProspect) return;
-
-    setLoading(true);
-    try {
-      await apiRequest(API_ENDPOINTS.CLIENTS.UPDATE(editingProspect._id), {
-        method: "PUT",
-        body: JSON.stringify({
-          name: editingProspect.name,
-          email: editingProspect.email,
-          phone: editingProspect.phone,
-          company: editingProspect.company,
-          notes: editingProspect.notes,
-          status: editingProspect.status
-        }),
-      });
-
-      setEditingProspect(null);
-      onRefresh && onRefresh();
-      alert("✅ Prospect modifié avec succès");
-    } catch (err) {
-      console.error("Erreur modification prospect:", err);
-      alert(`❌ Erreur lors de la modification: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
+    navigate(`/prospect/edit/${prospect._id}`);
   };
 
   const handleSelectProspect = (clientId) => {
@@ -180,13 +147,13 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ FONCTIONS AMÉLIORÉES AVEC LE STATUT "NOUVEAU"
+  // ✅ FONCTIONS POUR LE STATUT
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
       case 'pending': return '#ed8936';
-      case 'nouveau': return '#4299e1'; // ✅ BLEU POUR NOUVEAU
+      case 'nouveau': return '#4299e1';
       default: return '#4299e1';
     }
   };
@@ -196,7 +163,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'active': return 'Actif';
       case 'inactive': return 'Inactif';
       case 'pending': return 'En attente';
-      case 'nouveau': return 'Nouveau'; // ✅ LABEL NOUVEAU
+      case 'nouveau': return 'Nouveau';
       default: return 'Nouveau';
     }
   };
@@ -206,133 +173,22 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'active': return '🟢';
       case 'inactive': return '🔴';
       case 'pending': return '🟡';
-      case 'nouveau': return '🔵'; // ✅ ICÔNE BLEUE POUR NOUVEAU
+      case 'nouveau': return '🔵';
       default: return '🔵';
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Obtenir le texte du bouton selon le statut
-  const getToggleButtonText = (status) => {
+  const getNextStatusLabel = (status) => {
     switch (status) {
-      case 'nouveau': return '▶️'; // Passer à actif
-      case 'active': return '⏸️'; // Passer à inactif
-      case 'inactive': return '🔄'; // Retour à nouveau
-      default: return '▶️';
-    }
-  };
-
-  const getToggleButtonTitle = (status) => {
-    switch (status) {
-      case 'nouveau': return 'Passer en actif';
-      case 'active': return 'Passer en inactif';
-      case 'inactive': return 'Remettre en nouveau';
-      default: return 'Changer le statut';
+      case 'nouveau': return 'Cliquer pour passer en Actif';
+      case 'active': return 'Cliquer pour passer en Inactif';
+      case 'inactive': return 'Cliquer pour remettre en Nouveau';
+      default: return 'Cliquer pour changer le statut';
     }
   };
 
   return (
     <div className="prospects-page">
-      {/* Modal d'édition */}
-      {editingProspect && (
-        <div className="modal-overlay\" onClick={() => setEditingProspect(null)}>
-          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>✏️ Modifier le prospect</h3>
-              <button 
-                className="modal-close"
-                onClick={() => setEditingProspect(null)}
-              >
-                ✕
-              </button>
-            </div>
-            
-            <form onSubmit={handleSaveProspect} className="edit-form">
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Nom *</label>
-                  <input
-                    type="text"
-                    value={editingProspect.name}
-                    onChange={(e) => setEditingProspect(prev => ({...prev, name: e.target.value}))}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Email *</label>
-                  <input
-                    type="email"
-                    value={editingProspect.email}
-                    onChange={(e) => setEditingProspect(prev => ({...prev, email: e.target.value}))}
-                    required
-                  />
-                </div>
-              </div>
-              
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Téléphone *</label>
-                  <input
-                    type="tel"
-                    value={editingProspect.phone}
-                    onChange={(e) => setEditingProspect(prev => ({...prev, phone: e.target.value}))}
-                    required
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Statut</label>
-                  <select
-                    value={editingProspect.status}
-                    onChange={(e) => setEditingProspect(prev => ({...prev, status: e.target.value}))}
-                  >
-                    <option value="nouveau">🔵 Nouveau</option>
-                    <option value="active">🟢 Actif</option>
-                    <option value="inactive">🔴 Inactif</option>
-                    <option value="pending">🟡 En attente</option>
-                  </select>
-                </div>
-              </div>
-              
-              <div className="form-group">
-                <label>Entreprise</label>
-                <input
-                  type="text"
-                  value={editingProspect.company}
-                  onChange={(e) => setEditingProspect(prev => ({...prev, company: e.target.value}))}
-                  placeholder="Nom de l'entreprise"
-                />
-              </div>
-              
-              <div className="form-group">
-                <label>Notes</label>
-                <textarea
-                  value={editingProspect.notes}
-                  onChange={(e) => setEditingProspect(prev => ({...prev, notes: e.target.value}))}
-                  placeholder="Notes sur le prospect..."
-                  rows={3}
-                />
-              </div>
-              
-              <div className="form-actions">
-                <button 
-                  type="button" 
-                  onClick={() => setEditingProspect(null)}
-                  className="btn-cancel"
-                >
-                  Annuler
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn-save"
-                  disabled={loading}
-                >
-                  {loading ? "Enregistrement..." : "💾 Enregistrer"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
       {/* En-tête avec titre et statistiques */}
       <div className="prospects-header">
         <div className="header-content">
@@ -498,10 +354,12 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                   <div className="prospect-avatar">
                     {prospect.name ? prospect.name.charAt(0).toUpperCase() : "?"}
                   </div>
+                  {/* ✅ INDICATEUR DE STATUT CLIQUABLE */}
                   <div 
-                    className="status-indicator"
+                    className="status-indicator clickable"
                     style={{ backgroundColor: getStatusColor(prospect.status) }}
-                    title={getStatusLabel(prospect.status)}
+                    title={getNextStatusLabel(prospect.status)}
+                    onClick={() => handleStatusClick(prospect._id, prospect.status)}
                   >
                     {getStatusIcon(prospect.status)}
                   </div>
@@ -560,20 +418,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                     📄
                   </button>
                   
-                  {/* ✅ BOUTON AMÉLIORÉ AVEC CYCLE NOUVEAU -> ACTIF -> INACTIF */}
-                  <button 
-                    onClick={() => handleToggleStatus(prospect._id)}
-                    className="action-btn secondary-action"
-                    title={getToggleButtonTitle(prospect.status)}
-                    disabled={loading}
-                  >
-                    {getToggleButtonText(prospect.status)}
-                  </button>
-                  
                   <button 
                     onClick={() => handleEditProspect(prospect)}
                     className="action-btn edit-action"
-                    title="Modifier"
+                    title="Modifier le prospect"
                   >
                     ✏️
                   </button>
