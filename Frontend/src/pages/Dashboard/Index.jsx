@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import Devis from "../../components/Dashboard/Devis/devisPage";
+import DevisListPage from "../../components/Dashboard/Devis/devisListPage"; // ✅ NOUVEAU
 import Analytics from "../../components/Dashboard/Analytics/analytics";
 import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
@@ -18,6 +19,7 @@ const Dashboard = () => {
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState({});
   const [selectedClientForDevis, setSelectedClientForDevis] = useState(null);
+  const [editingDevis, setEditingDevis] = useState(null); // ✅ NOUVEAU
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -41,7 +43,6 @@ const Dashboard = () => {
       }
     }
     
-    // Charger les données utilisateur
     fetchUserData();
   }, []);
 
@@ -99,16 +100,27 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Voir les devis d'un client spécifique
   const handleViewClientDevis = (client) => {
     setSelectedClientForDevis(client);
-    setActiveTab("devis");
+    setActiveTab("devis-creation"); // ✅ NOUVEAU TAB
+  };
+
+  // ✅ NOUVELLES FONCTIONS POUR LA GESTION DES DEVIS
+  const handleEditDevisFromList = (devis) => {
+    setEditingDevis(devis);
+    setActiveTab("devis-creation");
+  };
+
+  const handleCreateNewDevis = () => {
+    setEditingDevis(null);
+    setSelectedClientForDevis(null);
+    setActiveTab("devis-creation");
   };
 
   const menuItems = [
     { id: "dashboard", icon: "📊", label: "Tableau de bord" },
     { id: "clients", icon: "👤", label: "Prospects" },
-    { id: "devis", icon: "📄", label: "Devis" }, // ✅ GARDÉ
+    { id: "devis", icon: "📄", label: "Devis" }, // ✅ LISTE DES DEVIS
     { id: "notifications", icon: "🔔", label: "Notifications" },
     { id: "carte", icon: "💼", label: "Carte" },
     { id: "settings", icon: "⚙️", label: "Paramètres" }
@@ -138,12 +150,13 @@ const Dashboard = () => {
             {menuItems.map((item) => (
               <div
                 key={item.id}
-                className={`menu-item ${activeTab === item.id ? "active" : ""}`}
+                className={`menu-item ${activeTab === item.id || activeTab === "devis-creation" && item.id === "devis" ? "active" : ""}`}
                 onClick={() => {
                   setActiveTab(item.id);
-                  // ✅ Réinitialiser la sélection client quand on change d'onglet
-                  if (item.id !== "devis") {
+                  // ✅ Réinitialiser les sélections quand on change d'onglet
+                  if (item.id !== "devis" && item.id !== "devis-creation") {
                     setSelectedClientForDevis(null);
+                    setEditingDevis(null);
                   }
                 }}
               >
@@ -187,7 +200,6 @@ const Dashboard = () => {
                       <p>📞 {client.phone || "N/A"}</p>
                     </div>
                     <div className="client-actions">
-                      {/* ✅ NOUVEAU BOUTON: Voir les devis du client */}
                       <button 
                         onClick={() => handleViewClientDevis(client)}
                         className="primary-btn"
@@ -208,15 +220,29 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* ✅ SECTION DEVIS AMÉLIORÉE */}
+        {/* ✅ NOUVELLE PAGE: LISTE DES DEVIS TRIÉS PAR CLIENT */}
         {activeTab === "devis" && (
+          <DevisListPage 
+            clients={clients}
+            onEditDevis={handleEditDevisFromList}
+            onCreateDevis={handleCreateNewDevis}
+          />
+        )}
+
+        {/* ✅ PAGE DE CRÉATION/ÉDITION DE DEVIS */}
+        {activeTab === "devis-creation" && (
           <Devis 
             clients={clients}
-            selectedClientId={selectedClientForDevis?._id} // ✅ Passer l'ID du client sélectionné
+            initialDevisFromClient={editingDevis} // ✅ Passer le devis à éditer
+            selectedClientId={selectedClientForDevis?._id}
             onBack={selectedClientForDevis ? () => {
               setSelectedClientForDevis(null);
+              setEditingDevis(null);
               setActiveTab("clients");
-            } : null} // ✅ Bouton retour seulement si client spécifique
+            } : editingDevis ? () => {
+              setEditingDevis(null);
+              setActiveTab("devis");
+            } : null}
           />
         )}
 

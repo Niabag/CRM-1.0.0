@@ -141,6 +141,68 @@
   box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
 }
 
+/* ✅ NOUVEAUX STYLES POUR LE GROUPEMENT PAR CLIENT */
+.clients-devis-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+.client-devis-group {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+}
+
+.client-group-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.client-avatar {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 24px;
+  color: white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.client-group-info h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.client-group-info p {
+  margin: 0.25rem 0;
+  color: #718096;
+  font-size: 0.9rem;
+}
+
+.devis-count {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white !important;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem !important;
+  font-weight: 600;
+  display: inline-block;
+  margin-top: 0.5rem;
+}
+
 /* Container de l'aperçu */
 .devis-preview-container {
   max-width: 1400px;
@@ -253,6 +315,23 @@
   transform: translateY(-2px);
 }
 
+.cta-button {
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cta-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 123, 255, 0.3);
+}
+
 /* États vides */
 .empty-state {
   text-align: center;
@@ -339,6 +418,18 @@
   .total-amount {
     font-size: 1.2rem;
   }
+
+  .client-group-header {
+    flex-direction: column;
+    text-align: center;
+    gap: 1rem;
+  }
+
+  .client-avatar {
+    width: 50px;
+    height: 50px;
+    font-size: 20px;
+  }
 }
 
 /* Animations */
@@ -355,6 +446,10 @@
 
 .devis-card {
   animation: fadeInUp 0.5s ease-out;
+}
+
+.client-devis-group {
+  animation: fadeInUp 0.6s ease-out;
 }
 
 .devis-preview-container {
