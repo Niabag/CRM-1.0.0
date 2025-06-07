@@ -43,7 +43,7 @@ const DevisPreview = ({
   // ✅ CORRECTION: Fonction sécurisée pour récupérer les infos client
   const getClientInfo = () => {
     if (!devisData.clientId || !clients.length) {
-      return { name: '', email: '', phone: '' };
+      return { name: '', email: '', phone: '', address: '', postalCode: '', city: '' };
     }
     
     // Gérer le cas où clientId est un objet ou une string
@@ -52,10 +52,22 @@ const DevisPreview = ({
       : devisData.clientId;
     
     const client = clients.find(c => c._id === clientId);
-    return client || { name: '', email: '', phone: '' };
+    return client || { name: '', email: '', phone: '', address: '', postalCode: '', city: '' };
   };
 
   const clientInfo = getClientInfo();
+
+  // ✅ NOUVELLE FONCTION: Formater l'adresse complète du client
+  const formatClientAddress = () => {
+    const parts = [];
+    if (clientInfo.address) parts.push(clientInfo.address);
+    if (clientInfo.postalCode && clientInfo.city) {
+      parts.push(`${clientInfo.postalCode} ${clientInfo.city}`);
+    } else if (clientInfo.city) {
+      parts.push(clientInfo.city);
+    }
+    return parts.join('\n');
+  };
 
   return (
     <div className="devis-preview">
@@ -157,11 +169,19 @@ const DevisPreview = ({
                 placeholder="Téléphone du client" 
                 onChange={onFieldChange} 
               />
-              <EditableInput 
-                name="clientAddress" 
-                value={devisData.clientAddress || ""} 
-                placeholder="Adresse du client" 
-                onChange={onFieldChange} 
+              {/* ✅ NOUVEAU: Champ d'adresse automatiquement rempli */}
+              <textarea
+                className="editable-input client-address"
+                placeholder="Adresse du client"
+                value={devisData.clientAddress || formatClientAddress()}
+                onChange={(e) => onFieldChange("clientAddress", e.target.value)}
+                rows={3}
+                style={{
+                  resize: 'vertical',
+                  minHeight: '80px',
+                  fontFamily: 'inherit',
+                  lineHeight: '1.5'
+                }}
               />
             </div>
           </div>

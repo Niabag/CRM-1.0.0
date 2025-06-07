@@ -162,6 +162,31 @@
   color: #2d3748 !important;
 }
 
+/* ✅ NOUVEAU: Style pour le champ d'adresse client */
+.client-address {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px dashed #cbd5e0 !important;
+  border-radius: 8px !important;
+  padding: 0.75rem !important;
+  font-size: 0.9rem !important;
+  line-height: 1.5 !important;
+  transition: all 0.3s ease !important;
+  white-space: pre-line !important; /* Permet les retours à la ligne */
+}
+
+.client-address:focus {
+  border-color: #667eea !important;
+  background: white !important;
+  outline: none !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2) !important;
+}
+
+.client-address:hover {
+  border-color: #a0aec0 !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+}
+
 /* Métadonnées du devis */
 .devis-metadata {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -508,6 +533,12 @@
   
   .document-title h1 {
     font-size: 2rem;
+  }
+
+  /* ✅ NOUVEAU: Responsive pour le champ d'adresse */
+  .client-address {
+    min-height: 60px !important;
+    font-size: 0.8rem !important;
   }
 }
 
