@@ -231,96 +231,96 @@
   cursor: pointer;
 }
 
-/* ✅ NOUVEAU DESIGN: Grille des prospects comme sur l'image */
+/* ✅ NOUVEAU DESIGN: Grille des prospects plus compacte */
 .prospects-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
 .prospect-card {
   background: white;
-  border-radius: 24px;
+  border-radius: 16px;
   padding: 0;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
   position: relative;
   border: 1px solid #f1f3f4;
   overflow: hidden;
-  min-height: 400px;
+  min-height: 320px;
   display: flex;
   flex-direction: column;
 }
 
 .prospect-card:hover {
-  transform: translateY(-8px);
-  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.18);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
 }
 
 .prospect-card.selected {
   border-color: #667eea;
-  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.25);
+  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.2);
 }
 
-/* ✅ NOUVEAU: Section supérieure avec checkbox et avatar */
+/* ✅ NOUVEAU: Section supérieure plus compacte */
 .card-top-section {
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  padding: 2rem;
+  padding: 1.5rem;
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 180px;
+  min-height: 120px;
   justify-content: center;
 }
 
 .card-select {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
+  top: 0.75rem;
+  left: 0.75rem;
   z-index: 2;
 }
 
 .card-select input {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   cursor: pointer;
   accent-color: #667eea;
   border-radius: 4px;
 }
 
-/* ✅ NOUVEAU: Avatar centré et plus grand */
+/* ✅ NOUVEAU: Avatar plus petit */
 .prospect-avatar {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 2rem;
+  font-size: 1.5rem;
   color: white;
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
-  margin-bottom: 1rem;
-  border: 4px solid white;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  margin-bottom: 0.75rem;
+  border: 3px solid white;
 }
 
-/* ✅ NOUVEAU: Indicateur de statut repositionné */
+/* ✅ NOUVEAU: Indicateur de statut plus petit */
 .status-indicator {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
-  width: 32px;
-  height: 32px;
+  top: 0.75rem;
+  right: 0.75rem;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 3px solid white;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 2px solid white;
   transition: all 0.3s ease;
   z-index: 2;
 }
@@ -330,23 +330,23 @@
 }
 
 .status-indicator.clickable:hover {
-  transform: scale(1.15);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* ✅ NOUVEAU: Section contenu principal */
+/* ✅ NOUVEAU: Section contenu plus compacte */
 .card-content {
-  padding: 1.5rem 2rem;
+  padding: 1rem 1.5rem;
   flex: 1;
   display: flex;
   flex-direction: column;
 }
 
 .prospect-name {
-  font-size: 1.4rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: #2d3748;
-  margin: 0 0 1rem 0;
+  margin: 0 0 0.75rem 0;
   text-align: center;
   line-height: 1.3;
 }
@@ -354,50 +354,50 @@
 .contact-info {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
   flex: 1;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
 }
 
 .contact-icon {
-  font-size: 1.1rem;
-  width: 24px;
+  font-size: 1rem;
+  width: 20px;
   text-align: center;
   color: #667eea;
 }
 
 .contact-text {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #4a5568;
   word-break: break-all;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 .company-info {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-  padding: 0.75rem 1rem;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 12px;
-  border-left: 4px solid #667eea;
+  border-radius: 8px;
+  border-left: 3px solid #667eea;
 }
 
 .company-icon {
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: #667eea;
 }
 
 .company-name {
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: #2d3748;
   font-weight: 600;
 }
@@ -405,71 +405,71 @@
 .notes-preview {
   display: flex;
   align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
   background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
-  border-radius: 12px;
-  border-left: 4px solid #ed8936;
-  margin-bottom: 1rem;
+  border-radius: 8px;
+  border-left: 3px solid #ed8936;
+  margin-bottom: 0.75rem;
 }
 
 .notes-icon {
-  font-size: 1rem;
+  font-size: 0.9rem;
   margin-top: 0.1rem;
   color: #ed8936;
 }
 
 .notes-text {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: #4a5568;
   font-style: italic;
-  line-height: 1.4;
+  line-height: 1.3;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-/* ✅ NOUVEAU: Badge de statut moderne */
+/* ✅ NOUVEAU: Badge de statut plus petit */
 .status-text {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   text-align: center;
 }
 
 .status-badge {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border-radius: 20px;
-  font-size: 0.85rem;
+  gap: 0.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border: 2px solid transparent;
 }
 
-/* ✅ NOUVEAU: Actions modernes avec icônes colorées */
+/* ✅ NOUVEAU: Actions plus compactes */
 .card-actions {
   display: flex;
   justify-content: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  padding: 0 1rem;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0 0.75rem;
 }
 
 .action-btn {
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border: none;
-  border-radius: 16px;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 1.2rem;
+  font-size: 1rem;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   position: relative;
   overflow: hidden;
 }
@@ -505,27 +505,27 @@
 }
 
 .action-btn:hover:not(:disabled) {
-  transform: translateY(-4px) scale(1.05);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-2px) scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 .action-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-/* ✅ NOUVEAU: Footer avec date d'inscription */
+/* ✅ NOUVEAU: Footer plus compact */
 .card-footer {
   text-align: center;
-  padding: 1rem 2rem 1.5rem;
+  padding: 0.75rem 1.5rem 1rem;
   border-top: 1px solid #f1f3f4;
   background: linear-gradient(135deg, #fafbfc 0%, #f8f9fa 100%);
 }
 
 .join-date {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #718096;
   font-style: italic;
   font-weight: 500;
@@ -714,8 +714,8 @@
   }
   
   .prospects-grid {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
   }
 }
 
@@ -749,30 +749,30 @@
   
   .prospects-grid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
+    gap: 1.25rem;
   }
   
   .prospect-card {
-    min-height: 350px;
+    min-height: 300px;
   }
   
   .card-top-section {
-    padding: 1.5rem;
-    min-height: 140px;
+    padding: 1.25rem;
+    min-height: 100px;
   }
   
   .prospect-avatar {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
+    width: 50px;
+    height: 50px;
+    font-size: 1.25rem;
   }
   
   .prospect-name {
-    font-size: 1.2rem;
+    font-size: 1.1rem;
   }
 
   .card-content {
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1.25rem;
   }
 
   /* ✅ NOUVEAU: Pagination responsive */
@@ -807,9 +807,9 @@
   }
   
   .action-btn {
-    width: 40px;
-    height: 40px;
-    font-size: 1rem;
+    width: 36px;
+    height: 36px;
+    font-size: 0.9rem;
   }
 
   .stats-summary {

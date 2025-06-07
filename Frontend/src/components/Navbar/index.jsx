@@ -8,6 +8,7 @@ const Navbar = () => {
   const location = useLocation();
   const token = localStorage.getItem("token");
   const [user, setUser] = useState(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -21,7 +22,6 @@ const Navbar = () => {
       setUser(userData);
     } catch (error) {
       console.error("Erreur lors du chargement de l'utilisateur:", error);
-      // Si le token est invalide, déconnecter l'utilisateur
       handleLogout();
     }
   };
@@ -30,45 +30,82 @@ const Navbar = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-    navigate("/login");
+    navigate("/");
   };
 
-  // Ne pas afficher la navbar sur la page dashboard
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
+  };
+
+  // Ne pas afficher la navbar sur certaines pages
   if (location.pathname === "/dashboard") {
     return null;
   }
 
   return (
     <nav className="navbar">
-      <div className="navbar-brand">
-        <Link to={token ? "/dashboard" : "/"} className="brand-link">
-          💼 CRM Pro
-        </Link>
-      </div>
+      <div className="navbar-container">
+        <div className="navbar-brand">
+          <Link to="/" className="brand-link" onClick={closeMenu}>
+            <span className="brand-icon">💼</span>
+            <span className="brand-text">CRM Pro</span>
+          </Link>
+        </div>
 
-      <div className="navbar-menu">
-        {!token ? (
-          <>
-            <Link to="/register-user\" className="nav-link">
-              ✨ Créer un compte
-            </Link>
-            <Link to="/login" className="nav-link login-btn">
-              🔐 Se connecter
-            </Link>
-          </>
-        ) : (
-          <div className="user-menu">
-            <span className="welcome-text">
-              Bonjour, {user?.name || "Utilisateur"} 👋
-            </span>
-            <Link to="/dashboard" className="nav-link dashboard-btn">
-              📊 Dashboard
-            </Link>
-            <button onClick={handleLogout} className="logout-btn">
-              🚪 Déconnexion
-            </button>
-          </div>
-        )}
+        {/* Menu burger pour mobile */}
+        <button 
+          className={`menu-toggle ${isMenuOpen ? 'active' : ''}`}
+          onClick={toggleMenu}
+          aria-label="Toggle menu"
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+
+        <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
+          {!token ? (
+            <>
+              <Link to="/" className="nav-link" onClick={closeMenu}>
+                🏠 Accueil
+              </Link>
+              <Link to="/register-user" className="nav-link" onClick={closeMenu}>
+                ✨ Créer un compte
+              </Link>
+              <Link to="/login" className="nav-link login-btn" onClick={closeMenu}>
+                🔐 Se connecter
+              </Link>
+            </>
+          ) : (
+            <div className="user-menu">
+              <Link to="/" className="nav-link" onClick={closeMenu}>
+                🏠 Accueil
+              </Link>
+              <Link to="/dashboard" className="nav-link dashboard-btn" onClick={closeMenu}>
+                📊 Dashboard
+              </Link>
+              <div className="user-info">
+                <div className="user-avatar">
+                  {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
+                </div>
+                <div className="user-details">
+                  <span className="user-name">{user?.name || "Utilisateur"}</span>
+                  <span className="user-email">{user?.email || ""}</span>
+                </div>
+              </div>
+              <button onClick={() => { handleLogout(); closeMenu(); }} className="logout-btn">
+                🚪 Déconnexion
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Overlay pour fermer le menu mobile */}
+        {isMenuOpen && <div className="menu-overlay" onClick={closeMenu}></div>}
       </div>
     </nav>
   );

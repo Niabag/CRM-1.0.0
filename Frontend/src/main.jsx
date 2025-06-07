@@ -2,6 +2,7 @@ import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import Navbar from "./components/Navbar";
+import Home from "./pages/Home/Index";
 import Login from "./pages/Login/Index";
 import RegisterUser from "./pages/RegisterUser/Index";
 import RegisterClient from "./pages/RegisterClient/Index";
@@ -17,15 +18,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       <Navbar />
       <div className="align-page">
         <Routes>
-          {/* Redirection de la racine vers le dashboard si connecté, sinon vers login */}
-          <Route 
-            path="/" 
-            element={
-              localStorage.getItem("token") ? 
-                <Navigate to="/dashboard\" replace /> : 
-                <Navigate to="/login" replace />
-            } 
-          />
+          {/* Page d'accueil */}
+          <Route path="/" element={<Home />} />
           
           {/* Routes publiques */}
           <Route path="/register-user" element={<RegisterUser />} />
