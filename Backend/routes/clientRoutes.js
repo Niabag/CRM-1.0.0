@@ -1,8 +1,12 @@
 const express = require("express");
-const { registerClient, getClients } = require("../controllers/clientController");
+const { 
+  registerClient, 
+  getClients, 
+  deleteClient, 
+  updateClientStatus, 
+  updateClient 
+} = require("../controllers/clientController");
 const authMiddleware = require("../middleware/auth");
-const { deleteClient } = require("../controllers/clientController");
-
 
 const router = express.Router();
 
@@ -12,6 +16,13 @@ router.post("/register/:userId", registerClient);
 // 📌 Un utilisateur connecté peut voir SES clients
 router.get("/", authMiddleware, getClients);
 
+// 📌 ✅ NOUVEAU: Mettre à jour le statut d'un client
+router.patch("/:id/status", authMiddleware, updateClientStatus);
+
+// 📌 ✅ NOUVEAU: Mettre à jour un client
+router.put("/:id", authMiddleware, updateClient);
+
+// 📌 Supprimer un client
 router.delete("/:id", authMiddleware, deleteClient);
 
 module.exports = router;

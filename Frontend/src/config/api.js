@@ -21,12 +21,14 @@ export const API_ENDPOINTS = {
     BASE: `${API_CONFIG.BASE_URL}/clients`,
     REGISTER: (userId) => `${API_CONFIG.BASE_URL}/clients/register/${userId}`,
     DELETE: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}`,
+    UPDATE: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}`, // ✅ NOUVEAU
+    UPDATE_STATUS: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}/status`, // ✅ NOUVEAU
   },
   
   // Devis
   DEVIS: {
     BASE: `${API_CONFIG.BASE_URL}/devis`,
-    BY_CLIENT: (clientId) => `${API_CONFIG.BASE_URL}/devis/client/${clientId}`, // ✅ NOUVEAU
+    BY_CLIENT: (clientId) => `${API_CONFIG.BASE_URL}/devis/client/${clientId}`,
     UPDATE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
     DELETE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
   },

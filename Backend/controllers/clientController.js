@@ -4,10 +4,10 @@ const Devis = require("../models/devis");
 
 exports.registerClient = async (req, res) => {
   try {
-    const { name, email, phone } = req.body;
+    const { name, email, phone, company, notes } = req.body;
     const { userId } = req.params;
 
-    console.log("➡️ Données reçues pour l'inscription :", { name, email, phone, userId });
+    console.log("➡️ Données reçues pour l'inscription :", { name, email, phone, company, notes, userId });
 
     // Vérifier si userId est valide
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -27,7 +27,10 @@ exports.registerClient = async (req, res) => {
       name,
       email,
       phone,
-      userId: new mongoose.Types.ObjectId(userId), // Convertir userId en ObjectId
+      company,
+      notes,
+      status: 'active', // ✅ Statut par défaut
+      userId: new mongoose.Types.ObjectId(userId),
     });
 
     await newClient.save();
@@ -40,12 +43,11 @@ exports.registerClient = async (req, res) => {
   }
 };
 
-
 exports.getClients = async (req, res) => {
   try {
     console.log("User ID de la requête:", req.userId);
 
-    const clients = await Client.find({ userId: req.userId });
+    const clients = await Client.find({ userId: req.userId }).sort({ createdAt: -1 });
 
     console.log("Clients trouvés:", clients);
     res.json(clients);
@@ -55,15 +57,99 @@ exports.getClients = async (req, res) => {
   }
 };
 
+// ✅ NOUVELLE FONCTION: Mettre à jour le statut d'un client
+exports.updateClientStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    // Vérifier que le statut est valide
+    if (!['active', 'inactive', 'pending'].includes(status)) {
+      return res.status(400).json({ message: "Statut invalide" });
+    }
+
+    // Vérifier que le client appartient à l'utilisateur
+    const client = await Client.findOne({ _id: id, userId: req.userId });
+    if (!client) {
+      return res.status(404).json({ message: "Client introuvable ou non autorisé" });
+    }
+
+    // Mettre à jour le statut
+    client.status = status;
+    await client.save();
+
+    console.log(`✅ Statut du client ${client.name} mis à jour: ${status}`);
+    res.json({ 
+      message: "Statut mis à jour avec succès", 
+      client: {
+        _id: client._id,
+        name: client.name,
+        status: client.status
+      }
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur mise à jour statut client:", error);
+    res.status(500).json({ message: "Erreur lors de la mise à jour du statut" });
+  }
+};
+
+// ✅ NOUVELLE FONCTION: Mettre à jour les informations d'un client
+exports.updateClient = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone, company, notes, status } = req.body;
+
+    // Vérifier que le client appartient à l'utilisateur
+    const client = await Client.findOne({ _id: id, userId: req.userId });
+    if (!client) {
+      return res.status(404).json({ message: "Client introuvable ou non autorisé" });
+    }
+
+    // Vérifier si l'email est déjà utilisé par un autre client
+    if (email && email !== client.email) {
+      const existingClient = await Client.findOne({ 
+        email, 
+        userId: req.userId, 
+        _id: { $ne: id } 
+      });
+      if (existingClient) {
+        return res.status(400).json({ message: "Cet email est déjà utilisé par un autre client" });
+      }
+    }
+
+    // Mettre à jour les champs
+    if (name) client.name = name;
+    if (email) client.email = email;
+    if (phone) client.phone = phone;
+    if (company !== undefined) client.company = company;
+    if (notes !== undefined) client.notes = notes;
+    if (status && ['active', 'inactive', 'pending'].includes(status)) {
+      client.status = status;
+    }
+
+    await client.save();
+
+    console.log(`✅ Client ${client.name} mis à jour avec succès`);
+    res.json({ 
+      message: "Client mis à jour avec succès", 
+      client 
+    });
+
+  } catch (error) {
+    console.error("❌ Erreur mise à jour client:", error);
+    res.status(500).json({ message: "Erreur lors de la mise à jour du client" });
+  }
+};
 
 exports.deleteClient = async (req, res) => {
   try {
     const clientId = req.params.id;
 
-    // 🔒 Optionnel : vérifie que le client appartient à l'utilisateur
-    const client = await Client.findById(clientId);
+    // 🔒 Vérifier que le client appartient à l'utilisateur
+    const client = await Client.findOne({ _id: clientId, userId: req.userId });
     if (!client) {
-      return res.status(404).json({ message: "Client introuvable" });
+      return res.status(404).json({ message: "Client introuvable ou non autorisé" });
     }
 
     // 🔥 Supprime aussi tous les devis liés à ce client

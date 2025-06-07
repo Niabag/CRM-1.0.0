@@ -8,6 +8,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
   const [sortBy, setSortBy] = useState('name');
   const [loading, setLoading] = useState(false);
   const [selectedProspects, setSelectedProspects] = useState([]);
+  const [editingProspect, setEditingProspect] = useState(null);
 
   // Filtrer et trier les prospects
   const filteredProspects = clients
@@ -17,7 +18,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                            client.phone.includes(searchTerm);
       
       const matchesStatus = statusFilter === 'all' || 
-                           (statusFilter === 'active' && client.status !== 'inactive') ||
+                           (statusFilter === 'active' && client.status === 'active') ||
                            (statusFilter === 'inactive' && client.status === 'inactive');
       
       return matchesSearch && matchesStatus;
@@ -58,9 +59,66 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
+  // ✅ NOUVELLE FONCTION: Changer le statut actif/inactif
   const handleToggleStatus = async (clientId) => {
-    // Simulation du changement de statut (à implémenter côté backend)
-    console.log(`Toggle status for client ${clientId}`);
+    const client = clients.find(c => c._id === clientId);
+    const newStatus = client.status === 'active' ? 'inactive' : 'active';
+    
+    setLoading(true);
+    try {
+      await apiRequest(API_ENDPOINTS.CLIENTS.UPDATE_STATUS(clientId), {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      onRefresh && onRefresh();
+      
+      const statusText = newStatus === 'active' ? 'activé' : 'désactivé';
+      alert(`✅ Prospect ${statusText} avec succès`);
+    } catch (err) {
+      console.error("Erreur changement statut:", err);
+      alert(`❌ Erreur lors du changement de statut: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ NOUVELLE FONCTION: Modifier un prospect
+  const handleEditProspect = (prospect) => {
+    setEditingProspect({
+      ...prospect,
+      company: prospect.company || '',
+      notes: prospect.notes || ''
+    });
+  };
+
+  const handleSaveProspect = async (e) => {
+    e.preventDefault();
+    if (!editingProspect) return;
+
+    setLoading(true);
+    try {
+      await apiRequest(API_ENDPOINTS.CLIENTS.UPDATE(editingProspect._id), {
+        method: "PUT",
+        body: JSON.stringify({
+          name: editingProspect.name,
+          email: editingProspect.email,
+          phone: editingProspect.phone,
+          company: editingProspect.company,
+          notes: editingProspect.notes,
+          status: editingProspect.status
+        }),
+      });
+
+      setEditingProspect(null);
+      onRefresh && onRefresh();
+      alert("✅ Prospect modifié avec succès");
+    } catch (err) {
+      console.error("Erreur modification prospect:", err);
+      alert(`❌ Erreur lors de la modification: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSelectProspect = (clientId) => {
@@ -124,8 +182,117 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case 'active': return '🟢';
+      case 'inactive': return '🔴';
+      case 'pending': return '🟡';
+      default: return '🔵';
+    }
+  };
+
   return (
     <div className="prospects-page">
+      {/* Modal d'édition */}
+      {editingProspect && (
+        <div className="modal-overlay" onClick={() => setEditingProspect(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>✏️ Modifier le prospect</h3>
+              <button 
+                className="modal-close"
+                onClick={() => setEditingProspect(null)}
+              >
+                ✕
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveProspect} className="edit-form">
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Nom *</label>
+                  <input
+                    type="text"
+                    value={editingProspect.name}
+                    onChange={(e) => setEditingProspect(prev => ({...prev, name: e.target.value}))}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input
+                    type="email"
+                    value={editingProspect.email}
+                    onChange={(e) => setEditingProspect(prev => ({...prev, email: e.target.value}))}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Téléphone *</label>
+                  <input
+                    type="tel"
+                    value={editingProspect.phone}
+                    onChange={(e) => setEditingProspect(prev => ({...prev, phone: e.target.value}))}
+                    required
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Statut</label>
+                  <select
+                    value={editingProspect.status}
+                    onChange={(e) => setEditingProspect(prev => ({...prev, status: e.target.value}))}
+                  >
+                    <option value="active">🟢 Actif</option>
+                    <option value="inactive">🔴 Inactif</option>
+                    <option value="pending">🟡 En attente</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="form-group">
+                <label>Entreprise</label>
+                <input
+                  type="text"
+                  value={editingProspect.company}
+                  onChange={(e) => setEditingProspect(prev => ({...prev, company: e.target.value}))}
+                  placeholder="Nom de l'entreprise"
+                />
+              </div>
+              
+              <div className="form-group">
+                <label>Notes</label>
+                <textarea
+                  value={editingProspect.notes}
+                  onChange={(e) => setEditingProspect(prev => ({...prev, notes: e.target.value}))}
+                  placeholder="Notes sur le prospect..."
+                  rows={3}
+                />
+              </div>
+              
+              <div className="form-actions">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingProspect(null)}
+                  className="btn-cancel"
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-save"
+                  disabled={loading}
+                >
+                  {loading ? "Enregistrement..." : "💾 Enregistrer"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* En-tête avec titre et statistiques */}
       <div className="prospects-header">
         <div className="header-content">
@@ -142,6 +309,14 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
             <div className="stat-item">
               <span className="stat-number">{selectedProspects.length}</span>
               <span className="stat-label">Sélectionnés</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{clients.filter(c => c.status === 'active').length}</span>
+              <span className="stat-label">🟢 Actifs</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{clients.filter(c => c.status === 'inactive').length}</span>
+              <span className="stat-label">🔴 Inactifs</span>
             </div>
           </div>
         </div>
@@ -283,8 +458,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                     style={{ backgroundColor: getStatusColor(prospect.status) }}
                     title={getStatusLabel(prospect.status)}
                   >
-                    {prospect.status === 'active' ? '🟢' : 
-                     prospect.status === 'inactive' ? '🔴' : '🟡'}
+                    {getStatusIcon(prospect.status)}
                   </div>
                 </div>
 
@@ -316,6 +490,19 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                       <span className="notes-text">{prospect.notes}</span>
                     </div>
                   )}
+
+                  {/* Statut en texte */}
+                  <div className="status-text">
+                    <span 
+                      className="status-badge"
+                      style={{ 
+                        backgroundColor: getStatusColor(prospect.status),
+                        color: 'white'
+                      }}
+                    >
+                      {getStatusIcon(prospect.status)} {getStatusLabel(prospect.status)}
+                    </span>
+                  </div>
                 </div>
 
                 {/* Actions */}
@@ -332,12 +519,13 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                     onClick={() => handleToggleStatus(prospect._id)}
                     className="action-btn secondary-action"
                     title={prospect.status === 'active' ? 'Désactiver' : 'Activer'}
+                    disabled={loading}
                   >
                     {prospect.status === 'active' ? '⏸️' : '▶️'}
                   </button>
                   
                   <button 
-                    onClick={() => console.log('Modifier prospect', prospect._id)}
+                    onClick={() => handleEditProspect(prospect)}
                     className="action-btn edit-action"
                     title="Modifier"
                   >
