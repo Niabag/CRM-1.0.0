@@ -1,309 +1,573 @@
-/* devis.scss - version moderne et propre */
+/* Design moderne pour la section devis */
 
 .devis-page {
-  justify-content: center;
-  align-items: center;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 2rem;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  min-height: 100vh;
   padding: 2rem;
-  background: #f9fafb;
 }
 
 .devis-container {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  background: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-  padding: 2rem;
-  max-width: 1200px;
-  margin: auto;
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
+  height: calc(100vh - 4rem);
 }
 
-.devis-left,
-.devis-right {
-  flex: 1;
+/* Section gauche - Formulaire */
+.devis-form-section {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.devis-form-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.devis-form-title {
+  font-size: 2rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.form-section {
   margin-bottom: 2rem;
 }
 
-.devis-left input,
-.devis-left select,
-.devis-left textarea {
-  width: 100%;
-  padding: 0.75rem;
+.form-section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d3748;
   margin-bottom: 1rem;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  font-size: 1rem;
-  background-color: #fdfdfd;
-  transition: border-color 0.3s ease;
-}
-
-.devis-left input:focus,
-.devis-left select:focus,
-.devis-left textarea:focus {
-  border-color: #007bff;
-  outline: none;
-  background-color: #fff;
-}
-
-.article-form {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr) auto;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-}
-
-.article-form input {
-  padding: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.article-form button {
-  background-color: #e3342f;
-  color: white;
-  border: none;
-  padding: 0.3rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.article-form button:hover {
-  background-color: #cc1f1a;
-}
-
-button {
-  background-color: #007bff;
-  color: white;
-  border: none;
-  padding: 0.6rem 1.2rem;
-  margin-top: 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-button:hover {
-  background-color: #0056b3;
-}
-
-button:disabled {
-  background-color: #6c757d;
-  cursor: not-allowed;
-}
-
-.devis-header {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.form-section-title::before {
+  content: '';
+  width: 4px;
+  height: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 2px;
+}
+
+.form-group {
   margin-bottom: 1.5rem;
 }
 
-.logo img {
-  height: 50px;
-  object-fit: contain;
-}
-
-.devis-info {
-  text-align: right;
-  font-size: 14px;
-  color: #555;
-}
-
-.entreprise-info {
-  font-size: 14px;
-  line-height: 1.6;
-  margin-bottom: 2rem;
-  color: #333;
-}
-
-.devis-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 1rem;
-  font-size: 14px;
-}
-
-.devis-table th,
-.devis-table td {
-  border: 1px solid #ccc;
-  padding: 0.75rem;
-  text-align: center;
-}
-
-.devis-table th {
-  background-color: #f0f0f0;
-  font-weight: 600;
-}
-
-.totals {
-  text-align: right;
-  margin-top: 2rem;
-  font-size: 16px;
-  color: #222;
-}
-
-.totals div {
+.form-label {
+  display: block;
+  font-weight: 500;
+  color: #4a5568;
   margin-bottom: 0.5rem;
+  font-size: 0.9rem;
 }
 
-.footer {
-  margin-top: 3rem;
-  font-size: 14px;
-  color: #555;
+.form-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  background: #f8f9fa;
 }
 
-.signature-line {
-  width: 200px;
-  height: 1px;
-  background-color: #000;
-  margin-top: 1rem;
+.form-input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  transform: translateY(-1px);
 }
 
-.devis-preview {
+.form-select {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 1rem;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.file-upload {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
   width: 100%;
 }
 
-.devis-meta-header {
-  padding: 15px 0;
-  margin-bottom: 15px;
-  background: #f4f6fa;
-  border-left: 5px solid #007bff;
-}
-
-.devis-title {
-  font-size: 22px;
-  font-weight: bold;
-  color: #1a1a1a;
-}
-
-.devis-list-section {
-  flex-wrap: wrap;
+.file-upload-input {
+  position: absolute;
+  opacity: 0;
   width: 100%;
-  display: flex;
-  flex-direction: column;
-  margin-top: 50px;
-  padding-right: 20px;
-}
-
-.devis-item {
-  margin: 20px;
-  width: 25%;
-  margin-bottom: 10px;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.devis-info {
-  margin-bottom: 4px;
-}
-
-.devis-sub {
-  font-size: 13px;
-  color: #555;
-}
-
-.devis-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.devis-actions button {
-  margin: 0;
-  padding: 6px 12px;
-  font-size: 12px;
-}
-
-.actions {
-  margin: 10px 0;
-}
-
-.cancel-button {
-  margin-left: 10px;
-  background-color: #dc3545;
-  border: none;
-  color: white;
-  padding: 6px 16px;
-  font-size: 14px;
-  border-radius: 4px;
+  height: 100%;
   cursor: pointer;
 }
 
-.cancel-button:hover {
-  background-color: #c82333;
-}
-
-.containerDevisListItems {
+.file-upload-label {
   display: flex;
-  flex-wrap: wrap;
-  flex-direction: row;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: #f8f9fa;
+  color: #718096;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  cursor: pointer;
 }
 
-.back-button {
-  background-color: #6c757d;
-  margin-bottom: 20px;
+.file-upload-label:hover {
+  border-color: #667eea;
+  background: #edf2f7;
+  color: #667eea;
 }
 
-.back-button:hover {
-  background-color: #5a6268;
+/* Articles section */
+.articles-section {
+  background: #f8f9fa;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.loading {
-  text-align: center;
-  padding: 20px;
-  font-size: 18px;
-  color: #666;
+.articles-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
 }
 
-.error-message {
-  color: #dc3545;
-  background-color: #f8d7da;
-  border: 1px solid #f5c6cb;
-  padding: 10px;
-  border-radius: 4px;
-  margin: 10px 0;
+.add-article-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.add-article-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+}
+
+.article-item {
+  background: white;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.article-item:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.article-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr auto;
+  gap: 1rem;
+  align-items: end;
 }
 
 .remove-article-btn {
-  background-color: #dc3545;
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
   color: white;
   border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
+  padding: 0.5rem;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .remove-article-btn:hover {
-  background-color: #c82333;
+  transform: scale(1.1);
+  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+}
+
+/* Boutons d'action */
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 2px solid #f1f3f4;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  flex: 1;
+  font-size: 1rem;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
+/* Section droite - Aperçu */
+.devis-preview-section {
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.preview-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.preview-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0;
+}
+
+.preview-toolbar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-btn {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toolbar-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
+}
+
+.pdf-download-btn {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%) !important;
+}
+
+.pdf-download-btn:hover {
+  box-shadow: 0 8px 25px rgba(237, 137, 54, 0.3) !important;
+}
+
+/* Liste des devis */
+.devis-list-section {
+  grid-column: 1 / -1;
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+.devis-list-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.devis-list-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0;
+}
+
+.devis-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 1.5rem;
+}
+
+.devis-card {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 16px;
+  padding: 1.5rem;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.devis-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.devis-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.devis-card-header {
+  margin-bottom: 1rem;
+}
+
+.devis-card-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.devis-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #718096;
+}
+
+.devis-card-amount {
+  font-weight: 600;
+  color: #48bb78;
+  font-size: 1.1rem;
+}
+
+.devis-card-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.card-btn {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.card-btn-edit {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+}
+
+.card-btn-edit:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
+}
+
+.card-btn-delete {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  color: white;
+}
+
+.card-btn-delete:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
+}
+
+/* États vides */
+.empty-state {
+  text-align: center;
+  padding: 3rem;
+  color: #718096;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
+}
+
+.empty-message {
+  font-size: 1.2rem;
+  margin: 0;
+}
+
+/* Messages d'état */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  font-size: 1.2rem;
+  color: #718096;
+}
+
+.error-state {
+  background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+  color: #c53030;
+  padding: 1rem;
+  border-radius: 12px;
+  margin: 1rem 0;
+  text-align: center;
+  font-weight: 500;
+}
+
+/* Responsive design */
+@media (max-width: 1200px) {
+  .devis-container {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    height: auto;
+  }
+  
+  .devis-form-section,
+  .devis-preview-section {
+    max-height: none;
+  }
 }
 
 @media (max-width: 768px) {
-  .article-form {
-    grid-template-columns: repeat(2, 1fr);
+  .devis-page {
+    padding: 1rem;
   }
-
-  .devis-header,
-  .entreprise-info,
-  .totals,
-  .footer {
-    text-align: left;
+  
+  .article-grid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
   }
-
-  .devis-item {
-    width: 100%;
-    margin: 10px 0;
-  }
-
-  .containerDevisListItems {
+  
+  .form-actions {
     flex-direction: column;
   }
+  
+  .preview-toolbar {
+    flex-direction: column;
+  }
+  
+  .devis-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .devis-card-actions {
+    flex-direction: column;
+  }
+  
+  .devis-card-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.devis-card {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.article-item {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+/* Scrollbar personnalisée */
+.devis-form-section::-webkit-scrollbar,
+.devis-preview-section::-webkit-scrollbar {
+  width: 6px;
+}
+
+.devis-form-section::-webkit-scrollbar-track,
+.devis-preview-section::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.devis-form-section::-webkit-scrollbar-thumb,
+.devis-preview-section::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 3px;
+}
+
+.devis-form-section::-webkit-scrollbar-thumb:hover,
+.devis-preview-section::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 }

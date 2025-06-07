@@ -1,61 +1,113 @@
-/* devisPreview.scss */
+/* Design moderne pour l'aperçu du devis */
 
 .devis-preview {
-  font-family: 'Arial', sans-serif;
-  padding: 20px;
-  background: #fff;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: white;
   color: #000;
-  max-width: 900px;
-  margin: auto;
-  border: 1px solid #ccc;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
 .preview-toolbar {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
 }
 
 .preview-toolbar button {
-  background-color: #007bff;
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
   border: none;
   color: white;
-  padding: 6px 16px;
+  padding: 0.75rem 1.5rem;
   font-size: 14px;
-  border-radius: 4px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.preview-toolbar button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
+}
+
+.pdf-download-button {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%) !important;
+}
+
+.pdf-download-button:hover {
+  box-shadow: 0 8px 25px rgba(237, 137, 54, 0.3) !important;
 }
 
 .preview-content {
   position: relative;
-  padding: 20px;
-  border: 1px solid #000;
-  background-color: #fff;
+  padding: 2rem;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  margin: 1rem 0;
 }
 
+/* En-tête du devis */
 .header {
   position: absolute;
-  top: 10px;
-  right: 20px;
+  top: 2rem;
+  right: 2rem;
   margin: 0;
 }
 
 .header h1 {
-  font-weight: bold;
-  font-size: 28px;
+  font-weight: 700;
+  font-size: 2.5rem;
   margin: 0;
   padding: 0;
+  color: #2d3748;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Logo et informations entreprise */
 .logo-and-company {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-top: 0px;
-  margin-bottom: 10px;
+  margin-bottom: 2rem;
   position: relative;
 }
+
+.logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0;
+  width: 140px;
+  height: 120px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  transition: all 0.3s ease;
+}
+
+.logo:hover {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
+}
+
+.logo img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
 .logo-upload {
   cursor: pointer;
   display: flex;
@@ -64,112 +116,181 @@
   width: 100%;
   height: 100%;
   font-style: italic;
-  color: #555;
+  color: #718096;
+  font-weight: 500;
+  text-align: center;
+  transition: color 0.3s ease;
 }
 
-.logo img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-
-.logo {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 10px;
-  width: 120px;
-  height: 100px;
-  border: 1px dashed #bbb;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-style: italic;
-  background: #fff;
+.logo-upload:hover {
+  color: #667eea;
 }
 
 .company {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 0.5rem;
   max-width: 300px;
   margin-left: 0;
 }
 
 .company input {
   display: block;
-  border: 1px dashed #bbb;
+  border: 1px dashed #cbd5e0;
   width: 100%;
-  padding: 4px;
+  padding: 0.5rem;
   background-color: transparent;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
 }
 
+.company input:focus {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  outline: none;
+}
+
+/* Métadonnées du devis */
 .client-meta {
   display: flex;
   justify-content: flex-start;
   font-size: 14px;
-  margin: 10px 0;
+  margin: 2rem 0;
 }
 
 .client-meta table {
   border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .client-meta td {
-  border: 1px dotted #000;
-  padding: 5px 10px;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
 }
 
+.client-meta td:first-child {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+}
+
+/* Informations client */
 .client-info {
   position: absolute;
-  top: 150px;
-  right: 20px;
+  top: 180px;
+  right: 2rem;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .client-info input {
-  width: 300px;
-  border: 1px dashed #000;
-  padding: 6px;
+  width: 280px;
+  border: 1px dashed #cbd5e0;
+  padding: 0.5rem;
   background: transparent;
+  border-radius: 6px;
+  transition: all 0.3s ease;
 }
 
+.client-info input:focus {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  outline: none;
+}
+
+/* Tableau des articles */
 .devis-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 200px;
+  margin-top: 220px;
   font-size: 14px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
 .devis-table th,
 .devis-table td {
-  border: 1px dotted #000;
-  padding: 5px;
+  border: 1px solid #e2e8f0;
+  padding: 1rem 0.75rem;
   text-align: center;
 }
 
 .devis-table th {
-  background-color: #333f50;
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
   color: white;
-  font-weight: bold;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.devis-table tbody tr {
+  transition: all 0.3s ease;
+}
+
+.devis-table tbody tr:hover {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.devis-table tbody tr:nth-child(even) {
+  background: #f8f9fa;
 }
 
 .editable-input {
   width: 100%;
-  border: 1px dashed #ccc;
+  border: 1px dashed #cbd5e0;
   background: transparent;
-  padding: 2px;
+  padding: 0.25rem;
   text-align: center;
-  margin: 0px;
+  margin: 0;
+  border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
+.editable-input:focus {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  outline: none;
+}
+
+/* Sélecteur TVA */
+.tva-text-only {
+  display: none;
+}
+
+.tva-select {
+  width: 70px;
+  border: 1px dashed #cbd5e0;
+  background: transparent;
+  padding: 0.25rem;
+  text-align: center;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+}
+
+.tva-select:focus {
+  border-color: #667eea;
+  background: rgba(102, 126, 234, 0.05);
+  outline: none;
+}
+
+/* Totaux */
 .totals-boxes {
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
+  margin-top: 2rem;
+  gap: 2rem;
 }
 
 .tva-breakdown,
@@ -177,45 +298,86 @@
   border-collapse: collapse;
   font-size: 14px;
   width: 48%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
 .tva-breakdown th,
 .tva-breakdown td,
 .total-summary td {
-  border: 1px dotted #000;
-  padding: 5px 10px;
+  border: 1px solid #e2e8f0;
+  padding: 0.75rem 1rem;
   text-align: right;
 }
 
+.tva-breakdown th {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  color: white;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.total-summary td:first-child {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  font-weight: 600;
+  color: #2d3748;
+}
+
+.total-summary td:last-child {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  font-weight: 700;
+}
+
+/* Signature */
 .signature {
   text-align: center;
-  margin-top: 30px;
+  margin-top: 3rem;
   font-style: italic;
   font-size: 14px;
+  color: #718096;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
 }
 
 .signature-line {
   display: flex;
   justify-content: space-between;
-  margin-top: 20px;
+  margin-top: 2rem;
   font-size: 13px;
-  padding: 0 10px;
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
 }
 
-/* Safe check styling for empty or invalid data */
+.signature-line div {
+  flex: 1;
+  text-align: center;
+  color: #4a5568;
+  font-weight: 500;
+}
+
+/* Messages d'erreur */
 .devis-preview .error-message {
-  color: red;
+  color: #e53e3e;
   font-weight: bold;
   text-align: center;
-  padding: 20px;
-  border: 1px solid red;
-  background-color: #fff0f0;
+  padding: 2rem;
+  border: 2px solid #fed7d7;
+  background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+  border-radius: 12px;
+  margin: 1rem 0;
 }
 
-/* Masquer les bordures et styles d’édition dans le PDF */
+/* Mode PDF - Masquer les éléments d'édition */
 .pdf-mode input,
 .pdf-mode .editable-input,
-.pdf-mode td,
 .pdf-mode .company input,
 .pdf-mode .client-info input {
   border: none !important;
@@ -232,23 +394,9 @@
 .pdf-mode .devis-table td,
 .pdf-mode .tva-breakdown td,
 .pdf-mode .total-summary td {
-  border: 1px solid #000 !important; /* Remplace pointillés par plein */
+  border: 1px solid #2d3748 !important;
 }
 
-/* Affiche texte TVA à la place du select dans le PDF */
-.tva-text-only {
-  display: none;
-}
-
-.tva-select {
-  width: 60px;
-  border: 1px dashed #ccc;
-  background: transparent;
-  padding: px;
-  text-align: center;
-}
-
-/* Mode PDF : cacher les selects, afficher la valeur texte */
 .pdf-mode .tva-select {
   display: none !important;
 }
@@ -257,3 +405,106 @@
   display: inline !important;
 }
 
+/* Responsive design */
+@media (max-width: 768px) {
+  .preview-content {
+    padding: 1rem;
+  }
+  
+  .logo-and-company {
+    flex-direction: column;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .logo {
+    position: static;
+    transform: none;
+    margin-bottom: 1rem;
+  }
+  
+  .company {
+    max-width: 100%;
+    width: 100%;
+  }
+  
+  .client-info {
+    position: static;
+    width: 100%;
+    margin: 2rem 0;
+  }
+  
+  .client-info input {
+    width: 100%;
+  }
+  
+  .devis-table {
+    margin-top: 2rem;
+    font-size: 12px;
+  }
+  
+  .devis-table th,
+  .devis-table td {
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .totals-boxes {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .tva-breakdown,
+  .total-summary {
+    width: 100%;
+  }
+  
+  .signature-line {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .header {
+    position: static;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .header h1 {
+    font-size: 2rem;
+  }
+}
+
+/* Animations */
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.preview-content {
+  animation: slideInFromTop 0.5s ease-out;
+}
+
+/* Scrollbar personnalisée */
+.devis-preview::-webkit-scrollbar {
+  width: 8px;
+}
+
+.devis-preview::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.devis-preview::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+}
+
+.devis-preview::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+}
