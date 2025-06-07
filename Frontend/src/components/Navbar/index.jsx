@@ -49,7 +49,7 @@ const Navbar = () => {
       <div className="navbar-menu">
         {!token ? (
           <>
-            <Link to="/register-user" className="nav-link">
+            <Link to="/register-user\" className="nav-link">
               ✨ Créer un compte
             </Link>
             <Link to="/login" className="nav-link login-btn">

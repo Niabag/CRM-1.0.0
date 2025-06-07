@@ -21,7 +21,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             path="/" 
             element={
               localStorage.getItem("token") ? 
-                <Navigate to="/dashboard" replace /> : 
+                <Navigate to="/dashboard\" replace /> : 
                 <Navigate to="/login" replace />
             } 
           />
