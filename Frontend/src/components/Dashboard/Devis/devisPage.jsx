@@ -180,7 +180,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ NOUVELLE MÉTHODE: Génération PDF directe avec jsPDF (sans html2canvas)
+  // ✅ GÉNÉRATION PDF COMPLÈTE - Identique au preview
   const handleDownloadPDF = async (devis) => {
     try {
       setLoading(true);
@@ -193,113 +193,181 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       // ✅ Obtenir les informations du client
       const clientInfo = clients.find(c => c._id === devis.clientId) || {};
       
-      // ✅ Calculer les totaux
-      const totalTTC = calculateTTC(devis);
-      const totalHT = devis.articles.reduce((sum, article) => {
-        const price = parseFloat(article.unitPrice || 0);
-        const qty = parseFloat(article.quantity || 0);
-        return sum + (price * qty);
-      }, 0);
-      const totalTVA = totalTTC - totalHT;
+      // ✅ Calculer les totaux par taux de TVA (comme dans le preview)
+      const tauxTVA = {
+        "20": { ht: 0, tva: 0 },
+        "10": { ht: 0, tva: 0 },
+        "5.5": { ht: 0, tva: 0 },
+        "2.1": { ht: 0, tva: 0 }
+      };
 
-      // ✅ Créer le PDF directement avec jsPDF
+      devis.articles.forEach((item) => {
+        const price = parseFloat(item.unitPrice || "0");
+        const qty = parseFloat(item.quantity || "0");
+        const taux = item.tvaRate || "20";
+
+        if (!isNaN(price) && !isNaN(qty) && tauxTVA[taux]) {
+          const ht = price * qty;
+          tauxTVA[taux].ht += ht;
+          tauxTVA[taux].tva += ht * (parseFloat(taux) / 100);
+        }
+      });
+
+      const totalHT = Object.values(tauxTVA).reduce((sum, t) => sum + t.ht, 0);
+      const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
+      const totalTTC = totalHT + totalTVA;
+
+      // ✅ Créer le PDF avec le même design que le preview
       const pdf = new jsPDF('p', 'mm', 'a4');
       
-      // Configuration des polices et couleurs
-      const primaryColor = [0, 123, 255]; // Bleu
-      const textColor = [51, 51, 51]; // Gris foncé
-      const lightGray = [248, 249, 250]; // Gris clair
+      // Configuration des couleurs (identiques au preview)
+      const primaryColor = [102, 126, 234]; // #667eea
+      const secondaryColor = [118, 75, 162]; // #764ba2
+      const textColor = [45, 55, 72]; // #2d3748
+      const grayColor = [113, 128, 150]; // #718096
+      const lightGray = [248, 249, 250]; // #f8f9fa
       
-      let yPosition = 20;
+      let yPosition = 25;
       const pageWidth = 210;
       const margin = 20;
       const contentWidth = pageWidth - (margin * 2);
 
-      // ✅ EN-TÊTE
-      pdf.setFontSize(28);
+      // ✅ EN-TÊTE AVEC LOGO ET TITRE (comme dans le preview)
+      // Logo section (gauche)
+      if (devis.logoUrl) {
+        try {
+          // Si il y a un logo, l'afficher
+          pdf.addImage(devis.logoUrl, 'JPEG', margin, yPosition - 5, 50, 25);
+        } catch (e) {
+          // Si erreur avec le logo, afficher un placeholder
+          pdf.setFillColor(...lightGray);
+          pdf.rect(margin, yPosition - 5, 50, 25, 'F');
+          pdf.setFontSize(8);
+          pdf.setTextColor(...grayColor);
+          pdf.text('Logo', margin + 20, yPosition + 8);
+        }
+      } else {
+        // Placeholder pour logo
+        pdf.setFillColor(...lightGray);
+        pdf.rect(margin, yPosition - 5, 50, 25, 'F');
+        pdf.setFontSize(8);
+        pdf.setTextColor(...grayColor);
+        pdf.text('📷 Logo', margin + 20, yPosition + 8);
+      }
+      
+      // Titre DEVIS (droite)
+      pdf.setFontSize(36);
+      pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textColor);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('DEVIS', pageWidth - margin, yPosition, { align: 'right' });
-      
-      // Informations entreprise (gauche)
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(devis.entrepriseName || 'Entreprise', margin, yPosition);
-      
-      yPosition += 8;
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(devis.entrepriseAddress || '', margin, yPosition);
-      yPosition += 5;
-      pdf.text(devis.entrepriseCity || '', margin, yPosition);
-      yPosition += 5;
-      pdf.text(devis.entreprisePhone || '', margin, yPosition);
-      yPosition += 5;
-      pdf.text(devis.entrepriseEmail || '', margin, yPosition);
+      pdf.text('DEVIS', pageWidth - margin, yPosition + 10, { align: 'right' });
 
-      // Informations devis (droite)
-      yPosition = 35;
-      pdf.setFontSize(10);
-      pdf.text(`N°: ${devis._id?.slice(-8) || 'N/A'}`, pageWidth - margin, yPosition, { align: 'right' });
-      yPosition += 5;
-      pdf.text(`Date: ${formatDate(devis.dateDevis)}`, pageWidth - margin, yPosition, { align: 'right' });
-      yPosition += 5;
-      pdf.text(`Validité: ${formatDate(devis.dateValidite)}`, pageWidth - margin, yPosition, { align: 'right' });
-
-      // ✅ LIGNE DE SÉPARATION
-      yPosition += 10;
-      pdf.setDrawColor(...primaryColor);
-      pdf.setLineWidth(1);
-      pdf.line(margin, yPosition, pageWidth - margin, yPosition);
-
-      // ✅ INFORMATIONS CLIENT
-      yPosition += 15;
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...primaryColor);
-      pdf.text('DESTINATAIRE', margin, yPosition);
+      // ✅ INFORMATIONS ÉMETTEUR ET DESTINATAIRE (comme dans le preview)
+      yPosition = 60;
       
-      yPosition += 10;
+      // Émetteur (gauche)
+      pdf.setFillColor(...lightGray);
+      pdf.rect(margin, yPosition, (contentWidth / 2) - 5, 50, 'F');
+      
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textColor);
-      pdf.text(clientInfo.name || devis.clientName || 'Client', margin, yPosition);
+      pdf.text('Émetteur', margin + 5, yPosition + 8);
+      
+      yPosition += 15;
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(devis.entrepriseName || 'Nom de l\'entreprise', margin + 5, yPosition);
       
       yPosition += 6;
-      pdf.setFontSize(10);
+      pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(clientInfo.email || devis.clientEmail || '', margin, yPosition);
-      yPosition += 5;
-      pdf.text(clientInfo.phone || devis.clientPhone || '', margin, yPosition);
-      if (devis.clientAddress) {
-        yPosition += 5;
-        pdf.text(devis.clientAddress, margin, yPosition);
-      }
+      pdf.text(devis.entrepriseAddress || 'Adresse', margin + 5, yPosition);
+      yPosition += 4;
+      pdf.text(devis.entrepriseCity || 'Code postal et ville', margin + 5, yPosition);
+      yPosition += 4;
+      pdf.text(devis.entreprisePhone || 'Téléphone', margin + 5, yPosition);
+      yPosition += 4;
+      pdf.text(devis.entrepriseEmail || 'Email', margin + 5, yPosition);
 
-      // ✅ TABLEAU DES PRESTATIONS
-      yPosition += 20;
+      // Destinataire (droite)
+      const rightColumnX = margin + (contentWidth / 2) + 5;
+      yPosition = 60;
+      
+      pdf.setFillColor(...lightGray);
+      pdf.rect(rightColumnX, yPosition, (contentWidth / 2) - 5, 50, 'F');
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...textColor);
+      pdf.text('Destinataire', rightColumnX + 5, yPosition + 8);
+      
+      yPosition += 15;
+      pdf.setFontSize(11);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(clientInfo.name || devis.clientName || 'Nom du client', rightColumnX + 5, yPosition);
+      
+      yPosition += 6;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(clientInfo.email || devis.clientEmail || 'Email du client', rightColumnX + 5, yPosition);
+      yPosition += 4;
+      pdf.text(clientInfo.phone || devis.clientPhone || 'Téléphone du client', rightColumnX + 5, yPosition);
+      yPosition += 4;
+      pdf.text(devis.clientAddress || 'Adresse du client', rightColumnX + 5, yPosition);
+
+      // ✅ MÉTADONNÉES DU DEVIS (comme dans le preview)
+      yPosition = 125;
+      
+      // Fond dégradé simulé
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(margin, yPosition, contentWidth, 20, 'F');
+      
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      
+      const metadataItems = [
+        `Date du devis: ${formatDate(devis.dateDevis)}`,
+        `N° de devis: ${devis._id?.slice(-8) || 'À définir'}`,
+        `Date de validité: ${formatDate(devis.dateValidite)}`,
+        `Client: ${clientInfo.name || 'N/A'}`
+      ];
+      
+      let metaX = margin + 5;
+      metadataItems.forEach((item, index) => {
+        if (index === 2) {
+          yPosition += 6;
+          metaX = margin + 5;
+        }
+        pdf.text(item, metaX, yPosition + 8);
+        metaX += (contentWidth / 2);
+      });
+
+      // ✅ TABLEAU DES PRESTATIONS (identique au preview)
+      yPosition = 155;
+      
       pdf.setFontSize(14);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...primaryColor);
-      pdf.text('DÉTAIL DES PRESTATIONS', margin, yPosition);
+      pdf.setTextColor(...textColor);
+      pdf.text('Détail des prestations', margin, yPosition);
 
       yPosition += 10;
       
       // En-têtes du tableau
-      const tableHeaders = ['Description', 'Qté', 'Prix HT', 'TVA', 'Total HT'];
-      const colWidths = [80, 20, 25, 20, 25]; // Largeurs des colonnes
+      const tableHeaders = ['Description', 'Unité', 'Qté', 'Prix unitaire HT', 'TVA', 'Total HT'];
+      const colWidths = [60, 15, 15, 30, 15, 25];
       let xPosition = margin;
       
       // Fond de l'en-tête
       pdf.setFillColor(...textColor);
-      pdf.rect(margin, yPosition - 2, contentWidth, 8, 'F');
+      pdf.rect(margin, yPosition, contentWidth, 8, 'F');
       
-      pdf.setFontSize(9);
+      pdf.setFontSize(8);
       pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(255, 255, 255); // Blanc
+      pdf.setTextColor(255, 255, 255);
       
       tableHeaders.forEach((header, index) => {
-        pdf.text(header, xPosition + 2, yPosition + 3);
+        pdf.text(header, xPosition + 1, yPosition + 5);
         xPosition += colWidths[index];
       });
 
@@ -308,7 +376,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       // ✅ LIGNES DU TABLEAU
       pdf.setTextColor(...textColor);
       pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(9);
+      pdf.setFontSize(8);
 
       devis.articles.forEach((article, index) => {
         const price = parseFloat(article.unitPrice || 0);
@@ -318,86 +386,144 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         // Fond alterné
         if (index % 2 === 0) {
           pdf.setFillColor(...lightGray);
-          pdf.rect(margin, yPosition - 2, contentWidth, 6, 'F');
+          pdf.rect(margin, yPosition, contentWidth, 6, 'F');
         }
         
         xPosition = margin;
         
-        // Description (avec retour à la ligne si nécessaire)
+        // Description
         const description = article.description || '';
-        const splitDescription = pdf.splitTextToSize(description, colWidths[0] - 4);
-        pdf.text(splitDescription, xPosition + 2, yPosition + 2);
+        const splitDescription = pdf.splitTextToSize(description, colWidths[0] - 2);
+        pdf.text(splitDescription, xPosition + 1, yPosition + 4);
         xPosition += colWidths[0];
         
-        // Quantité
-        pdf.text(`${qty} ${article.unit || ''}`, xPosition + 2, yPosition + 2);
+        // Unité
+        pdf.text(article.unit || 'u', xPosition + 1, yPosition + 4);
         xPosition += colWidths[1];
         
-        // Prix unitaire
-        pdf.text(`${price.toFixed(2)} €`, xPosition + 2, yPosition + 2);
+        // Quantité
+        pdf.text(qty.toString(), xPosition + 1, yPosition + 4);
         xPosition += colWidths[2];
         
-        // TVA
-        pdf.text(`${article.tvaRate || 20}%`, xPosition + 2, yPosition + 2);
+        // Prix unitaire
+        pdf.text(`${price.toFixed(2)} €`, xPosition + 1, yPosition + 4);
         xPosition += colWidths[3];
+        
+        // TVA
+        pdf.text(`${article.tvaRate || 20}%`, xPosition + 1, yPosition + 4);
+        xPosition += colWidths[4];
         
         // Total
         pdf.setFont('helvetica', 'bold');
-        pdf.text(`${total.toFixed(2)} €`, xPosition + 2, yPosition + 2);
+        pdf.text(`${total.toFixed(2)} €`, xPosition + 1, yPosition + 4);
         pdf.setFont('helvetica', 'normal');
         
-        yPosition += Math.max(6, splitDescription.length * 4);
+        yPosition += Math.max(6, splitDescription.length * 3);
       });
 
-      // ✅ TOTAUX
+      // ✅ RÉCAPITULATIF TVA ET TOTAUX (comme dans le preview)
       yPosition += 15;
       
-      // Cadre pour les totaux
-      const totalBoxWidth = 80;
-      const totalBoxX = pageWidth - margin - totalBoxWidth;
-      
-      pdf.setDrawColor(...primaryColor);
-      pdf.setLineWidth(0.5);
-      pdf.rect(totalBoxX, yPosition - 5, totalBoxWidth, 25);
-      
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(`Total HT: ${totalHT.toFixed(2)} €`, totalBoxX + 5, yPosition);
-      yPosition += 6;
-      pdf.text(`Total TVA: ${totalTVA.toFixed(2)} €`, totalBoxX + 5, yPosition);
-      yPosition += 8;
-      
-      pdf.setFontSize(14);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(...primaryColor);
-      pdf.text(`TOTAL TTC: ${totalTTC.toFixed(2)} €`, totalBoxX + 5, yPosition);
-
-      // ✅ CONDITIONS
-      yPosition += 25;
+      // Récapitulatif TVA (gauche)
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textColor);
-      pdf.text('CONDITIONS :', margin, yPosition);
+      pdf.text('Récapitulatif TVA', margin, yPosition);
       
       yPosition += 8;
+      
+      // Tableau TVA
+      const tvaTableHeaders = ['Base HT', 'Taux TVA', 'Montant TVA', 'Total TTC'];
+      const tvaColWidths = [20, 20, 25, 25];
+      
+      xPosition = margin;
+      pdf.setFillColor(...primaryColor);
+      pdf.rect(margin, yPosition, 90, 6, 'F');
+      
+      pdf.setFontSize(8);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(255, 255, 255);
+      
+      tvaTableHeaders.forEach((header, index) => {
+        pdf.text(header, xPosition + 1, yPosition + 4);
+        xPosition += tvaColWidths[index];
+      });
+      
+      yPosition += 6;
+      
+      // Lignes TVA
+      pdf.setTextColor(...textColor);
+      pdf.setFont('helvetica', 'normal');
+      
+      Object.entries(tauxTVA)
+        .filter(([, { ht }]) => ht > 0)
+        .forEach(([rate, { ht, tva }], index) => {
+          if (index % 2 === 0) {
+            pdf.setFillColor(...lightGray);
+            pdf.rect(margin, yPosition, 90, 5, 'F');
+          }
+          
+          xPosition = margin;
+          pdf.text(`${ht.toFixed(2)} €`, xPosition + 1, yPosition + 3);
+          xPosition += tvaColWidths[0];
+          pdf.text(`${rate}%`, xPosition + 1, yPosition + 3);
+          xPosition += tvaColWidths[1];
+          pdf.text(`${tva.toFixed(2)} €`, xPosition + 1, yPosition + 3);
+          xPosition += tvaColWidths[2];
+          pdf.text(`${(ht + tva).toFixed(2)} €`, xPosition + 1, yPosition + 3);
+          
+          yPosition += 5;
+        });
+
+      // Totaux finaux (droite)
+      const totalBoxWidth = 70;
+      const totalBoxX = pageWidth - margin - totalBoxWidth;
+      const totalBoxY = yPosition - (Object.keys(tauxTVA).filter(k => tauxTVA[k].ht > 0).length * 5) - 6;
+      
+      pdf.setDrawColor(...primaryColor);
+      pdf.setLineWidth(1);
+      pdf.rect(totalBoxX, totalBoxY, totalBoxWidth, 25);
+      
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
-      pdf.text(`• Devis valable jusqu'au ${formatDate(devis.dateValidite) || 'date à définir'}`, margin, yPosition);
-      yPosition += 5;
-      pdf.text('• Règlement à 30 jours fin de mois', margin, yPosition);
-      yPosition += 5;
-      pdf.text('• TVA applicable selon la réglementation en vigueur', margin, yPosition);
-
-      // ✅ SIGNATURE
-      yPosition += 20;
-      pdf.setFontSize(11);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Bon pour accord - Date et signature :', margin, yPosition);
+      pdf.setTextColor(...textColor);
+      pdf.text(`Total HT: ${totalHT.toFixed(2)} €`, totalBoxX + 5, totalBoxY + 8);
+      pdf.text(`Total TVA: ${totalTVA.toFixed(2)} €`, totalBoxX + 5, totalBoxY + 14);
       
-      yPosition += 15;
-      pdf.setLineWidth(0.5);
-      pdf.setDrawColor(...textColor);
-      pdf.line(margin, yPosition, margin + 80, yPosition);
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...primaryColor);
+      pdf.text(`TOTAL TTC: ${totalTTC.toFixed(2)} €`, totalBoxX + 5, totalBoxY + 22);
+
+      // ✅ CONDITIONS ET SIGNATURE (comme dans le preview)
+      yPosition += 20;
+      
+      pdf.setFillColor(...lightGray);
+      pdf.rect(margin, yPosition, contentWidth, 35, 'F');
+      
+      pdf.setFontSize(12);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setTextColor(...textColor);
+      pdf.text('Conditions :', margin + 5, yPosition + 8);
+      
+      yPosition += 12;
+      pdf.setFontSize(9);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(`• Devis valable jusqu'au ${formatDate(devis.dateValidite) || 'date à définir'}`, margin + 5, yPosition);
+      yPosition += 4;
+      pdf.text('• Règlement à 30 jours fin de mois', margin + 5, yPosition);
+      yPosition += 4;
+      pdf.text('• TVA non applicable, art. 293 B du CGI (si applicable)', margin + 5, yPosition);
+      
+      yPosition += 10;
+      pdf.setFontSize(10);
+      pdf.setFont('helvetica', 'italic');
+      pdf.setTextColor(...grayColor);
+      pdf.text('Bon pour accord - Date et signature du client :', margin + 5, yPosition);
+      
+      yPosition += 8;
+      pdf.text('Date : _______________', margin + 20, yPosition);
+      pdf.text('Signature :', margin + 100, yPosition);
 
       // ✅ Télécharger le PDF
       const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
