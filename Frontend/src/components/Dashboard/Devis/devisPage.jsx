@@ -35,7 +35,14 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   };
 
   const [devisList, setDevisList] = useState([]);
-  const [currentDevis, setCurrentDevis] = useState(initialDevisFromClient || DEFAULT_DEVIS);
+  const [currentDevis, setCurrentDevis] = useState(() => {
+    // ✅ CORRECTION: Initialiser avec le client pré-sélectionné
+    const baseDevis = initialDevisFromClient || DEFAULT_DEVIS;
+    return {
+      ...baseDevis,
+      clientId: selectedClientId || normalizeClientId(baseDevis.clientId) || ""
+    };
+  });
   const [filterClientId, setFilterClientId] = useState(
     selectedClientId || normalizeClientId(initialDevisFromClient?.clientId)
   );
@@ -79,10 +86,15 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   }, [initialDevisFromClient]);
 
-  // ✅ Mettre à jour le filtre quand selectedClientId change
+  // ✅ CORRECTION: Mettre à jour le devis courant quand selectedClientId change
   useEffect(() => {
     if (selectedClientId) {
       setFilterClientId(selectedClientId);
+      // ✅ Mettre à jour le devis courant avec le client sélectionné
+      setCurrentDevis(prev => ({
+        ...prev,
+        clientId: selectedClientId
+      }));
     }
   }, [selectedClientId]);
 
@@ -99,13 +111,20 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   const handleReset = () => {
     const newDevis = {
       ...DEFAULT_DEVIS,
-      clientId: filterClientId || "" // ✅ Pré-remplir avec le client sélectionné
+      clientId: filterClientId || selectedClientId || "" // ✅ Pré-remplir avec le client sélectionné
     };
     setCurrentDevis(newDevis);
   };
 
   const handleSave = async (updatedDevis, isEdit = false) => {
-    const clientId = normalizeClientId(updatedDevis.clientId);
+    // ✅ CORRECTION: Utiliser le clientId du devis courant ou le client sélectionné
+    const clientId = normalizeClientId(updatedDevis.clientId) || selectedClientId;
+    
+    console.log("🔍 Debug sauvegarde:");
+    console.log("- updatedDevis.clientId:", updatedDevis.clientId);
+    console.log("- selectedClientId:", selectedClientId);
+    console.log("- clientId final:", clientId);
+    
     if (!clientId) {
       alert("❌ Veuillez sélectionner un client");
       return;
@@ -119,9 +138,17 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
       const method = isEdit ? "PUT" : "POST";
       
+      // ✅ S'assurer que le clientId est bien inclus dans les données envoyées
+      const devisData = {
+        ...updatedDevis,
+        clientId: clientId
+      };
+      
+      console.log("📤 Données envoyées:", devisData);
+      
       await apiRequest(url, {
         method,
-        body: JSON.stringify({ ...updatedDevis, clientId }),
+        body: JSON.stringify(devisData),
       });
 
       // ✅ Recharger les devis du client spécifique ou tous les devis
@@ -138,7 +165,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       // ✅ Réinitialiser avec le client pré-sélectionné
       const newDevis = {
         ...DEFAULT_DEVIS,
-        clientId: filterClientId || ""
+        clientId: filterClientId || selectedClientId || ""
       };
       setCurrentDevis(newDevis);
     } catch (error) {
