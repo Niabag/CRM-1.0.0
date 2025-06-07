@@ -186,8 +186,11 @@ const DevisPreview = ({
               />
             </div>
             <div className="metadata-item">
-              <label>Client ID :</label>
-              <span className="client-id">{devisData.clientId || "N/A"}</span>
+              <label>Client :</label>
+              {/* ✅ CORRECTION: Afficher le nom du client au lieu de l'objet */}
+              <span className="client-id">
+                {clientInfo.name || devisData.clientName || "Client non défini"}
+              </span>
             </div>
           </div>
         </div>

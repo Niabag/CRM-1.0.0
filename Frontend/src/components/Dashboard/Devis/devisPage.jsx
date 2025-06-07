@@ -196,7 +196,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ FONCTION PDF CORRIGÉE: Recherche robuste de l'élément
+  // ✅ FONCTION PDF COMPLÈTEMENT CORRIGÉE
   const handleDownloadPDF = async (devis) => {
     try {
       setLoading(true);
@@ -209,103 +209,141 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         import('jspdf')
       ]);
 
-      // Sauvegarder le devis actuel
-      const originalDevis = currentDevis;
-      
-      // Créer un devis temporaire pour l'affichage
-      const tempDevis = {
-        ...devis,
-        articles: Array.isArray(devis.articles) ? devis.articles : []
-      };
+      // ✅ CORRECTION: Créer un élément temporaire avec contenu complet
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.width = '210mm';
+      tempDiv.style.minHeight = '297mm'; // ✅ Hauteur minimale A4
+      tempDiv.style.background = 'white';
+      tempDiv.style.padding = '20px';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '14px';
+      tempDiv.style.lineHeight = '1.4';
+      tempDiv.style.color = '#000';
+      document.body.appendChild(tempDiv);
 
-      console.log("📝 Devis temporaire créé:", tempDevis.title);
+      // ✅ Obtenir les informations du client
+      const clientInfo = clients.find(c => c._id === devis.clientId) || {};
       
-      // Mettre temporairement le devis à capturer
-      setCurrentDevis(tempDevis);
+      // ✅ Calculer les totaux
+      const totalTTC = calculateTTC(devis);
+      const totalHT = devis.articles.reduce((sum, article) => {
+        const price = parseFloat(article.unitPrice || 0);
+        const qty = parseFloat(article.quantity || 0);
+        return sum + (price * qty);
+      }, 0);
+      const totalTVA = totalTTC - totalHT;
+
+      // ✅ Créer le contenu HTML complet
+      const devisHTML = `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background: white; color: black; min-height: 250mm;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px;">
+            <div>
+              <h2 style="margin: 0; color: #333; font-size: 24px;">${devis.entrepriseName || 'Entreprise'}</h2>
+              <p style="margin: 5px 0;">${devis.entrepriseAddress || ''}</p>
+              <p style="margin: 5px 0;">${devis.entrepriseCity || ''}</p>
+              <p style="margin: 5px 0;">${devis.entreprisePhone || ''}</p>
+              <p style="margin: 5px 0;">${devis.entrepriseEmail || ''}</p>
+            </div>
+            <div style="text-align: right;">
+              <h1 style="margin: 0; font-size: 48px; color: #333; font-weight: bold;">DEVIS</h1>
+              <p style="margin: 5px 0;"><strong>N°:</strong> ${devis._id || 'N/A'}</p>
+              <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(devis.dateDevis)}</p>
+              <p style="margin: 5px 0;"><strong>Validité:</strong> ${formatDate(devis.dateValidite)}</p>
+            </div>
+          </div>
+          
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 18px;">Client</h3>
+            <p style="margin: 5px 0; font-weight: bold; font-size: 16px;">${clientInfo.name || devis.clientName || 'Client'}</p>
+            <p style="margin: 5px 0;">${clientInfo.email || devis.clientEmail || ''}</p>
+            <p style="margin: 5px 0;">${clientInfo.phone || devis.clientPhone || ''}</p>
+            <p style="margin: 5px 0;">${devis.clientAddress || ''}</p>
+          </div>
+
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+            <thead>
+              <tr style="background: #333; color: white;">
+                <th style="border: 1px solid #ccc; padding: 12px; text-align: left; font-size: 14px;">Description</th>
+                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">Qté</th>
+                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">Prix HT</th>
+                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">TVA</th>
+                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">Total HT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${devis.articles.map(article => {
+                const price = parseFloat(article.unitPrice || 0);
+                const qty = parseFloat(article.quantity || 0);
+                const total = price * qty;
+                return `
+                  <tr>
+                    <td style="border: 1px solid #ccc; padding: 12px; font-size: 13px;">${article.description || ''}</td>
+                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px;">${qty} ${article.unit || ''}</td>
+                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px;">${price.toFixed(2)} €</td>
+                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px;">${article.tvaRate || 20}%</td>
+                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px; font-weight: bold;">${total.toFixed(2)} €</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+
+          <div style="text-align: right; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
+            <p style="margin: 5px 0; font-size: 16px;"><strong>Total HT: ${totalHT.toFixed(2)} €</strong></p>
+            <p style="margin: 5px 0; font-size: 16px;"><strong>Total TVA: ${totalTVA.toFixed(2)} €</strong></p>
+            <p style="margin: 5px 0; font-size: 20px; color: #28a745;"><strong>Total TTC: ${totalTTC.toFixed(2)} €</strong></p>
+          </div>
+
+          <div style="margin-top: 50px;">
+            <h4 style="color: #333; margin-bottom: 15px;">Conditions :</h4>
+            <p style="margin: 5px 0;">• Devis valable jusqu'au ${formatDate(devis.dateValidite) || 'date à définir'}</p>
+            <p style="margin: 5px 0;">• Règlement à 30 jours fin de mois</p>
+            <p style="margin: 5px 0;">• TVA applicable selon la réglementation en vigueur</p>
+          </div>
+
+          <div style="margin-top: 60px; text-align: center; font-style: italic;">
+            <p style="margin-bottom: 30px; font-size: 16px;"><strong>Bon pour accord - Date et signature :</strong></p>
+            <div style="margin-top: 40px; border-bottom: 2px solid #000; width: 300px; margin-left: auto; margin-right: auto;"></div>
+          </div>
+        </div>
+      `;
+
+      tempDiv.innerHTML = devisHTML;
+
+      console.log("📝 Contenu HTML créé, attente du rendu...");
       
-      // Attendre que le DOM soit mis à jour
+      // Attendre que le contenu soit rendu
       await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // ✅ RECHERCHE ROBUSTE de l'élément preview
-      let previewElement = null;
-      
-      // Essayer plusieurs sélecteurs possibles
-      const selectors = [
-        '.preview-content',
-        '.devis-preview .preview-content',
-        '[class*="preview-content"]',
-        '.devis-preview-container .preview-content'
-      ];
-      
-      for (const selector of selectors) {
-        previewElement = document.querySelector(selector);
-        if (previewElement) {
-          console.log(`✅ Élément trouvé avec: ${selector}`);
-          break;
-        }
-      }
-      
-      // Si toujours pas trouvé, chercher par contenu
-      if (!previewElement) {
-        const allDivs = document.querySelectorAll('div');
-        for (const div of allDivs) {
-          if (div.textContent.includes('DEVIS') && div.textContent.includes(tempDevis.title || '')) {
-            previewElement = div;
-            console.log("✅ Élément trouvé par contenu");
-            break;
-          }
-        }
-      }
-      
-      if (!previewElement) {
-        // Dernier recours: prendre le container principal
-        previewElement = document.querySelector('.devis-preview-container') || 
-                        document.querySelector('.dashboard-container') ||
-                        document.body;
-        console.log("⚠️ Utilisation de l'élément de secours");
-      }
-
-      if (!previewElement) {
-        throw new Error('Impossible de trouver un élément à capturer');
-      }
-
-      console.log("📸 Élément à capturer trouvé:", previewElement.className);
-
-      // Ajouter une classe pour le mode PDF (si possible)
-      const hadPdfClass = previewElement.classList.contains('pdf-mode');
-      if (!hadPdfClass) {
-        previewElement.classList.add('pdf-mode');
-      }
-      
-      // Attendre que les styles soient appliqués
-      await new Promise(resolve => setTimeout(resolve, 500));
 
       console.log("📷 Début capture canvas...");
 
-      // Capturer avec une haute qualité
-      const canvas = await html2canvas(previewElement, {
-        scale: 2, // ✅ Réduire le scale pour éviter les erreurs
+      // ✅ Capturer avec des paramètres optimisés
+      const canvas = await html2canvas(tempDiv, {
+        scale: 1.5, // ✅ Scale modéré pour qualité/performance
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: Math.min(previewElement.scrollWidth, 1200),
-        height: Math.min(previewElement.scrollHeight, 1600),
+        width: tempDiv.scrollWidth,
+        height: Math.max(tempDiv.scrollHeight, 1000), // ✅ Hauteur minimale garantie
         scrollX: 0,
         scrollY: 0,
         windowWidth: 1200,
-        windowHeight: 800,
-        logging: false // Réduire les logs
+        windowHeight: 1600,
+        logging: false
       });
 
       console.log("✅ Canvas créé:", canvas.width, 'x', canvas.height);
 
-      // Retirer la classe PDF
-      if (!hadPdfClass) {
-        previewElement.classList.remove('pdf-mode');
+      // ✅ Vérifier que le canvas a une taille valide
+      if (canvas.width === 0 || canvas.height === 0) {
+        throw new Error('Canvas invalide: dimensions nulles');
       }
-      
-      // Restaurer le devis original
-      setCurrentDevis(originalDevis);
+
+      // Nettoyer l'élément temporaire
+      document.body.removeChild(tempDiv);
 
       // Créer le PDF avec les bonnes dimensions
       const imgData = canvas.toDataURL('image/png', 0.95);
@@ -374,9 +412,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     } catch (error) {
       console.error('❌ Erreur génération PDF:', error);
       alert('❌ Erreur lors de la génération du PDF: ' + error.message);
-      
-      // Restaurer le devis original en cas d'erreur
-      setCurrentDevis(currentDevis);
     } finally {
       setLoading(false);
     }
