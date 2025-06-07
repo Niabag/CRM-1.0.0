@@ -169,6 +169,141 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
+  // ✅ NOUVELLE FONCTION: Télécharger PDF d'un devis spécifique
+  const handleDownloadPDF = async (devis) => {
+    try {
+      // Créer un élément temporaire pour le rendu PDF
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '210mm';
+      tempDiv.style.background = 'white';
+      document.body.appendChild(tempDiv);
+
+      // Importer dynamiquement les modules nécessaires
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
+
+      // Créer le contenu HTML du devis
+      const devisHTML = generateDevisHTML(devis);
+      tempDiv.innerHTML = devisHTML;
+
+      // Attendre que les styles soient appliqués
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Générer le canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // Créer le PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Télécharger le PDF
+      const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
+      pdf.save(`${fileName}.pdf`);
+
+      // Nettoyer
+      document.body.removeChild(tempDiv);
+    } catch (error) {
+      console.error('Erreur génération PDF:', error);
+      alert('❌ Erreur lors de la génération du PDF');
+    }
+  };
+
+  // ✅ Fonction pour générer le HTML du devis
+  const generateDevisHTML = (devis) => {
+    const totalTTC = calculateTTC(devis);
+    const clientInfo = clients.find(c => c._id === devis.clientId) || {};
+    
+    return `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background: white; color: black;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px;">
+          <div>
+            <h2 style="margin: 0; color: #333;">${devis.entrepriseName || 'Entreprise'}</h2>
+            <p style="margin: 5px 0;">${devis.entrepriseAddress || ''}</p>
+            <p style="margin: 5px 0;">${devis.entrepriseCity || ''}</p>
+            <p style="margin: 5px 0;">${devis.entreprisePhone || ''}</p>
+            <p style="margin: 5px 0;">${devis.entrepriseEmail || ''}</p>
+          </div>
+          <div style="text-align: right;">
+            <h1 style="margin: 0; font-size: 2.5em; color: #333;">DEVIS</h1>
+            <p style="margin: 5px 0;"><strong>N°:</strong> ${devis._id || 'N/A'}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(devis.dateDevis)}</p>
+            <p style="margin: 5px 0;"><strong>Validité:</strong> ${formatDate(devis.dateValidite)}</p>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+          <h3 style="color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Client</h3>
+          <p style="margin: 5px 0;"><strong>${clientInfo.name || devis.clientName || 'Client'}</strong></p>
+          <p style="margin: 5px 0;">${clientInfo.email || devis.clientEmail || ''}</p>
+          <p style="margin: 5px 0;">${clientInfo.phone || devis.clientPhone || ''}</p>
+          <p style="margin: 5px 0;">${devis.clientAddress || ''}</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+          <thead>
+            <tr style="background: #333; color: white;">
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: left;">Description</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Qté</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Prix HT</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">TVA</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Total HT</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${devis.articles.map(article => {
+              const price = parseFloat(article.unitPrice || 0);
+              const qty = parseFloat(article.quantity || 0);
+              const total = price * qty;
+              return `
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 10px;">${article.description || ''}</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${qty} ${article.unit || ''}</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${price.toFixed(2)} €</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${article.tvaRate || 20}%</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${total.toFixed(2)} €</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <div style="text-align: right; margin-bottom: 30px;">
+          <p style="margin: 5px 0; font-size: 1.2em;"><strong>Total TTC: ${totalTTC.toFixed(2)} €</strong></p>
+        </div>
+
+        <div style="margin-top: 50px; text-align: center; font-style: italic;">
+          <p>Bon pour accord - Date et signature :</p>
+          <div style="margin-top: 30px; border-bottom: 1px solid #000; width: 200px; margin-left: auto; margin-right: auto;"></div>
+        </div>
+      </div>
+    `;
+  };
+
   const handleFieldChange = (name, value, index = null) => {
     setCurrentDevis((prev) => {
       if (name.startsWith("article-") && index !== null) {
@@ -283,10 +418,17 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
                       ✏️ Modifier
                     </button>
                     <button 
+                      className="card-btn card-btn-pdf"
+                      onClick={() => handleDownloadPDF(devis)}
+                    >
+                      📄 PDF
+                    </button>
+                    <button 
                       className="card-btn card-btn-delete"
                       onClick={() => handleDelete(devis._id)}
+                      title="Supprimer"
                     >
-                      🗑️ Supprimer
+                      🗑️
                     </button>
                   </div>
                 </div>

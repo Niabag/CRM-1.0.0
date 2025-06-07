@@ -40,62 +40,6 @@ const DevisPreview = ({
   const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
   const totalTTC = totalHT + totalTVA;
 
-  const handleDownload = async () => {
-    try {
-      const previewElement = previewRef.current;
-      if (!previewElement) {
-        alert("❌ Erreur lors de la génération du PDF");
-        return;
-      }
-
-      // Activer le mode PDF pour masquer les éléments d'édition
-      previewElement.classList.add("pdf-mode");
-
-      // Configuration haute qualité pour html2canvas
-      const canvas = await html2canvas(previewElement, { 
-        scale: 3, // Augmenté pour une meilleure qualité
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: previewElement.scrollWidth,
-        height: previewElement.scrollHeight,
-        windowWidth: 1200,
-        windowHeight: 800
-      });
-      
-      // Retirer le mode PDF
-      previewElement.classList.remove("pdf-mode");
-
-      const imgData = canvas.toDataURL("image/png", 1.0); // Qualité maximale
-      const pdf = new jsPDF("p", "mm", "a4");
-      
-      // Calculs pour un rendu optimal
-      const pdfWidth = 210; // A4 width in mm
-      const pdfHeight = 297; // A4 height in mm
-      const margin = 10;
-      const contentWidth = pdfWidth - margin * 2;
-      const imgWidth = canvas.width;
-      const imgHeight = canvas.height;
-      const ratio = Math.min(contentWidth / (imgWidth * 0.264583), (pdfHeight - margin * 2) / (imgHeight * 0.264583));
-      
-      const scaledWidth = imgWidth * 0.264583 * ratio;
-      const scaledHeight = imgHeight * 0.264583 * ratio;
-      
-      // Centrer l'image
-      const x = (pdfWidth - scaledWidth) / 2;
-      const y = margin;
-
-      pdf.addImage(imgData, "PNG", x, y, scaledWidth, scaledHeight, undefined, 'FAST');
-
-      const fileName = devisData.title?.replace(/[^a-zA-Z0-9]/g, "-") || `devis-${devisData._id || "nouveau"}`;
-      pdf.save(`${fileName}.pdf`);
-    } catch (error) {
-      console.error("Erreur génération PDF:", error);
-      alert("❌ Erreur lors de la génération du PDF");
-    }
-  };
-
   const getClientInfo = () => {
     if (devisData.clientId && clients.length > 0) {
       const client = clients.find(c => c._id === devisData.clientId);
@@ -111,9 +55,6 @@ const DevisPreview = ({
       <div className="preview-toolbar">
         <button onClick={onAddArticle} className="toolbar-btn add-btn">
           ➕ Ajouter une ligne
-        </button>
-        <button className="toolbar-btn pdf-btn" onClick={handleDownload}>
-          📄 Télécharger PDF
         </button>
       </div>
 
