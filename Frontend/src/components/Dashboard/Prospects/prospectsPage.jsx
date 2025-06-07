@@ -452,27 +452,30 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
             </div>
           )}
 
-          {/* Grille des cartes prospects */}
+          {/* ✅ NOUVEAU DESIGN: Grille des cartes prospects */}
           <div className="prospects-grid">
             {currentProspects.map((prospect) => (
               <div 
                 key={prospect._id} 
                 className={`prospect-card ${selectedProspects.includes(prospect._id) ? 'selected' : ''}`}
               >
-                {/* Checkbox de sélection */}
-                <div className="card-select">
-                  <input
-                    type="checkbox"
-                    checked={selectedProspects.includes(prospect._id)}
-                    onChange={() => handleSelectProspect(prospect._id)}
-                  />
-                </div>
+                {/* ✅ NOUVEAU: Section supérieure avec design moderne */}
+                <div className="card-top-section">
+                  {/* Checkbox de sélection */}
+                  <div className="card-select">
+                    <input
+                      type="checkbox"
+                      checked={selectedProspects.includes(prospect._id)}
+                      onChange={() => handleSelectProspect(prospect._id)}
+                    />
+                  </div>
 
-                {/* Avatar et statut */}
-                <div className="card-header">
+                  {/* Avatar centré */}
                   <div className="prospect-avatar">
                     {prospect.name ? prospect.name.charAt(0).toUpperCase() : "?"}
                   </div>
+
+                  {/* Indicateur de statut */}
                   <div 
                     className="status-indicator clickable"
                     style={{ backgroundColor: getStatusColor(prospect.status) }}
@@ -483,7 +486,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                   </div>
                 </div>
 
-                {/* Informations principales */}
+                {/* ✅ NOUVEAU: Section contenu principal */}
                 <div className="card-content">
                   <h3 className="prospect-name">{prospect.name || "N/A"}</h3>
                   
@@ -519,7 +522,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                     </div>
                   )}
 
-                  {/* Statut en texte */}
+                  {/* ✅ NOUVEAU: Badge de statut moderne */}
                   <div className="status-text">
                     <span 
                       className="status-badge"
@@ -531,36 +534,36 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                       {getStatusIcon(prospect.status)} {getStatusLabel(prospect.status)}
                     </span>
                   </div>
+
+                  {/* ✅ NOUVEAU: Actions modernes */}
+                  <div className="card-actions">
+                    <button 
+                      onClick={() => onViewClientDevis && onViewClientDevis(prospect)}
+                      className="action-btn primary-action"
+                      title="Voir les devis"
+                    >
+                      📄
+                    </button>
+                    
+                    <button 
+                      onClick={() => handleEditProspect(prospect)}
+                      className="action-btn edit-action"
+                      title="Modifier le prospect"
+                    >
+                      ✏️
+                    </button>
+                    
+                    <button 
+                      onClick={() => handleDeleteClient(prospect._id)}
+                      className="action-btn delete-action"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
                 </div>
 
-                {/* Actions */}
-                <div className="card-actions">
-                  <button 
-                    onClick={() => onViewClientDevis && onViewClientDevis(prospect)}
-                    className="action-btn primary-action"
-                    title="Voir les devis"
-                  >
-                    📄
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleEditProspect(prospect)}
-                    className="action-btn edit-action"
-                    title="Modifier le prospect"
-                  >
-                    ✏️
-                  </button>
-                  
-                  <button 
-                    onClick={() => handleDeleteClient(prospect._id)}
-                    className="action-btn delete-action"
-                    title="Supprimer"
-                  >
-                    🗑️
-                  </button>
-                </div>
-
-                {/* Métadonnées */}
+                {/* ✅ NOUVEAU: Footer avec date */}
                 <div className="card-footer">
                   <span className="join-date">
                     Inscrit le {new Date(prospect.createdAt || Date.now()).toLocaleDateString('fr-FR')}
