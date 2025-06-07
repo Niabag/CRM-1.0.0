@@ -196,139 +196,125 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ FONCTION PDF ORIGINALE RESTAURÉE
+  // ✅ NOUVELLE FONCTION PDF: Capture directe du preview
   const handleDownloadPDF = async (devis) => {
     try {
-      // Créer un élément temporaire pour le rendu PDF
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.width = '210mm';
-      tempDiv.style.background = 'white';
-      document.body.appendChild(tempDiv);
-
+      setLoading(true);
+      
       // Importer dynamiquement les modules nécessaires
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
         import('html2canvas'),
         import('jspdf')
       ]);
 
-      // Créer le contenu HTML du devis
-      const devisHTML = generateDevisHTML(devis);
-      tempDiv.innerHTML = devisHTML;
+      // Créer un devis temporaire pour l'affichage
+      const tempDevis = {
+        ...devis,
+        articles: Array.isArray(devis.articles) ? devis.articles : []
+      };
 
+      // Sauvegarder le devis actuel
+      const originalDevis = currentDevis;
+      
+      // Mettre temporairement le devis à capturer
+      setCurrentDevis(tempDevis);
+      
+      // Attendre que le DOM soit mis à jour
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Trouver l'élément preview
+      const previewElement = document.querySelector('.preview-content');
+      
+      if (!previewElement) {
+        throw new Error('Élément preview non trouvé');
+      }
+
+      // Ajouter une classe pour le mode PDF
+      previewElement.classList.add('pdf-mode');
+      
       // Attendre que les styles soient appliqués
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise(resolve => setTimeout(resolve, 200));
 
-      // Générer le canvas
-      const canvas = await html2canvas(tempDiv, {
-        scale: 2,
+      // Capturer avec une haute qualité
+      const canvas = await html2canvas(previewElement, {
+        scale: 3, // ✅ Haute résolution
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        width: previewElement.scrollWidth,
+        height: previewElement.scrollHeight,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: 1200,
+        windowHeight: 800
       });
 
-      // Créer le PDF
-      const imgData = canvas.toDataURL('image/png');
+      // Retirer la classe PDF
+      previewElement.classList.remove('pdf-mode');
+      
+      // Restaurer le devis original
+      setCurrentDevis(originalDevis);
+
+      // Créer le PDF avec les bonnes dimensions
+      const imgData = canvas.toDataURL('image/png', 1.0);
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
+      
+      // Calculer les dimensions pour s'adapter à A4
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
+      const imgWidth = pdfWidth - 20; // Marges de 10mm de chaque côté
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-
-      let position = 0;
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      
+      let position = 10; // Marge du haut
+      
+      // Si l'image est plus haute qu'une page, la diviser
+      if (imgHeight > pdfHeight - 20) {
+        const pageHeight = pdfHeight - 20;
+        let remainingHeight = imgHeight;
+        let currentPosition = 0;
+        
+        while (remainingHeight > 0) {
+          const currentHeight = Math.min(pageHeight, remainingHeight);
+          const currentCanvas = document.createElement('canvas');
+          const currentCtx = currentCanvas.getContext('2d');
+          
+          currentCanvas.width = canvas.width;
+          currentCanvas.height = (currentHeight * canvas.width) / imgWidth;
+          
+          currentCtx.drawImage(
+            canvas,
+            0, (currentPosition * canvas.width) / imgWidth,
+            canvas.width, currentCanvas.height,
+            0, 0,
+            canvas.width, currentCanvas.height
+          );
+          
+          const currentImgData = currentCanvas.toDataURL('image/png', 1.0);
+          
+          if (currentPosition > 0) {
+            pdf.addPage();
+          }
+          
+          pdf.addImage(currentImgData, 'PNG', 10, 10, imgWidth, currentHeight);
+          
+          remainingHeight -= pageHeight;
+          currentPosition += pageHeight;
+        }
+      } else {
+        // L'image tient sur une page
+        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
       }
 
       // Télécharger le PDF
       const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
       pdf.save(`${fileName}.pdf`);
 
-      // Nettoyer
-      document.body.removeChild(tempDiv);
     } catch (error) {
       console.error('Erreur génération PDF:', error);
-      alert('❌ Erreur lors de la génération du PDF');
+      alert('❌ Erreur lors de la génération du PDF: ' + error.message);
+    } finally {
+      setLoading(false);
     }
-  };
-
-  // ✅ Fonction pour générer le HTML du devis (CODE ORIGINAL)
-  const generateDevisHTML = (devis) => {
-    const totalTTC = calculateTTC(devis);
-    const clientInfo = clients.find(c => c._id === devis.clientId) || {};
-    
-    return `
-      <div style="font-family: Arial, sans-serif; padding: 20px; background: white; color: black;">
-        <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px;">
-          <div>
-            <h2 style="margin: 0; color: #333;">${devis.entrepriseName || 'Entreprise'}</h2>
-            <p style="margin: 5px 0;">${devis.entrepriseAddress || ''}</p>
-            <p style="margin: 5px 0;">${devis.entrepriseCity || ''}</p>
-            <p style="margin: 5px 0;">${devis.entreprisePhone || ''}</p>
-            <p style="margin: 5px 0;">${devis.entrepriseEmail || ''}</p>
-          </div>
-          <div style="text-align: right;">
-            <h1 style="margin: 0; font-size: 2.5em; color: #333;">DEVIS</h1>
-            <p style="margin: 5px 0;"><strong>N°:</strong> ${devis._id || 'N/A'}</p>
-            <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(devis.dateDevis)}</p>
-            <p style="margin: 5px 0;"><strong>Validité:</strong> ${formatDate(devis.dateValidite)}</p>
-          </div>
-        </div>
-        
-        <div style="margin-bottom: 30px;">
-          <h3 style="color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Client</h3>
-          <p style="margin: 5px 0;"><strong>${clientInfo.name || devis.clientName || 'Client'}</strong></p>
-          <p style="margin: 5px 0;">${clientInfo.email || devis.clientEmail || ''}</p>
-          <p style="margin: 5px 0;">${clientInfo.phone || devis.clientPhone || ''}</p>
-          <p style="margin: 5px 0;">${devis.clientAddress || ''}</p>
-        </div>
-
-        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-          <thead>
-            <tr style="background: #333; color: white;">
-              <th style="border: 1px solid #ccc; padding: 10px; text-align: left;">Description</th>
-              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Qté</th>
-              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Prix HT</th>
-              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">TVA</th>
-              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Total HT</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${devis.articles.map(article => {
-              const price = parseFloat(article.unitPrice || 0);
-              const qty = parseFloat(article.quantity || 0);
-              const total = price * qty;
-              return `
-                <tr>
-                  <td style="border: 1px solid #ccc; padding: 10px;">${article.description || ''}</td>
-                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${qty} ${article.unit || ''}</td>
-                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${price.toFixed(2)} €</td>
-                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${article.tvaRate || 20}%</td>
-                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${total.toFixed(2)} €</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
-
-        <div style="text-align: right; margin-bottom: 30px;">
-          <p style="margin: 5px 0; font-size: 1.2em;"><strong>Total TTC: ${totalTTC.toFixed(2)} €</strong></p>
-        </div>
-
-        <div style="margin-top: 50px; text-align: center; font-style: italic;">
-          <p>Bon pour accord - Date et signature :</p>
-          <div style="margin-top: 30px; border-bottom: 1px solid #000; width: 200px; margin-left: auto; margin-right: auto;"></div>
-        </div>
-      </div>
-    `;
   };
 
   const handleFieldChange = (name, value, index = null) => {
@@ -447,6 +433,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
                     <button 
                       className="card-btn card-btn-pdf"
                       onClick={() => handleDownloadPDF(devis)}
+                      disabled={loading}
                     >
                       📄 PDF
                     </button>
