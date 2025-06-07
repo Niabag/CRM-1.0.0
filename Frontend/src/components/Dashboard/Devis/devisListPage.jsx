@@ -32,6 +32,7 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
   const [error, setError] = useState(null);
   const [selectedClientFilter, setSelectedClientFilter] = useState("");
   const [groupedDevis, setGroupedDevis] = useState({});
+  const [orphanDevis, setOrphanDevis] = useState([]); // ✅ NOUVEAU: Devis orphelins
 
   useEffect(() => {
     fetchAllDevis();
@@ -45,42 +46,59 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
       const devisArray = Array.isArray(data) ? data : [];
       setDevisList(devisArray);
       
-      // ✅ CORRECTION: Filtrer les devis avec clientId valide et grouper
-      const validDevis = devisArray.filter(devis => {
+      // ✅ NOUVEAU: Séparer les devis valides et orphelins
+      const validDevis = [];
+      const orphanDevisList = [];
+      
+      devisArray.forEach(devis => {
         const clientId = typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId;
-        return clientId && clientId !== null; // ✅ Exclure les devis sans client
+        
+        if (clientId && clientId !== null) {
+          // Vérifier si le client existe dans la liste des clients
+          const clientExists = clients.find(c => c._id === clientId);
+          if (clientExists) {
+            validDevis.push(devis);
+          } else {
+            // Client supprimé mais devis encore présent
+            orphanDevisList.push({
+              ...devis,
+              orphanReason: 'Client supprimé'
+            });
+          }
+        } else {
+          // Devis sans clientId
+          orphanDevisList.push({
+            ...devis,
+            orphanReason: 'Aucun client associé'
+          });
+        }
       });
 
+      // ✅ GROUPER LES DEVIS VALIDES PAR CLIENT
       const grouped = validDevis.reduce((acc, devis) => {
         const clientId = typeof devis.clientId === "object" ? devis.clientId._id : devis.clientId;
-        const client = clients.find(c => c._id === clientId) || { 
-          name: "Client inconnu", 
-          _id: clientId,
-          email: "N/A",
-          phone: "N/A"
-        };
+        const client = clients.find(c => c._id === clientId);
         
-        if (!acc[client.name]) {
-          acc[client.name] = {
-            client: client,
-            devis: []
-          };
+        if (client) {
+          if (!acc[client.name]) {
+            acc[client.name] = {
+              client: client,
+              devis: []
+            };
+          }
+          acc[client.name].devis.push(devis);
         }
-        acc[client.name].devis.push(devis);
         return acc;
       }, {});
       
       setGroupedDevis(grouped);
+      setOrphanDevis(orphanDevisList); // ✅ NOUVEAU: Stocker les devis orphelins
+      
       console.log("📋 Devis groupés par client:", grouped);
+      console.log("🔍 Devis valides:", validDevis.length);
       
-      // ✅ NOUVEAU: Afficher les devis orphelins dans la console pour debug
-      const orphanDevis = devisArray.filter(devis => {
-        const clientId = typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId;
-        return !clientId || clientId === null;
-      });
-      
-      if (orphanDevis.length > 0) {
-        console.warn(`⚠️ ${orphanDevis.length} devis sans client trouvés:`, orphanDevis);
+      if (orphanDevisList.length > 0) {
+        console.warn(`⚠️ ${orphanDevisList.length} devis orphelins trouvés:`, orphanDevisList);
       }
       
     } catch (err) {
@@ -440,7 +458,58 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
           <div className="error-state">{error}</div>
         )}
 
-        {Object.keys(filteredGroupedDevis).length === 0 ? (
+        {/* ✅ NOUVEAU: Affichage des devis orphelins */}
+        {orphanDevis.length > 0 && (
+          <div className="orphan-devis-section">
+            <div className="orphan-header">
+              <h3>⚠️ Devis sans client associé ({orphanDevis.length})</h3>
+              <p>Ces devis ne sont pas liés à un client valide et doivent être corrigés ou supprimés.</p>
+            </div>
+            
+            <div className="devis-grid">
+              {orphanDevis.map((devisItem) => (
+                <div key={devisItem._id} className="devis-card orphan-card">
+                  <div className="devis-card-header">
+                    <h4 className="devis-card-title">{devisItem.title || "Devis sans titre"}</h4>
+                    <div className="devis-card-meta">
+                      <span>📅 {formatDate(devisItem.dateDevis)}</span>
+                      <span className="devis-card-amount">
+                        💰 {calculateTTC(devisItem).toFixed(2)} € TTC
+                      </span>
+                    </div>
+                    <div className="orphan-reason">
+                      🚨 {devisItem.orphanReason}
+                    </div>
+                  </div>
+                  <div className="devis-card-actions">
+                    <button 
+                      className="card-btn card-btn-edit"
+                      onClick={() => onEditDevis && onEditDevis(devisItem)}
+                    >
+                      ✏️ Corriger
+                    </button>
+                    <button 
+                      className="card-btn card-btn-pdf"
+                      onClick={() => handleDownloadPDF(devisItem)}
+                      disabled={loading}
+                    >
+                      {loading ? "⏳" : "📄"} PDF
+                    </button>
+                    <button 
+                      className="card-btn card-btn-delete"
+                      onClick={() => handleDelete(devisItem._id)}
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {Object.keys(filteredGroupedDevis).length === 0 && orphanDevis.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📄</div>
             <p className="empty-message">
