@@ -55,7 +55,7 @@ const ProspectEditPage = () => {
     
     let newStatus;
     
-    // ✅ CYCLE CORRIGÉ: nouveau -> en_attente -> active -> inactive -> nouveau
+    // ✅ CYCLE FINAL SIMPLIFIÉ: nouveau -> en_attente -> active -> inactive -> nouveau
     switch (prospect.status) {
       case 'nouveau':
         newStatus = 'en_attente';
@@ -68,6 +68,10 @@ const ProspectEditPage = () => {
         break;
       case 'inactive':
         newStatus = 'nouveau';
+        break;
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending':
+        newStatus = 'en_attente'; // Convertir pending vers en_attente
         break;
       default:
         newStatus = 'en_attente';
@@ -151,9 +155,10 @@ const ProspectEditPage = () => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
-      case 'pending': return '#ed8936';
       case 'nouveau': return '#4299e1';
       case 'en_attente': return '#9f7aea'; // ✅ Violet pour "en attente"
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return '#ed8936'; // Orange pour pending (ancien)
       default: return '#4299e1';
     }
   };
@@ -162,9 +167,10 @@ const ProspectEditPage = () => {
     switch (status) {
       case 'active': return 'Actif';
       case 'inactive': return 'Inactif';
-      case 'pending': return 'En cours';
       case 'nouveau': return 'Nouveau';
       case 'en_attente': return 'En attente'; // ✅ CORRIGÉ
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return 'En cours'; // Ancien statut
       default: return 'Nouveau';
     }
   };
@@ -173,9 +179,10 @@ const ProspectEditPage = () => {
     switch (status) {
       case 'active': return '🟢';
       case 'inactive': return '🔴';
-      case 'pending': return '🟡';
       case 'nouveau': return '🔵';
       case 'en_attente': return '🟣'; // ✅ Violet pour "en attente"
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return '🟡'; // Orange pour pending (ancien)
       default: return '🔵';
     }
   };
@@ -186,6 +193,8 @@ const ProspectEditPage = () => {
       case 'en_attente': return 'Passer en Actif'; // ✅ CORRIGÉ
       case 'active': return 'Passer en Inactif';
       case 'inactive': return 'Remettre en Nouveau';
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return 'Convertir en Attente';
       default: return 'Changer le statut';
     }
   };
@@ -348,7 +357,6 @@ const ProspectEditPage = () => {
                 <option value="en_attente">🟣 En attente</option>
                 <option value="active">🟢 Actif</option>
                 <option value="inactive">🔴 Inactif</option>
-                <option value="pending">🟡 En cours</option>
               </select>
             </div>
 

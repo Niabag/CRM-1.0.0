@@ -57,7 +57,7 @@ exports.getClients = async (req, res) => {
   }
 };
 
-// ✅ FONCTION: Mettre à jour le statut d'un client (AVEC NOUVEAU STATUT)
+// ✅ FONCTION CORRIGÉE: Mettre à jour le statut d'un client
 exports.updateClientStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -65,8 +65,8 @@ exports.updateClientStatus = async (req, res) => {
 
     console.log(`🔄 Tentative de mise à jour du statut pour le client ${id} vers ${status}`);
 
-    // ✅ VÉRIFIER QUE LE STATUT EST VALIDE (AVEC "EN_ATTENTE")
-    if (!['active', 'inactive', 'pending', 'nouveau', 'en_attente'].includes(status)) {
+    // ✅ STATUTS VALIDES FINAUX (SANS PENDING)
+    if (!['active', 'inactive', 'nouveau', 'en_attente'].includes(status)) {
       console.error("❌ Statut invalide:", status);
       return res.status(400).json({ message: "Statut invalide" });
     }
@@ -100,7 +100,7 @@ exports.updateClientStatus = async (req, res) => {
   }
 };
 
-// ✅ FONCTION: Mettre à jour les informations d'un client (AVEC NOUVEAU STATUT)
+// ✅ FONCTION CORRIGÉE: Mettre à jour les informations d'un client
 exports.updateClient = async (req, res) => {
   try {
     const { id } = req.params;
@@ -134,8 +134,8 @@ exports.updateClient = async (req, res) => {
     if (phone) client.phone = phone;
     if (company !== undefined) client.company = company;
     if (notes !== undefined) client.notes = notes;
-    // ✅ VÉRIFIER LE NOUVEAU STATUT "EN_ATTENTE"
-    if (status && ['active', 'inactive', 'pending', 'nouveau', 'en_attente'].includes(status)) {
+    // ✅ STATUTS VALIDES FINAUX (SANS PENDING)
+    if (status && ['active', 'inactive', 'nouveau', 'en_attente'].includes(status)) {
       client.status = status;
     }
 

@@ -93,7 +93,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
   const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
-    // ✅ CYCLE CORRIGÉ: nouveau -> en_attente -> active -> inactive -> nouveau
+    // ✅ CYCLE FINAL SIMPLIFIÉ: nouveau -> en_attente -> active -> inactive -> nouveau
     switch (currentStatus) {
       case 'nouveau':
         newStatus = 'en_attente';
@@ -106,6 +106,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
         break;
       case 'inactive':
         newStatus = 'nouveau';
+        break;
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending':
+        newStatus = 'en_attente'; // Convertir pending vers en_attente
         break;
       default:
         newStatus = 'en_attente';
@@ -229,9 +233,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
-      case 'pending': return '#ed8936';
       case 'nouveau': return '#4299e1';
       case 'en_attente': return '#9f7aea'; // ✅ Violet pour "en attente"
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return '#ed8936'; // Orange pour pending (ancien)
       default: return '#4299e1';
     }
   };
@@ -240,9 +245,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     switch (status) {
       case 'active': return 'Actif';
       case 'inactive': return 'Inactif';
-      case 'pending': return 'En cours';
       case 'nouveau': return 'Nouveau';
       case 'en_attente': return 'En attente'; // ✅ CORRIGÉ
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return 'En cours'; // Ancien statut
       default: return 'Nouveau';
     }
   };
@@ -251,9 +257,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     switch (status) {
       case 'active': return '🟢';
       case 'inactive': return '🔴';
-      case 'pending': return '🟡';
       case 'nouveau': return '🔵';
       case 'en_attente': return '🟣'; // ✅ Violet pour "en attente"
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return '🟡'; // Orange pour pending (ancien)
       default: return '🔵';
     }
   };
@@ -264,6 +271,8 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'en_attente': return 'Cliquer pour passer en Actif'; // ✅ CORRIGÉ
       case 'active': return 'Cliquer pour passer en Inactif';
       case 'inactive': return 'Cliquer pour remettre en Nouveau';
+      // ✅ GESTION DES ANCIENS STATUTS (MIGRATION)
+      case 'pending': return 'Cliquer pour convertir en Attente';
       default: return 'Cliquer pour changer le statut';
     }
   };
