@@ -17,6 +17,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState(null);
   const [user, setUser] = useState({});
+  const [selectedClientForDevis, setSelectedClientForDevis] = useState(null);
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -98,6 +99,12 @@ const Dashboard = () => {
     }
   };
 
+  // ✅ NOUVELLE FONCTION: Voir les devis d'un client spécifique
+  const handleViewClientDevis = (client) => {
+    setSelectedClientForDevis(client);
+    setActiveTab("devis");
+  };
+
   const menuItems = [
     { id: "dashboard", icon: "📊", label: "Tableau de bord" },
     { id: "clients", icon: "👤", label: "Prospects" },
@@ -132,7 +139,13 @@ const Dashboard = () => {
               <div
                 key={item.id}
                 className={`menu-item ${activeTab === item.id ? "active" : ""}`}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  // ✅ Réinitialiser la sélection client quand on change d'onglet
+                  if (item.id !== "devis") {
+                    setSelectedClientForDevis(null);
+                  }
+                }}
               >
                 <span className="menu-icon">{item.icon}</span>
                 {isOpen && <span className="menu-label">{item.label}</span>}
@@ -174,6 +187,13 @@ const Dashboard = () => {
                       <p>📞 {client.phone || "N/A"}</p>
                     </div>
                     <div className="client-actions">
+                      {/* ✅ NOUVEAU BOUTON: Voir les devis du client */}
+                      <button 
+                        onClick={() => handleViewClientDevis(client)}
+                        className="primary-btn"
+                      >
+                        📄 Voir ses devis
+                      </button>
                       <button 
                         onClick={() => handleDeleteClient(client._id)}
                         className="danger-btn"
@@ -188,11 +208,15 @@ const Dashboard = () => {
           </>
         )}
 
-        {/* ✅ SECTION DEVIS GARDÉE - Affiche tous les devis */}
+        {/* ✅ SECTION DEVIS AMÉLIORÉE */}
         {activeTab === "devis" && (
           <Devis 
             clients={clients}
-            // ✅ Pas de filtre client spécifique = affiche tous les devis
+            selectedClientId={selectedClientForDevis?._id} // ✅ Passer l'ID du client sélectionné
+            onBack={selectedClientForDevis ? () => {
+              setSelectedClientForDevis(null);
+              setActiveTab("clients");
+            } : null} // ✅ Bouton retour seulement si client spécifique
           />
         )}
 
