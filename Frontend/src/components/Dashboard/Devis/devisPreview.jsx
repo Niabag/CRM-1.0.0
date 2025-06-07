@@ -187,7 +187,6 @@ const DevisPreview = ({
             </div>
             <div className="metadata-item">
               <label>ID Client :</label>
-              {/* ✅ CORRECTION: Garder l'affichage de l'ID client */}
               <span className="client-id">{devisData.clientId || "N/A"}</span>
             </div>
           </div>
@@ -245,9 +244,8 @@ const DevisPreview = ({
                       />
                     </td>
                     <td>
-                      {/* ✅ CORRECTION: € en dessous ou en haut, pas à droite */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <span style={{ fontSize: '0.8em', color: '#666' }}>€</span>
+                      {/* ✅ CORRECTION: € à droite du chiffre */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <EditableInput 
                           name="article-unitPrice" 
                           value={article.unitPrice || ""} 
@@ -256,6 +254,7 @@ const DevisPreview = ({
                           type="number"
                           placeholder="0"
                         />
+                        <span>€</span>
                       </div>
                     </td>
                     <td>
