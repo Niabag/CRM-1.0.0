@@ -21,7 +21,6 @@ const BusinessCard = ({ userId, user }) => {
   });
   
   const [qrValue, setQrValue] = useState("");
-  const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(false);
   
   // ✅ NOUVEAU: Statistiques en temps réel
@@ -248,15 +247,18 @@ const BusinessCard = ({ userId, user }) => {
       case 'download': return '📥 Téléchargement';
       case 'form': return '📝 Formulaire';
       case 'redirect': return '🌐 Redirection';
-      case 'website': return '🌐 Site web';
       default: return type;
     }
   };
 
   return (
     <div className="business-card-container">
-      {/* ✅ NOUVEAU: Statistiques en haut de page */}
-      <div className="stats-header">
+      {/* ✅ NOUVEAU: Statistiques sous le titre */}
+      <div className="card-header">
+        <h2>💼 Carte de Visite Numérique</h2>
+        <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
+        
+        {/* ✅ Statistiques intégrées dans l'en-tête */}
         <div className="stats-overview">
           <div className="stat-card highlight">
             <div className="stat-icon">📊</div>
@@ -307,11 +309,6 @@ const BusinessCard = ({ userId, user }) => {
             ))}
           </div>
         </div>
-      </div>
-
-      <div className="card-header">
-        <h2>💼 Carte de Visite Numérique</h2>
-        <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
       </div>
 
       <div className="card-content">
@@ -426,7 +423,6 @@ const BusinessCard = ({ userId, user }) => {
                           <option value="download">📥 Téléchargement</option>
                           <option value="form">📝 Formulaire</option>
                           <option value="redirect">🌐 Redirection</option>
-                          <option value="website">🌐 Site web</option>
                         </select>
                       </div>
                       
@@ -442,7 +438,7 @@ const BusinessCard = ({ userId, user }) => {
                       </div>
                     </div>
                     
-                    {(action.type === 'redirect' || action.type === 'website') && (
+                    {action.type === 'redirect' && (
                       <div className="form-group">
                         <label>URL :</label>
                         <input
@@ -501,8 +497,8 @@ const BusinessCard = ({ userId, user }) => {
           </div>
         </div>
 
-        {/* Aperçu */}
-        <div className="card-preview">
+        {/* ✅ Aperçu fixe */}
+        <div className="card-preview fixed-preview">
           <h3>👁️ Aperçu de la carte</h3>
           
           <div className="preview-container">
@@ -527,10 +523,6 @@ const BusinessCard = ({ userId, user }) => {
           </div>
 
           <div className="preview-actions">
-            <button onClick={() => setPreviewMode(!previewMode)} className="btn-preview">
-              {previewMode ? '📝 Mode édition' : '👁️ Mode aperçu'}
-            </button>
-            
             <button onClick={downloadBusinessCard} className="btn-download">
               💾 Télécharger la carte
             </button>
