@@ -2,11 +2,11 @@ import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import Devis from "../../components/Dashboard/Devis/devisPage";
 import DevisListPage from "../../components/Dashboard/Devis/devisListPage";
-import ProspectsPage from "../../components/Dashboard/Prospects/prospectsPage"; // ✅ NOUVEAU
+import ProspectsPage from "../../components/Dashboard/Prospects/prospectsPage";
 import Analytics from "../../components/Dashboard/Analytics/analytics";
 import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
-import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard"; // ✅ NOUVEAU
+import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard";
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from "../../config/api";
 import "./dashboard.scss";
 import "./QRCodeGenerator.scss";
@@ -57,7 +57,7 @@ const Dashboard = () => {
     }
   };
 
-  // ✅ FONCTION CENTRALISÉE POUR RECHARGER LES CLIENTS
+  // Fonction centralisée pour recharger les clients
   const fetchClients = async () => {
     setLoading(true);
     setError(null);
@@ -109,7 +109,7 @@ const Dashboard = () => {
     { id: "clients", icon: "👤", label: "Prospects" },
     { id: "devis", icon: "📄", label: "Devis" },
     { id: "notifications", icon: "🔔", label: "Notifications" },
-    { id: "carte", icon: "💼", label: "Carte de visite" }, // ✅ MODIFIÉ
+    { id: "carte", icon: "💼", label: "Carte de visite" },
     { id: "settings", icon: "⚙️", label: "Paramètres" }
   ];
 
@@ -157,11 +157,11 @@ const Dashboard = () => {
       <div className="dashboard-container">
         {activeTab === "dashboard" && <Analytics />}
 
-        {/* ✅ NOUVELLE PAGE PROSPECTS MODERNE AVEC REFRESH */}
+        {/* Page prospects moderne avec refresh */}
         {activeTab === "clients" && (
           <ProspectsPage 
             clients={clients}
-            onRefresh={fetchClients} // ✅ Passer la fonction de rechargement
+            onRefresh={fetchClients}
             onViewClientDevis={handleViewClientDevis}
           />
         )}
@@ -194,7 +194,7 @@ const Dashboard = () => {
 
         {activeTab === "settings" && <Settings />}
 
-        {/* ✅ NOUVEAU: Page de carte de visite numérique */}
+        {/* Page de carte de visite numérique */}
         {activeTab === "carte" && (
           <BusinessCard 
             userId={userId}

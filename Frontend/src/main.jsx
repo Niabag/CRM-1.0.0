@@ -6,7 +6,7 @@ import Login from "./pages/Login/Index";
 import RegisterUser from "./pages/RegisterUser/Index";
 import RegisterClient from "./pages/RegisterClient/Index";
 import Dashboard from "./pages/Dashboard/Index";
-import ProspectEditPage from "./components/Dashboard/Prospects/prospectEditPage"; // ✅ NOUVEAU
+import ProspectEditPage from "./components/Dashboard/Prospects/prospectEditPage";
 import Error from "./pages/Error/Index";
 import ProtectedRoute from "./components/ProtectedRoute/Index";
 import "./utils/styles/global.scss";
@@ -22,7 +22,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             path="/" 
             element={
               localStorage.getItem("token") ? 
-                <Navigate to="/dashboard\" replace /> : 
+                <Navigate to="/dashboard" replace /> : 
                 <Navigate to="/login" replace />
             } 
           />
@@ -42,7 +42,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             }
           />
           
-          {/* ✅ NOUVELLE ROUTE: Page de modification des prospects */}
+          {/* Route de modification des prospects */}
           <Route
             path="/prospect/edit/:id"
             element={

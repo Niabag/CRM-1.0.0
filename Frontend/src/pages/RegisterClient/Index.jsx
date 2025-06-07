@@ -19,11 +19,11 @@ const RegisterClient = () => {
   const [loading, setLoading] = useState(false);
   const downloadedRef = useRef(false);
   
-  // ✅ NOUVEAU: Gestion des actions multiples
+  // Gestion des actions multiples
   const [actions, setActions] = useState([]);
   const [currentActionIndex, setCurrentActionIndex] = useState(0);
 
-  // ✅ NOUVEAU: Décoder et exécuter les actions depuis l'URL
+  // Décoder et exécuter les actions depuis l'URL
   useEffect(() => {
     const actionsParam = searchParams.get('actions');
     if (actionsParam) {
@@ -45,7 +45,7 @@ const RegisterClient = () => {
     }
   }, [searchParams]);
 
-  // ✅ NOUVEAU: Exécuter les actions dans l'ordre avec délais
+  // Exécuter les actions dans l'ordre avec délais
   const executeActions = (actionsList) => {
     actionsList.forEach((action, index) => {
       setTimeout(() => {
@@ -55,7 +55,7 @@ const RegisterClient = () => {
     });
   };
 
-  // ✅ NOUVEAU: Exécuter une action spécifique
+  // Exécuter une action spécifique
   const executeAction = (action, index) => {
     console.log(`🎬 Exécution action ${index + 1}:`, action);
     
@@ -82,7 +82,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ NOUVEAU: Fonction de téléchargement de fichier
+  // Fonction de téléchargement de fichier
   const downloadFile = (fileUrl, fileName) => {
     try {
       const link = document.createElement('a');
@@ -97,7 +97,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ NOUVEAU: Action par défaut (rétrocompatibilité)
+  // Action par défaut (rétrocompatibilité)
   const executeDefaultAction = () => {
     if (downloadedRef.current) return;
     downloadedRef.current = true;
@@ -126,7 +126,7 @@ const RegisterClient = () => {
 
       setSuccess(true);
       
-      // ✅ NOUVEAU: Exécuter les redirections après inscription
+      // Exécuter les redirections après inscription
       const redirectActions = actions.filter(action => 
         action.type === 'redirect' || action.type === 'website'
       );
@@ -157,7 +157,7 @@ const RegisterClient = () => {
         <h2>📝 Inscription Prospect</h2>
         <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
         
-        {/* ✅ NOUVEAU: Affichage des actions en cours */}
+        {/* Affichage des actions en cours */}
         {actions.length > 0 && (
           <div className="actions-status">
             <h4>🎬 Actions en cours :</h4>
