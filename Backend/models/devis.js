@@ -8,6 +8,12 @@ const devisSchema = new mongoose.Schema({
   date: { type: Date, default: Date.now },
   userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   clientId: { type: mongoose.Schema.Types.ObjectId, ref: "Client", required: true },
+  // ✅ NOUVEAU: Statut métier du devis
+  status: { 
+    type: String, 
+    enum: ['nouveau', 'en_attente', 'fini', 'inactif'], 
+    default: 'nouveau' 
+  },
   tvaRate: Number,
   dateValidite: String,
   dateDevis: String,

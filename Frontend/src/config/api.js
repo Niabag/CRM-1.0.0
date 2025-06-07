@@ -21,8 +21,8 @@ export const API_ENDPOINTS = {
     BASE: `${API_CONFIG.BASE_URL}/clients`,
     REGISTER: (userId) => `${API_CONFIG.BASE_URL}/clients/register/${userId}`,
     DELETE: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}`,
-    UPDATE: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}`, // ✅ NOUVEAU
-    UPDATE_STATUS: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}/status`, // ✅ NOUVEAU
+    UPDATE: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}`,
+    UPDATE_STATUS: (clientId) => `${API_CONFIG.BASE_URL}/clients/${clientId}/status`,
   },
   
   // Devis
@@ -30,6 +30,7 @@ export const API_ENDPOINTS = {
     BASE: `${API_CONFIG.BASE_URL}/devis`,
     BY_CLIENT: (clientId) => `${API_CONFIG.BASE_URL}/devis/client/${clientId}`,
     UPDATE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
+    UPDATE_STATUS: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}/status`, // ✅ NOUVEAU
     DELETE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
   },
 };

@@ -4,6 +4,7 @@ const {
   getUserDevis,
   getClientDevis,
   updateDevis,
+  updateDevisStatus, // ✅ NOUVEAU
   deleteDevis
 } = require("../controllers/devisController");
 const authMiddleware = require("../middleware/auth");
@@ -21,6 +22,9 @@ router.get("/client/:clientId", authMiddleware, getClientDevis);
 
 // 📌 Modifier un devis existant (PUT)
 router.put("/:id", authMiddleware, updateDevis);
+
+// 📌 ✅ NOUVEAU: Mettre à jour le statut d'un devis (PATCH)
+router.patch("/:id/status", authMiddleware, updateDevisStatus);
 
 // 📌 Supprimer un devis (DELETE)
 router.delete("/:id", authMiddleware, deleteDevis);
