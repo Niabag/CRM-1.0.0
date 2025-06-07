@@ -20,7 +20,9 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     .filter(client => {
       const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           client.phone.includes(searchTerm);
+                           client.phone.includes(searchTerm) ||
+                           (client.company && client.company.toLowerCase().includes(searchTerm.toLowerCase())) || // ✅ NOUVEAU
+                           (client.city && client.city.toLowerCase().includes(searchTerm.toLowerCase())); // ✅ NOUVEAU
       
       const matchesStatus = statusFilter === 'all' || 
                            (statusFilter === 'active' && client.status === 'active') ||
@@ -277,6 +279,18 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
+  // ✅ NOUVELLE FONCTION: Formater l'adresse complète
+  const formatAddress = (prospect) => {
+    const parts = [];
+    if (prospect.address) parts.push(prospect.address);
+    if (prospect.postalCode && prospect.city) {
+      parts.push(`${prospect.postalCode} ${prospect.city}`);
+    } else if (prospect.city) {
+      parts.push(prospect.city);
+    }
+    return parts.join(', ');
+  };
+
   return (
     <div className="prospects-page">
       {/* En-tête avec titre et statistiques */}
@@ -323,7 +337,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
             <span className="search-icon">🔍</span>
             <input
               type="text"
-              placeholder="Rechercher par nom, email ou téléphone..."
+              placeholder="Rechercher par nom, email, téléphone, entreprise ou ville..." // ✅ MISE À JOUR
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="search-input"
@@ -482,6 +496,13 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                       <span className="contact-icon">📞</span>
                       <span className="contact-text">{prospect.phone || "N/A"}</span>
                     </div>
+                    {/* ✅ NOUVEAU: Affichage de l'adresse */}
+                    {formatAddress(prospect) && (
+                      <div className="contact-item">
+                        <span className="contact-icon">📍</span>
+                        <span className="contact-text">{formatAddress(prospect)}</span>
+                      </div>
+                    )}
                   </div>
 
                   {prospect.company && (

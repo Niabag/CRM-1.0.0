@@ -40,6 +40,43 @@ const companies = [
   'Garage Auto', 'Cabinet Médical', 'École Formation', 'Agence Immobilière', 'Studio Photo'
 ];
 
+// ✅ NOUVEAU: Adresses françaises réalistes
+const streets = [
+  'Rue de la République', 'Avenue des Champs-Élysées', 'Boulevard Saint-Germain', 'Rue de Rivoli',
+  'Place de la Bastille', 'Rue du Faubourg Saint-Antoine', 'Avenue de la Grande Armée', 'Rue de la Paix',
+  'Boulevard Haussmann', 'Rue Saint-Honoré', 'Avenue Montaigne', 'Rue de Vaugirard',
+  'Boulevard Voltaire', 'Rue de Belleville', 'Avenue Parmentier', 'Rue Oberkampf',
+  'Boulevard de Ménilmontant', 'Rue de Charonne', 'Avenue de la République', 'Rue du Temple',
+  'Boulevard Beaumarchais', 'Rue de Turbigo', 'Avenue de l\'Opéra', 'Rue de Châteaudun',
+  'Boulevard des Italiens', 'Rue Lafayette', 'Avenue de Clichy', 'Rue de Rome',
+  'Boulevard Malesherbes', 'Rue de la Boétie', 'Avenue Foch', 'Rue de Passy',
+  'Boulevard Saint-Michel', 'Rue Mouffetard', 'Avenue des Gobelins', 'Rue de Tolbiac',
+  'Boulevard de l\'Hôpital', 'Rue de Bercy', 'Avenue Daumesnil', 'Rue de Charenton'
+];
+
+const cities = [
+  { name: 'Paris', postalCodes: ['75001', '75002', '75003', '75004', '75005', '75006', '75007', '75008', '75009', '75010'] },
+  { name: 'Lyon', postalCodes: ['69001', '69002', '69003', '69004', '69005', '69006', '69007', '69008', '69009'] },
+  { name: 'Marseille', postalCodes: ['13001', '13002', '13003', '13004', '13005', '13006', '13007', '13008'] },
+  { name: 'Toulouse', postalCodes: ['31000', '31100', '31200', '31300', '31400', '31500'] },
+  { name: 'Nice', postalCodes: ['06000', '06100', '06200', '06300'] },
+  { name: 'Nantes', postalCodes: ['44000', '44100', '44200', '44300'] },
+  { name: 'Montpellier', postalCodes: ['34000', '34070', '34080', '34090'] },
+  { name: 'Strasbourg', postalCodes: ['67000', '67100', '67200'] },
+  { name: 'Bordeaux', postalCodes: ['33000', '33100', '33200', '33300'] },
+  { name: 'Lille', postalCodes: ['59000', '59100', '59200', '59300'] },
+  { name: 'Rennes', postalCodes: ['35000', '35100', '35200'] },
+  { name: 'Reims', postalCodes: ['51100', '51200'] },
+  { name: 'Saint-Étienne', postalCodes: ['42000', '42100'] },
+  { name: 'Toulon', postalCodes: ['83000', '83100', '83200'] },
+  { name: 'Grenoble', postalCodes: ['38000', '38100'] },
+  { name: 'Dijon', postalCodes: ['21000', '21100'] },
+  { name: 'Angers', postalCodes: ['49000', '49100'] },
+  { name: 'Nîmes', postalCodes: ['30000', '30900'] },
+  { name: 'Villeurbanne', postalCodes: ['69100'] },
+  { name: 'Aix-en-Provence', postalCodes: ['13100', '13090'] }
+];
+
 const domains = ['gmail.com', 'hotmail.fr', 'yahoo.fr', 'outlook.com', 'free.fr', 'orange.fr', 'sfr.fr', 'laposte.net', 'wanadoo.fr'];
 
 // ✅ MISE À JOUR: Ajout du statut "en_attente"
@@ -91,6 +128,20 @@ const generateEmail = (firstName, lastName) => {
   ];
   const variation = variations[Math.floor(Math.random() * variations.length)];
   return `${variation}@${domain}`;
+};
+
+// ✅ NOUVELLE FONCTION: Générer une adresse française réaliste
+const generateAddress = () => {
+  const street = streets[Math.floor(Math.random() * streets.length)];
+  const number = Math.floor(Math.random() * 200) + 1;
+  const city = cities[Math.floor(Math.random() * cities.length)];
+  const postalCode = city.postalCodes[Math.floor(Math.random() * city.postalCodes.length)];
+  
+  return {
+    address: `${number} ${street}`,
+    postalCode: postalCode,
+    city: city.name
+  };
 };
 
 // Fonction pour générer une date aléatoire dans les 6 derniers mois
@@ -168,12 +219,19 @@ const generate100Clients = async () => {
       
       usedEmails.add(email);
       
+      // ✅ NOUVEAU: Générer une adresse
+      const addressData = generateAddress();
+      
       const client = {
         name: `${firstName} ${lastName}`,
         email: email,
         phone: generatePhoneNumber(),
         company: Math.random() > 0.3 ? companies[Math.floor(Math.random() * companies.length)] : '', // 70% ont une entreprise
         notes: Math.random() > 0.4 ? sampleNotes[Math.floor(Math.random() * sampleNotes.length)] : '', // 60% ont des notes
+        // ✅ NOUVEAUX CHAMPS: Adresse
+        address: Math.random() > 0.2 ? addressData.address : '', // 80% ont une adresse
+        postalCode: Math.random() > 0.2 ? addressData.postalCode : '', // 80% ont un code postal
+        city: Math.random() > 0.2 ? addressData.city : '', // 80% ont une ville
         status: statuses[Math.floor(Math.random() * statuses.length)], // ✅ INCLUT MAINTENANT "en_attente"
         userId: userId,
         createdAt: generateRandomDate(),
@@ -206,6 +264,13 @@ const generate100Clients = async () => {
                    status === 'inactive' ? '🔴' : '🟡';
       console.log(`   ${emoji} ${status}: ${count} clients`);
     });
+    
+    // ✅ NOUVEAU: Statistiques d'adresses
+    const withAddress = insertedClients.filter(c => c.address).length;
+    const withCity = insertedClients.filter(c => c.city).length;
+    console.log('📍 Statistiques d\'adresses:');
+    console.log(`   - ${withAddress} clients avec adresse complète`);
+    console.log(`   - ${withCity} clients avec ville`);
     
     console.log('');
     console.log('🔐 Informations de connexion:');

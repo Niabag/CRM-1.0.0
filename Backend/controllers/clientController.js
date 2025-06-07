@@ -4,10 +4,12 @@ const Devis = require("../models/devis");
 
 exports.registerClient = async (req, res) => {
   try {
-    const { name, email, phone, company, notes } = req.body;
+    const { name, email, phone, company, notes, address, postalCode, city } = req.body; // ✅ NOUVEAUX CHAMPS
     const { userId } = req.params;
 
-    console.log("➡️ Données reçues pour l'inscription :", { name, email, phone, company, notes, userId });
+    console.log("➡️ Données reçues pour l'inscription :", { 
+      name, email, phone, company, notes, address, postalCode, city, userId 
+    });
 
     // Vérifier si userId est valide
     if (!mongoose.Types.ObjectId.isValid(userId)) {
@@ -29,6 +31,9 @@ exports.registerClient = async (req, res) => {
       phone,
       company,
       notes,
+      address, // ✅ NOUVEAU
+      postalCode, // ✅ NOUVEAU
+      city, // ✅ NOUVEAU
       status: 'nouveau', // ✅ Statut par défaut "nouveau"
       userId: new mongoose.Types.ObjectId(userId),
     });
@@ -100,13 +105,15 @@ exports.updateClientStatus = async (req, res) => {
   }
 };
 
-// ✅ FONCTION CORRIGÉE: Mettre à jour les informations d'un client
+// ✅ FONCTION MISE À JOUR: Mettre à jour les informations d'un client (avec adresse)
 exports.updateClient = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, email, phone, company, notes, status } = req.body;
+    const { name, email, phone, company, notes, status, address, postalCode, city } = req.body; // ✅ NOUVEAUX CHAMPS
 
-    console.log(`🔄 Tentative de mise à jour du client ${id}:`, { name, email, phone, company, notes, status });
+    console.log(`🔄 Tentative de mise à jour du client ${id}:`, { 
+      name, email, phone, company, notes, status, address, postalCode, city 
+    });
 
     // Vérifier que le client appartient à l'utilisateur
     const client = await Client.findOne({ _id: id, userId: req.userId });
@@ -134,6 +141,10 @@ exports.updateClient = async (req, res) => {
     if (phone) client.phone = phone;
     if (company !== undefined) client.company = company;
     if (notes !== undefined) client.notes = notes;
+    // ✅ NOUVEAUX CHAMPS ADRESSE
+    if (address !== undefined) client.address = address;
+    if (postalCode !== undefined) client.postalCode = postalCode;
+    if (city !== undefined) client.city = city;
     // ✅ STATUTS VALIDES FINAUX (SANS PENDING)
     if (status && ['active', 'inactive', 'nouveau', 'en_attente'].includes(status)) {
       client.status = status;

@@ -12,6 +12,10 @@ const clientSchema = new mongoose.Schema({
   },
   company: { type: String },
   notes: { type: String },
+  // ✅ NOUVEAUX CHAMPS: Adresse complète
+  address: { type: String }, // Adresse (rue, numéro)
+  postalCode: { type: String }, // Code postal
+  city: { type: String }, // Ville
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });

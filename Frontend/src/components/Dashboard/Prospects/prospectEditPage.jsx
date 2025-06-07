@@ -26,7 +26,10 @@ const ProspectEditPage = () => {
           setProspect({
             ...foundProspect,
             company: foundProspect.company || '',
-            notes: foundProspect.notes || ''
+            notes: foundProspect.notes || '',
+            address: foundProspect.address || '', // ✅ NOUVEAU
+            postalCode: foundProspect.postalCode || '', // ✅ NOUVEAU
+            city: foundProspect.city || '' // ✅ NOUVEAU
           });
         } else {
           setError("Prospect introuvable");
@@ -112,6 +115,9 @@ const ProspectEditPage = () => {
           phone: prospect.phone,
           company: prospect.company,
           notes: prospect.notes,
+          address: prospect.address, // ✅ NOUVEAU
+          postalCode: prospect.postalCode, // ✅ NOUVEAU
+          city: prospect.city, // ✅ NOUVEAU
           status: prospect.status
         }),
       });
@@ -323,6 +329,47 @@ const ProspectEditPage = () => {
                   value={prospect.company}
                   onChange={(e) => handleInputChange('company', e.target.value)}
                   placeholder="Nom de l'entreprise"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ✅ NOUVELLE SECTION: Adresse */}
+          <div className="form-section">
+            <h3>📍 Adresse</h3>
+            
+            <div className="form-group">
+              <label htmlFor="address">Adresse</label>
+              <input
+                type="text"
+                id="address"
+                value={prospect.address}
+                onChange={(e) => handleInputChange('address', e.target.value)}
+                placeholder="Rue, numéro, bâtiment..."
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label htmlFor="postalCode">Code postal</label>
+                <input
+                  type="text"
+                  id="postalCode"
+                  value={prospect.postalCode}
+                  onChange={(e) => handleInputChange('postalCode', e.target.value)}
+                  placeholder="75000"
+                  maxLength={5}
+                />
+              </div>
+              
+              <div className="form-group">
+                <label htmlFor="city">Ville</label>
+                <input
+                  type="text"
+                  id="city"
+                  value={prospect.city}
+                  onChange={(e) => handleInputChange('city', e.target.value)}
+                  placeholder="Paris"
                 />
               </div>
             </div>
