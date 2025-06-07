@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import Devis from "../../components/Dashboard/Devis/devisPage";
+import Analytics from "../../components/Dashboard/Analytics/analytics";
+import Settings from "../../components/Dashboard/Settings/settings";
+import Notifications from "../../components/Dashboard/Notifications/notifications";
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from "../../config/api";
 import { DEFAULT_DEVIS } from "../../components/Dashboard/Devis/constants";
 import "./dashboard.scss";
@@ -9,12 +12,13 @@ import "./QRCodeGenerator.scss";
 const Dashboard = () => {
   const [clients, setClients] = useState([]);
   const [isOpen, setIsOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState("clients");
+  const [activeTab, setActiveTab] = useState("dashboard");
   const [qrValue, setQrValue] = useState("");
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState(null);
   const [currentDevis, setCurrentDevis] = useState(null);
+  const [user, setUser] = useState({});
 
   const toggleSidebar = () => setIsOpen(!isOpen);
 
@@ -37,7 +41,19 @@ const Dashboard = () => {
         setUserId(decodedToken.userId);
       }
     }
+    
+    // Charger les données utilisateur
+    fetchUserData();
   }, []);
+
+  const fetchUserData = async () => {
+    try {
+      const userData = await apiRequest(API_ENDPOINTS.AUTH.ME);
+      setUser(userData);
+    } catch (error) {
+      console.error("Erreur lors du chargement des données utilisateur:", error);
+    }
+  };
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -96,6 +112,15 @@ const Dashboard = () => {
     setActiveTab("devis");
   };
 
+  const menuItems = [
+    { id: "dashboard", icon: "📊", label: "Tableau de bord" },
+    { id: "clients", icon: "👤", label: "Prospects" },
+    { id: "devis", icon: "📄", label: "Devis" },
+    { id: "notifications", icon: "🔔", label: "Notifications" },
+    { id: "carte", icon: "💼", label: "Carte" },
+    { id: "settings", icon: "⚙️", label: "Paramètres" }
+  ];
+
   return (
     <div className="page-container">
       <div className="app">
@@ -103,67 +128,82 @@ const Dashboard = () => {
           <button className="toggle-btn" onClick={toggleSidebar}>
             {isOpen ? "◀" : "▶"}
           </button>
+          
+          {isOpen && (
+            <div className="user-info">
+              <div className="user-avatar">
+                {user.name ? user.name.charAt(0).toUpperCase() : "U"}
+              </div>
+              <div className="user-details">
+                <p className="user-name">{user.name || "Utilisateur"}</p>
+                <p className="user-email">{user.email || ""}</p>
+              </div>
+            </div>
+          )}
+          
           <div className="menu">
-            <div
-              className={`menu-item ${activeTab === "clients" ? "active" : ""}`}
-              onClick={() => setActiveTab("clients")}
-            >
-              👤 {isOpen && <span>Prospects</span>}
-            </div>
-            <div
-              className={`menu-item ${activeTab === "devis" ? "active" : ""}`}
-              onClick={() => setActiveTab("devis")}
-            >
-              📄 {isOpen && <span>Devis</span>}
-            </div>
-            <div
-              className={`menu-item ${activeTab === "carte" ? "active" : ""}`}
-              onClick={() => setActiveTab("carte")}
-            >
-              💼 {isOpen && <span>Carte</span>}
-            </div>
+            {menuItems.map((item) => (
+              <div
+                key={item.id}
+                className={`menu-item ${activeTab === item.id ? "active" : ""}`}
+                onClick={() => setActiveTab(item.id)}
+              >
+                <span className="menu-icon">{item.icon}</span>
+                {isOpen && <span className="menu-label">{item.label}</span>}
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       <div className="dashboard-container">
+        {activeTab === "dashboard" && <Analytics />}
+
         {activeTab === "clients" && (
           <>
-            <h2>Mes Prospects</h2>
+            <h2>👥 Mes Prospects</h2>
             {loading ? (
               <p>Chargement des clients...</p>
             ) : error ? (
               <p className="error-message">{error}</p>
             ) : clients.length === 0 ? (
-              <p>Aucun client trouvé. Utilisez votre QR code pour en ajouter !</p>
+              <div className="empty-state">
+                <div className="empty-icon">👥</div>
+                <h3>Aucun client trouvé</h3>
+                <p>Utilisez votre QR code pour permettre à vos prospects de s'inscrire !</p>
+                <button onClick={() => setActiveTab("carte")} className="cta-button">
+                  Générer mon QR code
+                </button>
+              </div>
             ) : (
-              <table className="prospect-table">
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Email</th>
-                    <th>Téléphone</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {clients.map((client) => (
-                    <tr key={client._id}>
-                      <td>{client.name || "N/A"}</td>
-                      <td>{client.email || "N/A"}</td>
-                      <td>{client.phone || "N/A"}</td>
-                      <td>
-                        <button onClick={() => handleCreateDevis(client)}>
-                          ➕ Créer un devis
-                        </button>
-                        <button onClick={() => handleDeleteClient(client._id)}>
-                          🗑 Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="clients-grid">
+                {clients.map((client) => (
+                  <div key={client._id} className="client-card">
+                    <div className="client-avatar">
+                      {client.name ? client.name.charAt(0).toUpperCase() : "?"}
+                    </div>
+                    <div className="client-info">
+                      <h3>{client.name || "N/A"}</h3>
+                      <p>📧 {client.email || "N/A"}</p>
+                      <p>📞 {client.phone || "N/A"}</p>
+                    </div>
+                    <div className="client-actions">
+                      <button 
+                        onClick={() => handleCreateDevis(client)}
+                        className="primary-btn"
+                      >
+                        ➕ Créer un devis
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClient(client._id)}
+                        className="danger-btn"
+                      >
+                        🗑 Supprimer
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </>
         )}
@@ -179,18 +219,43 @@ const Dashboard = () => {
           />
         )}
 
+        {activeTab === "notifications" && <Notifications />}
+
+        {activeTab === "settings" && <Settings />}
+
         {activeTab === "carte" && (
           <div className="qr-container">
-            <h2>Carte de visite</h2>
-            <p>Générez un QR code pour permettre à vos prospects de s'inscrire directement</p>
-            <button onClick={generateQRCode}>Générer le QR Code</button>
-            {error && <div className="error-message">{error}</div>}
-            {qrValue && (
-              <div className="qr-display">
-                <QRCode value={qrValue} size={256} />
-                <p>Lien d'inscription: <a href={qrValue} target="_blank" rel="noopener noreferrer">{qrValue}</a></p>
+            <h2>💼 Carte de visite digitale</h2>
+            <div className="qr-content">
+              <div className="qr-info">
+                <h3>Générez votre QR code</h3>
+                <p>Permettez à vos prospects de s'inscrire directement en scannant ce code</p>
+                <button onClick={generateQRCode} className="generate-btn">
+                  🎯 Générer le QR Code
+                </button>
+                {error && <div className="error-message">{error}</div>}
               </div>
-            )}
+              
+              {qrValue && (
+                <div className="qr-display">
+                  <div className="qr-code-wrapper">
+                    <QRCode value={qrValue} size={200} />
+                  </div>
+                  <div className="qr-details">
+                    <p><strong>Lien d'inscription:</strong></p>
+                    <a href={qrValue} target="_blank" rel="noopener noreferrer" className="qr-link">
+                      {qrValue}
+                    </a>
+                    <button 
+                      onClick={() => navigator.clipboard.writeText(qrValue)}
+                      className="copy-btn"
+                    >
+                      📋 Copier le lien
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

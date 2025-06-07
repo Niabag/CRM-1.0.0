@@ -12,6 +12,8 @@ export const API_ENDPOINTS = {
     LOGIN: `${API_CONFIG.BASE_URL}/users/login`,
     REGISTER: `${API_CONFIG.BASE_URL}/users/register`,
     ME: `${API_CONFIG.BASE_URL}/users/me`,
+    UPDATE_PROFILE: `${API_CONFIG.BASE_URL}/users/profile`,
+    CHANGE_PASSWORD: `${API_CONFIG.BASE_URL}/users/password`,
   },
   
   // Clients

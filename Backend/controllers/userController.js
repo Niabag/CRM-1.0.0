@@ -122,3 +122,108 @@ exports.getUser = async (req, res) => {
     });
   }
 };
+
+exports.updateProfile = async (req, res) => {
+  try {
+    const { name, email } = req.body;
+    const userId = req.userId;
+
+    if (!name || !email) {
+      return res.status(400).json({ 
+        message: "Nom et email requis" 
+      });
+    }
+
+    // Vérifier si l'email est déjà utilisé par un autre utilisateur
+    const existingUser = await User.findOne({ 
+      email: email.toLowerCase().trim(),
+      _id: { $ne: userId }
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ 
+        message: "Cet email est déjà utilisé par un autre utilisateur" 
+      });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { 
+        name: name.trim(),
+        email: email.toLowerCase().trim()
+      },
+      { new: true, select: '-password' }
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ 
+        message: "Utilisateur non trouvé" 
+      });
+    }
+
+    console.log("✅ Profil mis à jour pour:", updatedUser.email);
+    res.status(200).json({
+      message: "Profil mis à jour avec succès",
+      user: {
+        userId: updatedUser._id,
+        name: updatedUser.name,
+        email: updatedUser.email
+      }
+    });
+  } catch (error) {
+    console.error("❌ Erreur lors de la mise à jour du profil:", error);
+    res.status(500).json({ 
+      message: "Erreur lors de la mise à jour du profil" 
+    });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const userId = req.userId;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ 
+        message: "Mot de passe actuel et nouveau mot de passe requis" 
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ 
+        message: "Le nouveau mot de passe doit contenir au moins 6 caractères" 
+      });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ 
+        message: "Utilisateur non trouvé" 
+      });
+    }
+
+    // Vérifier le mot de passe actuel
+    const isCurrentPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    if (!isCurrentPasswordValid) {
+      return res.status(400).json({ 
+        message: "Mot de passe actuel incorrect" 
+      });
+    }
+
+    // Hasher le nouveau mot de passe
+    const hashedNewPassword = await bcrypt.hash(newPassword, 12);
+
+    // Mettre à jour le mot de passe
+    await User.findByIdAndUpdate(userId, { password: hashedNewPassword });
+
+    console.log("✅ Mot de passe modifié pour:", user.email);
+    res.status(200).json({ 
+      message: "Mot de passe modifié avec succès" 
+    });
+  } catch (error) {
+    console.error("❌ Erreur lors du changement de mot de passe:", error);
+    res.status(500).json({ 
+      message: "Erreur lors du changement de mot de passe" 
+    });
+  }
+};
