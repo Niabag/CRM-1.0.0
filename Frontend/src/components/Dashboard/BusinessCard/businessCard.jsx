@@ -140,27 +140,64 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ FONCTION CORRIGÉE: Sauvegarder en base de données avec sérialisation propre
+  // ✅ FONCTION CORRIGÉE: Sauvegarder en base de données avec validation stricte
   const saveBusinessCardToDB = async (cardImage = null, config = null) => {
     try {
       setLoading(true);
       
-      // ✅ SÉRIALISATION PROPRE des données
+      // ✅ VALIDATION STRICTE des données avant envoi
       const configToSave = config || cardConfig;
       
-      // ✅ S'assurer que les actions sont bien un tableau d'objets
+      // ✅ NETTOYAGE ET VALIDATION des actions
+      const cleanedActions = Array.isArray(configToSave.actions) 
+        ? configToSave.actions
+            .filter(action => {
+              // Filtrer les actions valides
+              const isValid = action && 
+                             typeof action === 'object' && 
+                             action.type && 
+                             ['download', 'form', 'redirect', 'website'].includes(action.type) &&
+                             typeof action.id === 'number' &&
+                             action.id > 0;
+              
+              if (!isValid) {
+                console.warn('⚠️ Action invalide filtrée:', action);
+              }
+              
+              return isValid;
+            })
+            .map((action, index) => {
+              // Nettoyer et valider chaque action
+              const cleanAction = {
+                id: Number(action.id) || (Date.now() + index),
+                type: String(action.type),
+                file: String(action.file || ''),
+                url: String(action.url || ''),
+                delay: Number(action.delay) || 0,
+                active: Boolean(action.active !== undefined ? action.active : true)
+              };
+              
+              // Validation supplémentaire
+              if (!['download', 'form', 'redirect', 'website'].includes(cleanAction.type)) {
+                cleanAction.type = 'download';
+              }
+              
+              if (cleanAction.delay < 0) {
+                cleanAction.delay = 0;
+              }
+              
+              return cleanAction;
+            })
+        : [];
+
+      // ✅ CONFIGURATION NETTOYÉE avec validation
       const cleanedConfig = {
-        ...configToSave,
-        actions: Array.isArray(configToSave.actions) 
-          ? configToSave.actions.map(action => ({
-              id: Number(action.id) || Date.now(),
-              type: String(action.type || 'download'),
-              file: String(action.file || ''),
-              url: String(action.url || ''),
-              delay: Number(action.delay || 0),
-              active: Boolean(action.active !== undefined ? action.active : true)
-            }))
-          : []
+        showQR: Boolean(configToSave.showQR !== undefined ? configToSave.showQR : true),
+        qrPosition: ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(configToSave.qrPosition) 
+          ? configToSave.qrPosition 
+          : 'bottom-right',
+        qrSize: Math.max(100, Math.min(200, Number(configToSave.qrSize) || 150)),
+        actions: cleanedActions
       };
       
       const dataToSave = {
@@ -168,11 +205,13 @@ const BusinessCard = ({ userId, user }) => {
         cardConfig: cleanedConfig
       };
       
-      console.log("💾 Données à sauvegarder:", {
+      console.log("💾 Données validées à sauvegarder:", {
         hasCardImage: !!dataToSave.cardImage,
         configKeys: Object.keys(dataToSave.cardConfig),
         actionsCount: dataToSave.cardConfig.actions.length,
-        actionsTypes: dataToSave.cardConfig.actions.map(a => a.type)
+        actionsValid: dataToSave.cardConfig.actions.every(a => 
+          a.id && a.type && ['download', 'form', 'redirect', 'website'].includes(a.type)
+        )
       });
       
       const response = await apiRequest(API_ENDPOINTS.BUSINESS_CARDS.BASE, {

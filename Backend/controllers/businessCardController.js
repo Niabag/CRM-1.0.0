@@ -29,12 +29,15 @@ exports.saveBusinessCard = async (req, res) => {
       cleanedConfig = {
         showQR: cardConfig.showQR !== undefined ? cardConfig.showQR : true,
         qrPosition: cardConfig.qrPosition || 'bottom-right',
-        qrSize: cardConfig.qrSize || 150,
+        qrSize: Number(cardConfig.qrSize) || 150,
         actions: []
       };
 
       // ✅ GESTION ROBUSTE des actions (string ou array)
       let actionsData = cardConfig.actions;
+      
+      console.log("🔍 Type des actions reçues:", typeof actionsData);
+      console.log("🔍 Contenu des actions:", actionsData);
       
       // Si les actions sont une chaîne, essayer de les parser
       if (typeof actionsData === 'string') {
@@ -50,11 +53,17 @@ exports.saveBusinessCard = async (req, res) => {
       // ✅ NETTOYAGE des actions pour éviter les erreurs de validation
       if (actionsData && Array.isArray(actionsData)) {
         cleanedConfig.actions = actionsData
-          .filter(action => action && typeof action === 'object')
-          .map(action => {
+          .filter(action => {
+            const isValid = action && typeof action === 'object' && action.type;
+            if (!isValid) {
+              console.log("⚠️ Action invalide filtrée:", action);
+            }
+            return isValid;
+          })
+          .map((action, index) => {
             // ✅ CONVERSION SÉCURISÉE des types
             const cleanAction = {
-              id: Number(action.id) || Date.now() + Math.random(),
+              id: Number(action.id) || (Date.now() + index),
               type: String(action.type || 'download'),
               file: String(action.file || ''),
               url: String(action.url || ''),
@@ -64,21 +73,39 @@ exports.saveBusinessCard = async (req, res) => {
             
             // ✅ VALIDATION du type
             if (!['download', 'form', 'redirect', 'website'].includes(cleanAction.type)) {
+              console.log("⚠️ Type d'action invalide, correction:", cleanAction.type, "→ download");
               cleanAction.type = 'download';
             }
             
+            console.log(`✅ Action ${index + 1} nettoyée:`, cleanAction);
             return cleanAction;
           });
+      } else {
+        console.log("⚠️ Actions non valides, utilisation d'un tableau vide");
+        cleanedConfig.actions = [];
       }
     }
 
-    console.log("🧹 Configuration nettoyée:", JSON.stringify(cleanedConfig, null, 2));
+    console.log("🧹 Configuration finale nettoyée:", {
+      showQR: cleanedConfig.showQR,
+      qrPosition: cleanedConfig.qrPosition,
+      qrSize: cleanedConfig.qrSize,
+      actionsCount: cleanedConfig.actions.length,
+      actions: cleanedConfig.actions
+    });
+
+    // ✅ VALIDATION SUPPLÉMENTAIRE avant sauvegarde
+    if (!Array.isArray(cleanedConfig.actions)) {
+      console.error("❌ Les actions ne sont pas un tableau:", typeof cleanedConfig.actions);
+      cleanedConfig.actions = [];
+    }
 
     // Vérifier si une carte existe déjà pour cet utilisateur
     let businessCard = await BusinessCard.findOne({ userId });
 
     if (businessCard) {
       // ✅ MISE À JOUR avec upsert pour éviter les conflits
+      console.log("🔄 Mise à jour de la carte existante");
       businessCard = await BusinessCard.findOneAndUpdate(
         { userId },
         {
@@ -99,12 +126,20 @@ exports.saveBusinessCard = async (req, res) => {
       });
     } else {
       // ✅ CRÉATION avec gestion d'erreur de duplication
+      console.log("🆕 Création d'une nouvelle carte");
       try {
         businessCard = new BusinessCard({
           userId,
           cardImage,
           cardConfig: cleanedConfig
         });
+
+        // ✅ VALIDATION AVANT SAUVEGARDE
+        const validationError = businessCard.validateSync();
+        if (validationError) {
+          console.error("❌ Erreur de validation:", validationError);
+          throw validationError;
+        }
 
         await businessCard.save();
         
@@ -143,8 +178,28 @@ exports.saveBusinessCard = async (req, res) => {
   } catch (error) {
     console.error("❌ Erreur sauvegarde carte de visite:", error);
     console.error("❌ Stack trace:", error.stack);
+    
+    // ✅ GESTION D'ERREUR PLUS DÉTAILLÉE
+    let errorMessage = "Erreur lors de la sauvegarde de la carte de visite";
+    
+    if (error.name === 'ValidationError') {
+      console.error("❌ Erreurs de validation détaillées:", error.errors);
+      errorMessage = "Erreur de validation des données";
+      
+      // Détailler les erreurs de validation
+      const validationErrors = Object.keys(error.errors).map(key => {
+        return `${key}: ${error.errors[key].message}`;
+      });
+      
+      return res.status(400).json({ 
+        message: errorMessage,
+        validationErrors: validationErrors,
+        error: error.message 
+      });
+    }
+    
     res.status(500).json({ 
-      message: "Erreur lors de la sauvegarde de la carte de visite", 
+      message: errorMessage, 
       error: error.message 
     });
   }
@@ -237,8 +292,8 @@ exports.updateCardConfig = async (req, res) => {
       if (Array.isArray(actionsData)) {
         cleanedConfig.actions = actionsData
           .filter(action => action && typeof action === 'object')
-          .map(action => ({
-            id: Number(action.id) || Date.now() + Math.random(),
+          .map((action, index) => ({
+            id: Number(action.id) || (Date.now() + index),
             type: String(action.type || 'download'),
             file: String(action.file || ''),
             url: String(action.url || ''),
