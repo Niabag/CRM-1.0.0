@@ -7,12 +7,11 @@ const BusinessCard = ({ userId, user }) => {
   const [cardConfig, setCardConfig] = useState({
     cardImage: '/images/default-business-card.png',
     downloadImage: '/images/welcome.png',
-    redirectType: 'form', // 'form', 'website', 'download'
+    redirectType: 'form',
     websiteUrl: '',
     showQR: true,
     qrPosition: 'bottom-right',
     qrSize: 150,
-    // ✅ NOUVEAU: Actions multiples
     actions: [
       { id: 1, type: 'download', file: '/images/welcome.png', delay: 0, active: true },
       { id: 2, type: 'form', url: '', delay: 1000, active: true },
@@ -23,8 +22,8 @@ const BusinessCard = ({ userId, user }) => {
   const [qrValue, setQrValue] = useState("");
   const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [generatedCardUrl, setGeneratedCardUrl] = useState(null);
   
-  // ✅ NOUVEAU: Statistiques en temps réel
   const [stats, setStats] = useState({
     scansToday: 0,
     scansThisMonth: 0,
@@ -42,10 +41,8 @@ const BusinessCard = ({ userId, user }) => {
     }
   }, [userId, cardConfig.actions]);
 
-  // ✅ NOUVEAU: Récupération des statistiques
   const fetchStats = async () => {
     try {
-      // Simuler des données de statistiques (à remplacer par de vraies données)
       const mockStats = {
         scansToday: Math.floor(Math.random() * 50) + 10,
         scansThisMonth: Math.floor(Math.random() * 500) + 100,
@@ -75,7 +72,6 @@ const BusinessCard = ({ userId, user }) => {
   const generateQRCode = () => {
     if (!userId) return;
     
-    // ✅ NOUVEAU: URL avec actions multiples encodées
     const actionsData = encodeURIComponent(JSON.stringify(cardConfig.actions.filter(a => a.active)));
     const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
     
@@ -117,7 +113,6 @@ const BusinessCard = ({ userId, user }) => {
     }));
   };
 
-  // ✅ NOUVEAU: Gestion des actions multiples
   const addAction = () => {
     const newAction = {
       id: Date.now(),
@@ -170,68 +165,93 @@ const BusinessCard = ({ userId, user }) => {
     }));
   };
 
-  const downloadBusinessCard = () => {
+  // ✅ NOUVELLE FONCTION: Générer la carte de visite avec QR code
+  const generateBusinessCard = async () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Dimensions standard carte de visite (85.6 x 53.98 mm à 300 DPI)
-    canvas.width = 1012;
-    canvas.height = 638;
+    // Dimensions optimales pour carte de visite
+    canvas.width = 800;
+    canvas.height = 500;
     
-    const img = new Image();
-    img.onload = () => {
-      // Dessiner l'image de fond
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      
-      if (cardConfig.showQR && qrValue) {
-        // Générer le QR code
-        const qrSize = cardConfig.qrSize;
-        
-        // Position du QR code
-        let x, y;
-        switch (cardConfig.qrPosition) {
-          case 'top-left':
-            x = 20;
-            y = 20;
-            break;
-          case 'top-right':
-            x = canvas.width - qrSize - 20;
-            y = 20;
-            break;
-          case 'bottom-left':
-            x = 20;
-            y = canvas.height - qrSize - 20;
-            break;
-          case 'bottom-right':
-          default:
-            x = canvas.width - qrSize - 20;
-            y = canvas.height - qrSize - 20;
-            break;
-        }
-        
-        // Dessiner un fond blanc pour le QR code
-        ctx.fillStyle = 'white';
-        ctx.fillRect(x - 10, y - 10, qrSize + 20, qrSize + 20);
-        
-        // Dessiner un QR code simplifié (carré noir)
-        ctx.fillStyle = 'black';
-        ctx.fillRect(x, y, qrSize, qrSize);
-        
-        // Ajouter du texte "QR CODE"
-        ctx.fillStyle = 'white';
-        ctx.font = '16px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('QR CODE', x + qrSize/2, y + qrSize/2);
-      }
-      
-      // Télécharger
-      const link = document.createElement('a');
-      link.download = 'carte-de-visite-avec-qr.png';
-      link.href = canvas.toDataURL();
-      link.click();
-    };
+    // Fond dégradé
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, '#667eea');
+    gradient.addColorStop(1, '#764ba2');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    img.src = cardConfig.cardImage;
+    // Titre
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 48px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
+    
+    // Informations utilisateur
+    ctx.font = '32px Arial';
+    ctx.fillText(user?.name || 'Votre Nom', canvas.width / 2, 140);
+    
+    ctx.font = '24px Arial';
+    ctx.fillText(user?.email || 'votre.email@exemple.com', canvas.width / 2, 180);
+    
+    // QR Code (simulé avec un carré)
+    if (cardConfig.showQR && qrValue) {
+      const qrSize = 120;
+      const qrX = canvas.width - qrSize - 40;
+      const qrY = canvas.height - qrSize - 40;
+      
+      // Fond blanc pour QR
+      ctx.fillStyle = 'white';
+      ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+      
+      // QR simulé
+      ctx.fillStyle = 'black';
+      ctx.fillRect(qrX, qrY, qrSize, qrSize);
+      
+      // Texte QR
+      ctx.fillStyle = 'white';
+      ctx.font = '14px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('SCANNEZ-MOI', qrX + qrSize/2, qrY + qrSize/2);
+    }
+    
+    // Instructions
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = '18px Arial';
+    ctx.textAlign = 'left';
+    ctx.fillText('📱 Scannez le QR code pour vous inscrire', 40, canvas.height - 80);
+    ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
+    
+    // Convertir en URL
+    const dataUrl = canvas.toDataURL('image/png');
+    setGeneratedCardUrl(dataUrl);
+    return dataUrl;
+  };
+
+  const downloadBusinessCard = async () => {
+    const cardUrl = await generateBusinessCard();
+    
+    const link = document.createElement('a');
+    link.download = 'carte-de-visite-numerique.png';
+    link.href = cardUrl;
+    link.click();
+  };
+
+  // ✅ NOUVELLE FONCTION: Utiliser la carte générée pour les téléchargements
+  const useGeneratedCard = async () => {
+    const cardUrl = await generateBusinessCard();
+    
+    // Mettre à jour toutes les actions de téléchargement
+    setCardConfig(prev => ({
+      ...prev,
+      actions: prev.actions.map(action => 
+        action.type === 'download' 
+          ? { ...action, file: cardUrl }
+          : action
+      )
+    }));
+    
+    alert('✅ Carte de visite appliquée à tous les téléchargements !');
   };
 
   const copyQRLink = () => {
@@ -255,7 +275,7 @@ const BusinessCard = ({ userId, user }) => {
 
   return (
     <div className="business-card-container">
-      {/* ✅ NOUVEAU: Statistiques en haut de page */}
+      {/* Statistiques en haut */}
       <div className="stats-header">
         <div className="stats-overview">
           <div className="stat-card highlight">
@@ -314,9 +334,10 @@ const BusinessCard = ({ userId, user }) => {
         <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
       </div>
 
-      <div className="card-content">
-        {/* Configuration */}
-        <div className="card-config">
+      {/* ✅ NOUVEAU: Layout en colonnes fixes */}
+      <div className="card-main-content">
+        {/* Colonne de gauche - Configuration */}
+        <div className="card-config-column">
           <div className="config-section">
             <h3>🎨 Design de la carte</h3>
             
@@ -376,7 +397,7 @@ const BusinessCard = ({ userId, user }) => {
             )}
           </div>
 
-          {/* ✅ NOUVEAU: Section actions multiples */}
+          {/* Actions après scan */}
           <div className="config-section">
             <h3>🎯 Actions après scan</h3>
             <p className="section-description">
@@ -457,25 +478,36 @@ const BusinessCard = ({ userId, user }) => {
                     {action.type === 'download' && (
                       <div className="form-group">
                         <label>Fichier à télécharger :</label>
-                        <div className="file-upload">
-                          <input
-                            type="file"
-                            accept="image/*,application/pdf,.doc,.docx"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                  updateAction(action.id, 'file', reader.result);
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
-                            id={`download-file-${action.id}`}
-                          />
-                          <label htmlFor={`download-file-${action.id}`} className="upload-btn small">
-                            📎 Choisir
-                          </label>
+                        <div className="download-options">
+                          <div className="file-upload">
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf,.doc,.docx"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    updateAction(action.id, 'file', reader.result);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              id={`download-file-${action.id}`}
+                            />
+                            <label htmlFor={`download-file-${action.id}`} className="upload-btn small">
+                              📎 Fichier personnalisé
+                            </label>
+                          </div>
+                          
+                          {/* ✅ NOUVEAU: Bouton pour utiliser la carte générée */}
+                          <button 
+                            type="button"
+                            onClick={useGeneratedCard}
+                            className="upload-btn small card-btn"
+                          >
+                            💼 Carte de visite
+                          </button>
                         </div>
                       </div>
                     )}
@@ -501,117 +533,119 @@ const BusinessCard = ({ userId, user }) => {
           </div>
         </div>
 
-        {/* Aperçu */}
-        <div className="card-preview">
-          <h3>👁️ Aperçu de la carte</h3>
-          
-          <div className="preview-container">
-            <div className="business-card-preview">
-              <img 
-                src={cardConfig.cardImage} 
-                alt="Carte de visite"
-                className="card-image"
-              />
+        {/* Colonne de droite - Aperçu fixe */}
+        <div className="card-preview-column">
+          <div className="card-preview">
+            <h3>👁️ Aperçu de la carte</h3>
+            
+            <div className="preview-container">
+              <div className="business-card-preview">
+                <img 
+                  src={cardConfig.cardImage} 
+                  alt="Carte de visite"
+                  className="card-image"
+                />
+                
+                {cardConfig.showQR && qrValue && (
+                  <div className={`qr-overlay ${cardConfig.qrPosition}`}>
+                    <QRCode 
+                      value={qrValue} 
+                      size={cardConfig.qrSize * 0.6}
+                      bgColor="white"
+                      fgColor="black"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="preview-actions">
+              <button onClick={() => setPreviewMode(!previewMode)} className="btn-preview">
+                {previewMode ? '📝 Mode édition' : '👁️ Mode aperçu'}
+              </button>
               
-              {cardConfig.showQR && qrValue && (
-                <div className={`qr-overlay ${cardConfig.qrPosition}`}>
+              <button onClick={downloadBusinessCard} className="btn-download">
+                💾 Télécharger la carte
+              </button>
+            </div>
+            
+            {/* Aperçu des actions */}
+            <div className="actions-preview">
+              <h4>🎬 Séquence d'actions</h4>
+              <div className="actions-timeline">
+                {cardConfig.actions
+                  .filter(action => action.active)
+                  .map((action, index) => (
+                  <div key={action.id} className="timeline-item">
+                    <div className="timeline-marker">{index + 1}</div>
+                    <div className="timeline-content">
+                      <div className="timeline-action">
+                        {getActionTypeLabel(action.type)}
+                      </div>
+                      <div className="timeline-delay">
+                        {action.delay > 0 ? `Après ${action.delay}ms` : 'Immédiat'}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* QR Code et actions */}
+          <div className="qr-section">
+            <h3>📱 QR Code</h3>
+            
+            <div className="qr-display">
+              <div className="qr-code-wrapper">
+                {qrValue && (
                   <QRCode 
                     value={qrValue} 
-                    size={cardConfig.qrSize * 0.6} // Réduction pour l'aperçu
+                    size={200}
                     bgColor="white"
                     fgColor="black"
                   />
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="preview-actions">
-            <button onClick={() => setPreviewMode(!previewMode)} className="btn-preview">
-              {previewMode ? '📝 Mode édition' : '👁️ Mode aperçu'}
-            </button>
-            
-            <button onClick={downloadBusinessCard} className="btn-download">
-              💾 Télécharger la carte
-            </button>
-          </div>
-          
-          {/* ✅ NOUVEAU: Aperçu des actions */}
-          <div className="actions-preview">
-            <h4>🎬 Séquence d'actions</h4>
-            <div className="actions-timeline">
-              {cardConfig.actions
-                .filter(action => action.active)
-                .map((action, index) => (
-                <div key={action.id} className="timeline-item">
-                  <div className="timeline-marker">{index + 1}</div>
-                  <div className="timeline-content">
-                    <div className="timeline-action">
-                      {getActionTypeLabel(action.type)}
-                    </div>
-                    <div className="timeline-delay">
-                      {action.delay > 0 ? `Après ${action.delay}ms` : 'Immédiat'}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* QR Code et actions */}
-        <div className="qr-section">
-          <h3>📱 QR Code</h3>
-          
-          <div className="qr-display">
-            <div className="qr-code-wrapper">
-              {qrValue && (
-                <QRCode 
-                  value={qrValue} 
-                  size={200}
-                  bgColor="white"
-                  fgColor="black"
-                />
-              )}
-            </div>
-            
-            <div className="qr-info">
-              <div className="qr-details">
-                <h4>Actions configurées :</h4>
-                <div className="action-info">
-                  {cardConfig.actions
-                    .filter(action => action.active)
-                    .map((action, index) => (
-                    <div key={action.id} className="action-summary">
-                      <span className="action-number">#{index + 1}</span>
-                      <span className="action-type">{getActionTypeLabel(action.type)}</span>
-                      <span className="action-timing">
-                        {action.delay > 0 ? `+${action.delay}ms` : 'Immédiat'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="qr-link">
-                  <strong>Lien :</strong>
-                  <a href={qrValue} target="_blank" rel="noopener noreferrer">
-                    {qrValue}
-                  </a>
-                </div>
+                )}
               </div>
               
-              <div className="qr-actions">
-                <button onClick={copyQRLink} className="btn-copy">
-                  📋 Copier le lien
-                </button>
+              <div className="qr-info">
+                <div className="qr-details">
+                  <h4>Actions configurées :</h4>
+                  <div className="action-info">
+                    {cardConfig.actions
+                      .filter(action => action.active)
+                      .map((action, index) => (
+                      <div key={action.id} className="action-summary">
+                        <span className="action-number">#{index + 1}</span>
+                        <span className="action-type">{getActionTypeLabel(action.type)}</span>
+                        <span className="action-timing">
+                          {action.delay > 0 ? `+${action.delay}ms` : 'Immédiat'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  
+                  <div className="qr-link">
+                    <strong>Lien :</strong>
+                    <a href={qrValue} target="_blank" rel="noopener noreferrer">
+                      {qrValue}
+                    </a>
+                  </div>
+                </div>
                 
-                <button onClick={testQRCode} className="btn-test">
-                  🧪 Tester le QR code
-                </button>
-                
-                <button onClick={generateQRCode} className="btn-refresh">
-                  🔄 Régénérer
-                </button>
+                <div className="qr-actions">
+                  <button onClick={copyQRLink} className="btn-copy">
+                    📋 Copier le lien
+                  </button>
+                  
+                  <button onClick={testQRCode} className="btn-test">
+                    🧪 Tester le QR code
+                  </button>
+                  
+                  <button onClick={generateQRCode} className="btn-refresh">
+                    🔄 Régénérer
+                  </button>
+                </div>
               </div>
             </div>
           </div>
