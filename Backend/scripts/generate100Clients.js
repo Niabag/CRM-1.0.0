@@ -79,8 +79,8 @@ const cities = [
 
 const domains = ['gmail.com', 'hotmail.fr', 'yahoo.fr', 'outlook.com', 'free.fr', 'orange.fr', 'sfr.fr', 'laposte.net', 'wanadoo.fr'];
 
-// ✅ MISE À JOUR: Ajout du statut "en_attente"
-const statuses = ['nouveau', 'active', 'inactive', 'pending', 'en_attente'];
+// ✅ CORRECTION: Statuts valides selon le modèle (sans "pending")
+const statuses = ['nouveau', 'active', 'inactive', 'en_attente'];
 
 const sampleNotes = [
   'Intéressé par un site e-commerce',
@@ -232,7 +232,7 @@ const generate100Clients = async () => {
         address: Math.random() > 0.2 ? addressData.address : '', // 80% ont une adresse
         postalCode: Math.random() > 0.2 ? addressData.postalCode : '', // 80% ont un code postal
         city: Math.random() > 0.2 ? addressData.city : '', // 80% ont une ville
-        status: statuses[Math.floor(Math.random() * statuses.length)], // ✅ INCLUT MAINTENANT "en_attente"
+        status: statuses[Math.floor(Math.random() * statuses.length)], // ✅ STATUTS VALIDES UNIQUEMENT
         userId: userId,
         createdAt: generateRandomDate(),
         updatedAt: generateRandomDate()
@@ -259,7 +259,7 @@ const generate100Clients = async () => {
     console.log('📈 Répartition par statut:');
     Object.entries(statusStats).forEach(([status, count]) => {
       const emoji = status === 'nouveau' ? '🔵' : 
-                   status === 'en_attente' ? '🟣' : // ✅ NOUVEAU
+                   status === 'en_attente' ? '🟣' : 
                    status === 'active' ? '🟢' : 
                    status === 'inactive' ? '🔴' : '🟡';
       console.log(`   ${emoji} ${status}: ${count} clients`);
