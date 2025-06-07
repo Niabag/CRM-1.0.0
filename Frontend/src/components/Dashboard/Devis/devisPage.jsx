@@ -196,147 +196,38 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ FONCTION PDF SIMPLIFIÉE ET CORRIGÉE
+  // ✅ FONCTION PDF ORIGINALE RESTAURÉE
   const handleDownloadPDF = async (devis) => {
     try {
-      console.log("🔄 Début génération PDF...");
-      
+      // Créer un élément temporaire pour le rendu PDF
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.width = '210mm';
+      tempDiv.style.background = 'white';
+      document.body.appendChild(tempDiv);
+
       // Importer dynamiquement les modules nécessaires
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
         import('html2canvas'),
         import('jspdf')
       ]);
 
-      console.log("✅ Modules importés");
+      // Créer le contenu HTML du devis
+      const devisHTML = generateDevisHTML(devis);
+      tempDiv.innerHTML = devisHTML;
 
-      // Obtenir les infos client
-      const clientInfo = clients.find(c => c._id === normalizeClientId(devis.clientId)) || {};
-      
-      // Calculer les totaux
-      const tauxTVA = { "20": { ht: 0, tva: 0 }, "10": { ht: 0, tva: 0 }, "5.5": { ht: 0, tva: 0 } };
-      
-      if (Array.isArray(devis.articles)) {
-        devis.articles.forEach((item) => {
-          const price = parseFloat(item.unitPrice || "0");
-          const qty = parseFloat(item.quantity || "0");
-          const taux = item.tvaRate || "20";
-          if (!isNaN(price) && !isNaN(qty) && tauxTVA[taux]) {
-            const ht = price * qty;
-            tauxTVA[taux].ht += ht;
-            tauxTVA[taux].tva += ht * (parseFloat(taux) / 100);
-          }
-        });
-      }
+      // Attendre que les styles soient appliqués
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-      const totalHT = Object.values(tauxTVA).reduce((sum, t) => sum + t.ht, 0);
-      const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
-      const totalTTC = totalHT + totalTVA;
-
-      // Créer un conteneur temporaire simple
-      const tempDiv = document.createElement('div');
-      tempDiv.style.cssText = `
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-        width: 800px;
-        background: white;
-        padding: 40px;
-        font-family: Arial, sans-serif;
-        font-size: 14px;
-        color: black;
-      `;
-
-      // HTML simplifié pour éviter les erreurs
-      tempDiv.innerHTML = `
-        <div style="font-family: Arial, sans-serif; background: white; color: black; padding: 20px;">
-          <!-- En-tête -->
-          <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px;">
-            <div>
-              <h2 style="margin: 0; color: #333;">${devis.entrepriseName || 'Entreprise'}</h2>
-              <p style="margin: 5px 0;">${devis.entrepriseAddress || ''}</p>
-              <p style="margin: 5px 0;">${devis.entrepriseCity || ''}</p>
-              <p style="margin: 5px 0;">${devis.entreprisePhone || ''}</p>
-              <p style="margin: 5px 0;">${devis.entrepriseEmail || ''}</p>
-            </div>
-            <div style="text-align: right;">
-              <h1 style="margin: 0; font-size: 2.5em; color: #333;">DEVIS</h1>
-              <p style="margin: 5px 0;"><strong>N°:</strong> ${devis._id || 'N/A'}</p>
-              <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(devis.dateDevis)}</p>
-              <p style="margin: 5px 0;"><strong>Validité:</strong> ${formatDate(devis.dateValidite)}</p>
-            </div>
-          </div>
-          
-          <!-- Client -->
-          <div style="margin-bottom: 30px;">
-            <h3 style="color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Client</h3>
-            <p style="margin: 5px 0;"><strong>${clientInfo.name || devis.clientName || 'Client'}</strong></p>
-            <p style="margin: 5px 0;">${clientInfo.email || devis.clientEmail || ''}</p>
-            <p style="margin: 5px 0;">${clientInfo.phone || devis.clientPhone || ''}</p>
-          </div>
-
-          <!-- Tableau des prestations -->
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
-            <thead>
-              <tr style="background: #333; color: white;">
-                <th style="border: 1px solid #ccc; padding: 10px; text-align: left;">Description</th>
-                <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Unité</th>
-                <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Qté</th>
-                <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Prix HT</th>
-                <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">TVA</th>
-                <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Total HT</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${(devis.articles || []).map(article => {
-                const price = parseFloat(article.unitPrice || 0);
-                const qty = parseFloat(article.quantity || 0);
-                const total = price * qty;
-                return `
-                  <tr>
-                    <td style="border: 1px solid #ccc; padding: 10px;">${article.description || ''}</td>
-                    <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${article.unit || ''}</td>
-                    <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${qty}</td>
-                    <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${price.toFixed(2)} €</td>
-                    <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${article.tvaRate || 20}%</td>
-                    <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${total.toFixed(2)} €</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
-          </table>
-
-          <!-- Totaux -->
-          <div style="text-align: right; margin-bottom: 30px;">
-            <p style="margin: 5px 0; font-size: 1.1em;"><strong>Total HT: ${totalHT.toFixed(2)} €</strong></p>
-            <p style="margin: 5px 0; font-size: 1.1em;"><strong>Total TVA: ${totalTVA.toFixed(2)} €</strong></p>
-            <p style="margin: 5px 0; font-size: 1.2em;"><strong>Total TTC: ${totalTTC.toFixed(2)} €</strong></p>
-          </div>
-
-          <!-- Signature -->
-          <div style="margin-top: 50px; text-align: center;">
-            <p style="font-style: italic;">Bon pour accord - Date et signature :</p>
-            <div style="margin-top: 30px; border-bottom: 1px solid #000; width: 200px; margin-left: auto; margin-right: auto;"></div>
-          </div>
-        </div>
-      `;
-
-      document.body.appendChild(tempDiv);
-      console.log("✅ Conteneur ajouté au DOM");
-
-      // Attendre un peu pour le rendu
-      await new Promise(resolve => setTimeout(resolve, 500));
-
-      // Capturer avec html2canvas
-      console.log("🔄 Capture en cours...");
+      // Générer le canvas
       const canvas = await html2canvas(tempDiv, {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false
+        backgroundColor: '#ffffff'
       });
-
-      console.log("✅ Capture terminée");
 
       // Créer le PDF
       const imgData = canvas.toDataURL('image/png');
@@ -363,12 +254,81 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
       // Nettoyer
       document.body.removeChild(tempDiv);
-      console.log("✅ PDF généré avec succès");
-      
     } catch (error) {
-      console.error('❌ Erreur génération PDF:', error);
-      alert('❌ Erreur lors de la génération du PDF: ' + error.message);
+      console.error('Erreur génération PDF:', error);
+      alert('❌ Erreur lors de la génération du PDF');
     }
+  };
+
+  // ✅ Fonction pour générer le HTML du devis (CODE ORIGINAL)
+  const generateDevisHTML = (devis) => {
+    const totalTTC = calculateTTC(devis);
+    const clientInfo = clients.find(c => c._id === devis.clientId) || {};
+    
+    return `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background: white; color: black;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px;">
+          <div>
+            <h2 style="margin: 0; color: #333;">${devis.entrepriseName || 'Entreprise'}</h2>
+            <p style="margin: 5px 0;">${devis.entrepriseAddress || ''}</p>
+            <p style="margin: 5px 0;">${devis.entrepriseCity || ''}</p>
+            <p style="margin: 5px 0;">${devis.entreprisePhone || ''}</p>
+            <p style="margin: 5px 0;">${devis.entrepriseEmail || ''}</p>
+          </div>
+          <div style="text-align: right;">
+            <h1 style="margin: 0; font-size: 2.5em; color: #333;">DEVIS</h1>
+            <p style="margin: 5px 0;"><strong>N°:</strong> ${devis._id || 'N/A'}</p>
+            <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(devis.dateDevis)}</p>
+            <p style="margin: 5px 0;"><strong>Validité:</strong> ${formatDate(devis.dateValidite)}</p>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+          <h3 style="color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px;">Client</h3>
+          <p style="margin: 5px 0;"><strong>${clientInfo.name || devis.clientName || 'Client'}</strong></p>
+          <p style="margin: 5px 0;">${clientInfo.email || devis.clientEmail || ''}</p>
+          <p style="margin: 5px 0;">${clientInfo.phone || devis.clientPhone || ''}</p>
+          <p style="margin: 5px 0;">${devis.clientAddress || ''}</p>
+        </div>
+
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+          <thead>
+            <tr style="background: #333; color: white;">
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: left;">Description</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Qté</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Prix HT</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">TVA</th>
+              <th style="border: 1px solid #ccc; padding: 10px; text-align: center;">Total HT</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${devis.articles.map(article => {
+              const price = parseFloat(article.unitPrice || 0);
+              const qty = parseFloat(article.quantity || 0);
+              const total = price * qty;
+              return `
+                <tr>
+                  <td style="border: 1px solid #ccc; padding: 10px;">${article.description || ''}</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${qty} ${article.unit || ''}</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${price.toFixed(2)} €</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${article.tvaRate || 20}%</td>
+                  <td style="border: 1px solid #ccc; padding: 10px; text-align: center;">${total.toFixed(2)} €</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+
+        <div style="text-align: right; margin-bottom: 30px;">
+          <p style="margin: 5px 0; font-size: 1.2em;"><strong>Total TTC: ${totalTTC.toFixed(2)} €</strong></p>
+        </div>
+
+        <div style="margin-top: 50px; text-align: center; font-style: italic;">
+          <p>Bon pour accord - Date et signature :</p>
+          <div style="margin-top: 30px; border-bottom: 1px solid #000; width: 200px; margin-left: auto; margin-right: auto;"></div>
+        </div>
+      </div>
+    `;
   };
 
   const handleFieldChange = (name, value, index = null) => {
