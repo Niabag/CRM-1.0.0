@@ -1,6 +1,6 @@
 .business-card-container {
   padding: 2rem;
-  max-width: 1000px;
+  max-width: 1200px;
   margin: 0 auto;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
@@ -75,29 +75,32 @@
 }
 
 .user-details p {
-  margin: 0;
+  margin: 0 0 0.25rem 0;
   color: #4a5568;
   font-size: 1rem;
 }
 
-/* Section QR Code */
-.qr-section {
+.user-role {
+  color: #667eea;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-style: italic;
+}
+
+/* Section génération */
+.generation-section {
   margin-bottom: 3rem;
-}
-
-.qr-info {
   text-align: center;
-  margin-bottom: 2rem;
 }
 
-.qr-info h3 {
+.generation-info h3 {
   margin: 0 0 1rem 0;
   color: #2d3748;
   font-size: 1.5rem;
   font-weight: 600;
 }
 
-.qr-info p {
+.generation-info p {
   margin: 0 0 2rem 0;
   color: #718096;
   font-size: 1rem;
@@ -108,7 +111,7 @@
   background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
   border: none;
-  padding: 1rem 2rem;
+  padding: 1.2rem 2.5rem;
   border-radius: 12px;
   font-size: 1.1rem;
   font-weight: 600;
@@ -117,79 +120,152 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.2);
 }
 
 .generate-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
 }
 
-/* Affichage du QR Code */
-.qr-display {
-  display: flex;
-  gap: 3rem;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 2rem;
+/* Section aperçu de la carte */
+.card-preview-section {
+  margin-bottom: 3rem;
   padding: 2rem;
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
   border-radius: 16px;
   border: 2px solid #e2e8f0;
 }
 
-.qr-code-wrapper {
-  padding: 1.5rem;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  border: 3px solid #667eea;
-}
-
-.qr-details {
-  flex: 1;
-  min-width: 300px;
-  text-align: left;
-}
-
-.qr-details h4 {
-  margin: 0 0 1rem 0;
+.card-preview-section h3 {
+  margin: 0 0 2rem 0;
   color: #2d3748;
-  font-size: 1.2rem;
+  font-size: 1.3rem;
   font-weight: 600;
+  text-align: center;
 }
 
-.link-container {
+/* Carte de visite à télécharger */
+.business-card-download {
+  margin: 0 auto 2rem auto;
+  max-width: 800px;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+}
+
+.card-background {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 300px;
+  color: white;
+  position: relative;
+}
+
+.card-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.03)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.card-left {
+  flex: 1;
+  z-index: 1;
+}
+
+.card-logo {
   margin-bottom: 1.5rem;
 }
 
-.qr-link {
-  display: block;
-  color: #667eea;
-  text-decoration: none;
-  word-break: break-all;
-  background: white;
-  padding: 1rem;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
-  transition: all 0.3s ease;
+.logo-circle {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(10px);
+}
+
+.card-name {
+  margin: 0 0 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.card-title {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.card-contact {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.card-contact p {
+  margin: 0;
   font-size: 0.9rem;
-  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-.qr-link:hover {
-  border-color: #667eea;
-  background: #f8f9ff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.1);
+.card-right {
+  display: flex;
+  align-items: center;
+  z-index: 1;
 }
 
-.qr-actions {
+.qr-section-card {
+  text-align: center;
+  background: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.qr-instruction {
+  margin: 1rem 0 0 0;
+  color: #4a5568;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Actions de la carte */
+.card-actions {
   display: flex;
   gap: 1rem;
+  justify-content: center;
   flex-wrap: wrap;
+  margin-bottom: 2rem;
 }
 
+.download-btn,
 .copy-btn,
 .test-btn {
   padding: 0.75rem 1.5rem;
@@ -203,9 +279,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.5rem;
-  flex: 1;
+  min-width: 160px;
   justify-content: center;
-  min-width: 140px;
+}
+
+.download-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
 }
 
 .copy-btn {
@@ -218,51 +298,157 @@
   color: white;
 }
 
+.download-btn:hover,
 .copy-btn:hover,
 .test-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* Section instructions */
+.download-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Informations du lien */
+.link-info {
+  margin-bottom: 2rem;
+}
+
+.link-info h4 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.link-container {
+  background: white;
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.qr-link {
+  display: block;
+  color: #667eea;
+  text-decoration: none;
+  word-break: break-all;
+  padding: 1rem;
+  transition: all 0.3s ease;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.qr-link:hover {
+  background: #f8f9ff;
+  color: #5a67d8;
+}
+
+/* Instructions */
 .instructions-section {
-  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
+  margin-bottom: 3rem;
   padding: 2rem;
+  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
   border-radius: 16px;
   border-left: 4px solid #38b2ac;
 }
 
 .instructions-section h4 {
+  margin: 0 0 2rem 0;
+  color: #2d3748;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.instructions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.instruction-item {
+  background: rgba(255, 255, 255, 0.8);
+  padding: 1.5rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  transition: all 0.3s ease;
+}
+
+.instruction-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.instruction-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.instruction-content h5 {
+  margin: 0 0 0.5rem 0;
+  color: #2d3748;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.instruction-content p {
+  margin: 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+/* Avantages */
+.benefits-section {
+  padding: 2rem;
+  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
+  border-radius: 16px;
+  border-left: 4px solid #f56565;
+}
+
+.benefits-section h4 {
   margin: 0 0 1.5rem 0;
   color: #2d3748;
   font-size: 1.3rem;
   font-weight: 600;
+  text-align: center;
 }
 
-.instructions-section ul {
+.benefits-list {
   margin: 0;
   padding-left: 0;
   list-style: none;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
 }
 
-.instructions-section li {
-  margin-bottom: 1rem;
-  padding: 0.75rem;
-  background: rgba(255, 255, 255, 0.7);
+.benefits-list li {
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.8);
   border-radius: 8px;
   color: #2d3748;
-  font-size: 1rem;
+  font-size: 0.9rem;
   line-height: 1.5;
   display: flex;
   align-items: flex-start;
   gap: 0.5rem;
+  transition: all 0.3s ease;
 }
 
-.instructions-section li:last-child {
-  margin-bottom: 0;
+.benefits-list li:hover {
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
 }
 
-.instructions-section strong {
+.benefits-list strong {
   color: #2d3748;
 }
 
@@ -284,14 +470,23 @@
     padding: 1.5rem;
   }
   
-  .qr-display {
+  .card-background {
     flex-direction: column;
     text-align: center;
     gap: 2rem;
+    padding: 2rem 1.5rem;
   }
   
-  .qr-details {
-    text-align: center;
+  .card-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .download-btn,
+  .copy-btn,
+  .test-btn {
+    width: 100%;
+    max-width: 300px;
   }
 }
 
@@ -324,14 +519,16 @@
     font-size: 1.5rem;
   }
   
-  .qr-actions {
-    flex-direction: column;
+  .card-name {
+    font-size: 1.5rem;
   }
   
-  .copy-btn,
-  .test-btn {
-    flex: none;
-    width: 100%;
+  .instructions-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .benefits-list {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -344,18 +541,20 @@
     font-size: 1rem;
   }
   
-  .qr-info h3 {
+  .card-background {
+    padding: 1.5rem 1rem;
+  }
+  
+  .card-name {
     font-size: 1.3rem;
   }
   
-  .instructions-section h4 {
-    font-size: 1.1rem;
+  .card-contact p {
+    font-size: 0.8rem;
   }
   
-  .instructions-section li {
-    font-size: 0.9rem;
-    flex-direction: column;
-    gap: 0.25rem;
+  .qr-section-card {
+    padding: 1rem;
   }
 }
 
@@ -371,27 +570,56 @@
   }
 }
 
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 .business-card-container {
   animation: fadeInUp 0.6s ease-out;
 }
 
-.qr-display {
+.card-preview-section {
   animation: fadeInUp 0.8s ease-out;
 }
 
-/* Effet de pulsation pour le QR code */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.02); }
-  100% { transform: scale(1); }
+.card-left {
+  animation: slideInFromLeft 1s ease-out;
 }
 
-.qr-code-wrapper {
-  animation: pulse 3s infinite;
+.card-right {
+  animation: slideInFromRight 1s ease-out;
 }
+
+.instruction-item {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.instruction-item:nth-child(1) { animation-delay: 0.1s; }
+.instruction-item:nth-child(2) { animation-delay: 0.2s; }
+.instruction-item:nth-child(3) { animation-delay: 0.3s; }
+.instruction-item:nth-child(4) { animation-delay: 0.4s; }
 
 /* Effet de brillance sur les boutons */
 .generate-btn::before,
+.download-btn::before,
 .copy-btn::before,
 .test-btn::before {
   content: '';
@@ -405,14 +633,27 @@
 }
 
 .generate-btn:hover::before,
+.download-btn:hover::before,
 .copy-btn:hover::before,
 .test-btn:hover::before {
   left: 100%;
 }
 
 .generate-btn,
+.download-btn,
 .copy-btn,
 .test-btn {
   position: relative;
   overflow: hidden;
+}
+
+/* Effet de pulsation pour la carte */
+@keyframes cardPulse {
+  0% { box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
+  50% { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3); }
+  100% { box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
+}
+
+.business-card-download {
+  animation: cardPulse 3s infinite;
 }
