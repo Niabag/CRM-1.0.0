@@ -49,13 +49,13 @@ const ProspectEditPage = () => {
     }));
   };
 
-  // ✅ FONCTION PRINCIPALE: Changer le statut en cliquant sur l'indicateur (AVEC NOUVEAU STATUT)
+  // ✅ FONCTION CORRIGÉE: Changement de statut avec cycle harmonisé
   const handleStatusClick = async () => {
     if (!prospect) return;
     
     let newStatus;
     
-    // ✅ CYCLE: nouveau -> en_attente -> active -> inactive -> nouveau
+    // ✅ CYCLE CORRIGÉ: nouveau -> en_attente -> active -> inactive -> nouveau
     switch (prospect.status) {
       case 'nouveau':
         newStatus = 'en_attente';
@@ -73,6 +73,8 @@ const ProspectEditPage = () => {
         newStatus = 'en_attente';
     }
     
+    console.log(`🔄 Changement de statut: ${prospect.status} → ${newStatus}`); // ✅ DEBUG
+    
     setLoading(true);
     try {
       await apiRequest(API_ENDPOINTS.CLIENTS.UPDATE_STATUS(prospect._id), {
@@ -83,7 +85,6 @@ const ProspectEditPage = () => {
       // Mettre à jour l'état local
       setProspect(prev => ({ ...prev, status: newStatus }));
       
-      // ✅ SUPPRESSION DU POPUP - Changement silencieux
       console.log(`✅ Statut changé: ${prospect.status} → ${newStatus}`);
     } catch (err) {
       console.error("Erreur changement statut:", err);
@@ -145,14 +146,14 @@ const ProspectEditPage = () => {
     }
   };
 
-  // ✅ FONCTIONS POUR LE STATUT (AVEC NOUVEAU STATUT)
+  // ✅ FONCTIONS CORRIGÉES: Gestion des statuts harmonisée
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
       case 'pending': return '#ed8936';
       case 'nouveau': return '#4299e1';
-      case 'en_attente': return '#9f7aea'; // ✅ NOUVEAU: Violet pour "en attente"
+      case 'en_attente': return '#9f7aea'; // ✅ Violet pour "en attente"
       default: return '#4299e1';
     }
   };
@@ -161,9 +162,9 @@ const ProspectEditPage = () => {
     switch (status) {
       case 'active': return 'Actif';
       case 'inactive': return 'Inactif';
-      case 'pending': return 'En attente';
+      case 'pending': return 'En cours';
       case 'nouveau': return 'Nouveau';
-      case 'en_attente': return 'En attente'; // ✅ NOUVEAU
+      case 'en_attente': return 'En attente'; // ✅ CORRIGÉ
       default: return 'Nouveau';
     }
   };
@@ -174,7 +175,7 @@ const ProspectEditPage = () => {
       case 'inactive': return '🔴';
       case 'pending': return '🟡';
       case 'nouveau': return '🔵';
-      case 'en_attente': return '🟣'; // ✅ NOUVEAU: Violet pour "en attente"
+      case 'en_attente': return '🟣'; // ✅ Violet pour "en attente"
       default: return '🔵';
     }
   };
@@ -182,7 +183,7 @@ const ProspectEditPage = () => {
   const getNextStatusLabel = (status) => {
     switch (status) {
       case 'nouveau': return 'Passer en Attente';
-      case 'en_attente': return 'Passer en Actif'; // ✅ NOUVEAU
+      case 'en_attente': return 'Passer en Actif'; // ✅ CORRIGÉ
       case 'active': return 'Passer en Inactif';
       case 'inactive': return 'Remettre en Nouveau';
       default: return 'Changer le statut';

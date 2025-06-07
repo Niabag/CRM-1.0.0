@@ -26,7 +26,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                            (statusFilter === 'active' && client.status === 'active') ||
                            (statusFilter === 'inactive' && client.status === 'inactive') ||
                            (statusFilter === 'nouveau' && client.status === 'nouveau') ||
-                           (statusFilter === 'en_attente' && client.status === 'en_attente'); // ✅ NOUVEAU
+                           (statusFilter === 'en_attente' && client.status === 'en_attente'); // ✅ CORRIGÉ
       
       return matchesSearch && matchesStatus;
     })
@@ -89,11 +89,11 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ FONCTION MISE À JOUR: Changement de statut avec nouveau statut
+  // ✅ FONCTION CORRIGÉE: Changement de statut avec cycle correct
   const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
-    // ✅ CYCLE: nouveau -> en_attente -> active -> inactive -> nouveau
+    // ✅ CYCLE CORRIGÉ: nouveau -> en_attente -> active -> inactive -> nouveau
     switch (currentStatus) {
       case 'nouveau':
         newStatus = 'en_attente';
@@ -110,6 +110,8 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       default:
         newStatus = 'en_attente';
     }
+    
+    console.log(`🔄 Changement de statut: ${currentStatus} → ${newStatus}`); // ✅ DEBUG
     
     setLoading(true);
     try {
@@ -222,14 +224,14 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     return pages;
   };
 
-  // ✅ FONCTIONS MISES À JOUR: Gestion des statuts avec nouveau statut
+  // ✅ FONCTIONS CORRIGÉES: Gestion des statuts harmonisée
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
       case 'pending': return '#ed8936';
       case 'nouveau': return '#4299e1';
-      case 'en_attente': return '#9f7aea'; // ✅ NOUVEAU: Violet pour "en attente"
+      case 'en_attente': return '#9f7aea'; // ✅ Violet pour "en attente"
       default: return '#4299e1';
     }
   };
@@ -240,7 +242,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'inactive': return 'Inactif';
       case 'pending': return 'En cours';
       case 'nouveau': return 'Nouveau';
-      case 'en_attente': return 'En attente'; // ✅ NOUVEAU
+      case 'en_attente': return 'En attente'; // ✅ CORRIGÉ
       default: return 'Nouveau';
     }
   };
@@ -251,7 +253,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'inactive': return '🔴';
       case 'pending': return '🟡';
       case 'nouveau': return '🔵';
-      case 'en_attente': return '🟣'; // ✅ NOUVEAU: Violet pour "en attente"
+      case 'en_attente': return '🟣'; // ✅ Violet pour "en attente"
       default: return '🔵';
     }
   };
@@ -259,7 +261,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
   const getNextStatusLabel = (status) => {
     switch (status) {
       case 'nouveau': return 'Cliquer pour passer en Attente';
-      case 'en_attente': return 'Cliquer pour passer en Actif'; // ✅ NOUVEAU
+      case 'en_attente': return 'Cliquer pour passer en Actif'; // ✅ CORRIGÉ
       case 'active': return 'Cliquer pour passer en Inactif';
       case 'inactive': return 'Cliquer pour remettre en Nouveau';
       default: return 'Cliquer pour changer le statut';
