@@ -1,68 +1,20 @@
+
 .business-card-container {
   padding: 2rem;
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   min-height: 100vh;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-/* En-tête */
-.card-header {
-  text-align: center;
-=======
 /* ✅ NOUVEAU: Statistiques en haut de page */
 .stats-header {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   margin-bottom: 3rem;
 }
 
-<<<<<<< HEAD
-.card-header h2 {
-  margin: 0 0 0.5rem 0;
-=======
-=======
-/* ✅ En-tête avec statistiques intégrées */
-.card-header {
-  text-align: center;
-=======
-/* ✅ En-tête avec statistiques intégrées */
-.card-header {
-  text-align: center;
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-  margin-bottom: 3rem;
-  background: white;
-  padding: 2rem;
-  border-radius: 20px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-}
-
-.card-header h2 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0 0 0.5rem 0;
-}
-
-.card-header p {
-  margin: 0 0 2rem 0;
-  color: #718096;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
-
-/* ✅ Statistiques sous le titre */
-<<<<<<< HEAD
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .stats-overview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -184,22 +136,15 @@
 }
 
 .card-header h2 {
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   font-size: 2.5rem;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-<<<<<<< HEAD
-}
-
-.card-subtitle {
-=======
   margin: 0 0 0.5rem 0;
 }
 
 .card-header p {
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   margin: 0;
   color: #718096;
   font-size: 1.1rem;
@@ -208,8 +153,6 @@
 
 /* Contenu principal */
 .card-content {
-<<<<<<< HEAD
-=======
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 2rem;
@@ -224,17 +167,12 @@
 }
 
 .config-section {
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   background: white;
-  border-radius: 20px;
+  border-radius: 16px;
   padding: 2rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-<<<<<<< HEAD
-/* Section informations utilisateur */
-.user-info-section {
-=======
 .config-section h3 {
   margin: 0 0 1.5rem 0;
   color: #2d3748;
@@ -297,61 +235,104 @@
   gap: 1rem;
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 /* ✅ NOUVEAU: Actions multiples */
-=======
-/* ✅ Actions multiples */
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
-/* ✅ Actions multiples */
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .actions-list {
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  margin-bottom: 3rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 16px;
-  border-left: 4px solid #667eea;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
 }
 
-.user-avatar {
-  width: 80px;
-  height: 80px;
+.action-item {
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.action-item.disabled {
+  opacity: 0.6;
+  background: #f1f3f4;
+}
+
+.action-item:hover {
+  border-color: #667eea;
+  background: white;
+}
+
+.action-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.action-order {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 30px;
+  height: 30px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: bold;
-  font-size: 2rem;
-  color: white;
-<<<<<<< HEAD
-  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
-  flex-shrink: 0;
-}
-
-.user-details h3 {
-  margin: 0 0 0.5rem 0;
-  color: #2d3748;
-  font-size: 1.5rem;
   font-weight: 600;
-}
-
-.user-details p {
-  margin: 0 0 0.25rem 0;
-  color: #4a5568;
-  font-size: 1rem;
-}
-
-.user-role {
-  color: #667eea;
   font-size: 0.9rem;
-  font-weight: 500;
-=======
+}
+
+.action-controls {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.btn-move,
+.btn-remove {
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.btn-move {
+  background: #e2e8f0;
+  color: #4a5568;
+}
+
+.btn-move:hover:not(:disabled) {
+  background: #cbd5e0;
+}
+
+.btn-move:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-remove {
+  background: #fed7d7;
+  color: #c53030;
+}
+
+.btn-remove:hover {
+  background: #feb2b2;
+}
+
+.action-config {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.btn-add-action {
+  padding: 1rem;
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
   border: none;
   border-radius: 8px;
   font-weight: 500;
@@ -404,8 +385,6 @@
   box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 .help-text {
   font-size: 0.8rem;
   color: #718096;
@@ -414,12 +393,6 @@
 }
 
 /* Aperçu de la carte */
-=======
-/* ✅ Aperçu fixe */
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
-/* ✅ Aperçu fixe */
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .card-preview {
   background: white;
   border-radius: 16px;
@@ -427,23 +400,6 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-}
-
-.card-preview.fixed-preview {
-  position: sticky;
-  top: 2rem;
-  height: fit-content;
-  max-height: calc(100vh - 4rem);
-  overflow-y: auto;
-<<<<<<< HEAD
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
 
 .card-preview h3 {
@@ -543,15 +499,7 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
 /* ✅ NOUVEAU: Aperçu des actions */
-=======
-/* ✅ Aperçu des actions */
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
-/* ✅ Aperçu des actions */
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .actions-preview {
   border-top: 1px solid #e2e8f0;
   padding-top: 1.5rem;
@@ -607,436 +555,177 @@
 .timeline-delay {
   font-size: 0.8rem;
   color: #718096;
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   font-style: italic;
 }
 
-/* Section génération */
-.generation-section {
-  margin-bottom: 3rem;
-  text-align: center;
-}
-
-.generation-info h3 {
-  margin: 0 0 1rem 0;
-  color: #2d3748;
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-.generation-info p {
-  margin: 0 0 2rem 0;
-  color: #718096;
-  font-size: 1rem;
-  line-height: 1.5;
-}
-
-.generate-btn {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  color: white;
-  border: none;
-  padding: 1.2rem 2.5rem;
-  border-radius: 12px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.2);
-}
-
-.generate-btn:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 25px rgba(72, 187, 120, 0.4);
-}
-
-/* Section aperçu de la carte */
-.card-preview-section {
-  margin-bottom: 3rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+/* Section QR Code */
+.qr-section {
+  grid-column: 1 / -1;
+  background: white;
   border-radius: 16px;
-  border: 2px solid #e2e8f0;
+  padding: 2rem;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  margin-top: 2rem;
 }
 
-.card-preview-section h3 {
-  margin: 0 0 2rem 0;
+.qr-section h3 {
+  margin: 0 0 1.5rem 0;
   color: #2d3748;
   font-size: 1.3rem;
   font-weight: 600;
-  text-align: center;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
 }
 
-/* Carte de visite à télécharger */
-.business-card-download {
-  margin: 0 auto 2rem auto;
-  max-width: 800px;
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+.qr-display {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: start;
 }
 
-.card-background {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 2rem;
+.qr-code-wrapper {
+  padding: 1rem;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border: 2px solid #e2e8f0;
+}
+
+.qr-info {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 300px;
-  color: white;
-  position: relative;
+  flex-direction: column;
+  gap: 1.5rem;
 }
 
-.card-background::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="75" cy="75" r="1" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="10" cy="60" r="0.5" fill="rgba(255,255,255,0.03)"/><circle cx="90" cy="40" r="0.5" fill="rgba(255,255,255,0.03)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-  opacity: 0.3;
-  pointer-events: none;
-}
-
-.card-left {
-  flex: 1;
-  z-index: 1;
-}
-
-.card-logo {
-  margin-bottom: 1.5rem;
-}
-
-.logo-circle {
-  width: 60px;
-  height: 60px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 1.5rem;
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(10px);
-}
-
-.card-name {
-  margin: 0 0 0.5rem 0;
-  font-size: 2rem;
-  font-weight: 700;
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.card-title {
-  margin: 0 0 1.5rem 0;
+.qr-details h4 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
   font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+  font-weight: 600;
 }
 
-.card-contact {
+.action-info {
+  margin-bottom: 1.5rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
 }
 
-.card-contact p {
-  margin: 0;
-  font-size: 0.9rem;
-  color: rgba(255, 255, 255, 0.9);
+.action-summary {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
 }
 
-.card-right {
+.action-number {
+  background: #667eea;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  z-index: 1;
-}
-
-.qr-section-card {
-  text-align: center;
-  background: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-}
-
-.qr-instruction {
-  margin: 1rem 0 0 0;
-  color: #4a5568;
+  justify-content: center;
   font-size: 0.8rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  flex-shrink: 0;
 }
 
-/* Actions de la carte */
-.card-actions {
+.action-type {
+  flex: 1;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.action-timing {
+  font-size: 0.8rem;
+  color: #718096;
+  font-style: italic;
+}
+
+.qr-link {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  border-left: 4px solid #48bb78;
+}
+
+.qr-link a {
+  color: #667eea;
+  text-decoration: none;
+  word-break: break-all;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+.qr-link a:hover {
+  text-decoration: underline;
+}
+
+.qr-actions {
   display: flex;
   gap: 1rem;
-  justify-content: center;
   flex-wrap: wrap;
-  margin-bottom: 2rem;
 }
 
-.download-btn,
-.copy-btn,
-.test-btn {
+.btn-copy,
+.btn-test,
+.btn-refresh {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
+  border-radius: 8px;
+  font-weight: 500;
   cursor: pointer;
   transition: all 0.3s ease;
-  text-decoration: none;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 0.5rem;
-  min-width: 160px;
-  justify-content: center;
 }
 
-.download-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-}
-
-.copy-btn {
+.btn-copy {
   background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
   color: white;
 }
 
-.test-btn {
+.btn-test {
   background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
   color: white;
 }
 
-.download-btn:hover,
-.copy-btn:hover,
-.test-btn:hover {
+.btn-refresh {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+}
+
+.btn-copy:hover,
+.btn-test:hover,
+.btn-refresh:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-}
-
-.download-btn:disabled {
-  background: #6c757d;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-/* Informations du lien */
-.link-info {
-  margin-bottom: 2rem;
-}
-
-.link-info h4 {
-  margin: 0 0 1rem 0;
-  color: #2d3748;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.link-container {
-  background: white;
-  border-radius: 8px;
-  border: 2px solid #e2e8f0;
-  overflow: hidden;
-}
-
-.qr-link {
-  display: block;
-  color: #667eea;
-  text-decoration: none;
-  word-break: break-all;
-  padding: 1rem;
-  transition: all 0.3s ease;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-.qr-link:hover {
-  background: #f8f9ff;
-  color: #5a67d8;
-}
-
-/* Instructions */
-.instructions-section {
-  margin-bottom: 3rem;
-  padding: 2rem;
-  background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
-  border-radius: 16px;
-  border-left: 4px solid #38b2ac;
-}
-
-.instructions-section h4 {
-  margin: 0 0 2rem 0;
-  color: #2d3748;
-  font-size: 1.3rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.instructions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 1.5rem;
-}
-
-.instruction-item {
-  background: rgba(255, 255, 255, 0.8);
-  padding: 1.5rem;
-  border-radius: 12px;
-  display: flex;
-  align-items: flex-start;
-  gap: 1rem;
-  transition: all 0.3s ease;
-}
-
-.instruction-item:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.instruction-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
-}
-
-.instruction-content h5 {
-  margin: 0 0 0.5rem 0;
-  color: #2d3748;
-  font-size: 1rem;
-  font-weight: 600;
-}
-
-.instruction-content p {
-  margin: 0;
-  color: #4a5568;
-  font-size: 0.9rem;
-  line-height: 1.4;
-}
-
-/* Avantages */
-.benefits-section {
-  padding: 2rem;
-  background: linear-gradient(135deg, #fff5f5 0%, #fed7d7 100%);
-  border-radius: 16px;
-  border-left: 4px solid #f56565;
-}
-
-.benefits-section h4 {
-  margin: 0 0 1.5rem 0;
-  color: #2d3748;
-  font-size: 1.3rem;
-  font-weight: 600;
-  text-align: center;
-}
-
-.benefits-list {
-  margin: 0;
-  padding-left: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1rem;
-}
-
-.benefits-list li {
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.8);
-  border-radius: 8px;
-  color: #2d3748;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.5rem;
-  transition: all 0.3s ease;
-}
-
-.benefits-list li:hover {
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateY(-1px);
-}
-
-.benefits-list strong {
-  color: #2d3748;
-}
-
-/* Messages d'erreur */
-.error-message {
-  background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
-  color: #c53030;
-  padding: 1rem;
-  border-radius: 8px;
-  margin-top: 1rem;
-  text-align: center;
-  font-weight: 500;
-  border: 1px solid #f5c6cb;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
 /* Responsive */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .business-card-container {
     padding: 1.5rem;
   }
   
-<<<<<<< HEAD
-  .card-background {
-    flex-direction: column;
-    text-align: center;
-    gap: 2rem;
-    padding: 2rem 1.5rem;
-=======
   .stats-header {
     grid-template-columns: 1fr;
   }
   
-<<<<<<< HEAD
-<<<<<<< HEAD
   .stats-overview {
     grid-template-columns: repeat(2, 1fr);
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   }
   
-  .card-actions {
-    flex-direction: column;
-    align-items: center;
+  .card-content {
+    grid-template-columns: 1fr;
   }
-<<<<<<< HEAD
-  
-  .download-btn,
-  .copy-btn,
-  .test-btn {
-    width: 100%;
-    max-width: 300px;
-  }
-=======
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
-=======
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-  .card-preview.fixed-preview {
-    position: static;
-    max-height: none;
-  }
-<<<<<<< HEAD
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
 
 @media (max-width: 768px) {
@@ -1044,82 +733,56 @@
     padding: 1rem;
   }
   
-  .card-header {
-    padding: 1.5rem;
-  }
-  
   .card-header h2 {
     font-size: 2rem;
   }
   
-<<<<<<< HEAD
-  .card-content {
-=======
-  .config-section,
-  .card-preview,
-  .qr-section {
-<<<<<<< HEAD
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-    padding: 1.5rem;
-  }
-  
-  .user-info-section {
-    flex-direction: column;
-    text-align: center;
-    gap: 1rem;
-  }
-<<<<<<< HEAD
-  
-  .user-avatar {
-    width: 60px;
-    height: 60px;
-    font-size: 1.5rem;
-  }
-<<<<<<< HEAD
-  
-  .card-name {
-    font-size: 1.5rem;
-  }
-  
-  .instructions-grid {
+  .stats-overview {
     grid-template-columns: 1fr;
   }
   
-  .benefits-list {
+  .qr-display {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+  
+  .qr-actions {
+    justify-content: center;
+  }
+  
+  .preview-actions {
+    flex-direction: column;
+  }
+  
+  .form-row {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
+  .card-header {
+    padding: 1.5rem;
+  }
+  
   .card-header h2 {
     font-size: 1.5rem;
   }
   
-  .card-subtitle {
-    font-size: 1rem;
+  .config-section,
+  .card-preview,
+  .qr-section {
+    padding: 1.5rem;
   }
   
-  .card-background {
-    padding: 1.5rem 1rem;
+  .qr-actions {
+    flex-direction: column;
   }
   
-  .card-name {
-    font-size: 1.3rem;
+  .action-summary {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.5rem;
   }
-  
-  .card-contact p {
-    font-size: 0.8rem;
-  }
-  
-  .qr-section-card {
-    padding: 1rem;
-  }
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
 
 /* Animations */
@@ -1134,112 +797,33 @@
   }
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-@keyframes slideInFromLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInFromRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.business-card-container {
-=======
 .stats-header,
-=======
-.card-header,
-<<<<<<< HEAD
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .config-section,
 .card-preview,
 .qr-section {
->>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   animation: fadeInUp 0.6s ease-out;
 }
 
-.card-preview-section {
-  animation: fadeInUp 0.8s ease-out;
+.stat-card:nth-child(2) {
+  animation-delay: 0.1s;
 }
 
-.card-left {
-  animation: slideInFromLeft 1s ease-out;
+.stat-card:nth-child(3) {
+  animation-delay: 0.2s;
 }
 
-.card-right {
-  animation: slideInFromRight 1s ease-out;
+.stat-card:nth-child(4) {
+  animation-delay: 0.3s;
 }
 
-.instruction-item {
-  animation: fadeInUp 0.6s ease-out;
+.config-section:nth-child(2) {
+  animation-delay: 0.1s;
 }
 
-.instruction-item:nth-child(1) { animation-delay: 0.1s; }
-.instruction-item:nth-child(2) { animation-delay: 0.2s; }
-.instruction-item:nth-child(3) { animation-delay: 0.3s; }
-.instruction-item:nth-child(4) { animation-delay: 0.4s; }
-
-/* Effet de brillance sur les boutons */
-.generate-btn::before,
-.download-btn::before,
-.copy-btn::before,
-.test-btn::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-  transition: left 0.5s ease;
+.card-preview {
+  animation-delay: 0.2s;
 }
 
-<<<<<<< HEAD
-.generate-btn:hover::before,
-.download-btn:hover::before,
-.copy-btn:hover::before,
-.test-btn:hover::before {
-  left: 100%;
-}
-
-.generate-btn,
-.download-btn,
-.copy-btn,
-.test-btn {
-  position: relative;
-  overflow: hidden;
-}
-
-/* Effet de pulsation pour la carte */
-@keyframes cardPulse {
-  0% { box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
-  50% { box-shadow: 0 20px 45px rgba(0, 0, 0, 0.3); }
-  100% { box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2); }
-}
-
-.business-card-download {
-  animation: cardPulse 3s infinite;
-=======
 .qr-section {
   animation-delay: 0.3s;
-<<<<<<< HEAD
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
-=======
->>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
