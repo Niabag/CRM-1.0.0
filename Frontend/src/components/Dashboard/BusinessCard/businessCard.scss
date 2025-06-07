@@ -7,6 +7,7 @@
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 /* En-tête */
 .card-header {
   text-align: center;
@@ -24,6 +25,35 @@
 .card-header h2 {
   margin: 0 0 0.5rem 0;
 =======
+=======
+/* ✅ En-tête avec statistiques intégrées */
+.card-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  background: white;
+  padding: 2rem;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+.card-header h2 {
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin: 0 0 0.5rem 0;
+}
+
+.card-header p {
+  margin: 0 0 2rem 0;
+  color: #718096;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+
+/* ✅ Statistiques sous le titre */
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .stats-overview {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -258,7 +288,11 @@
   gap: 1rem;
 }
 
+<<<<<<< HEAD
 /* ✅ NOUVEAU: Actions multiples */
+=======
+/* ✅ Actions multiples */
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .actions-list {
 >>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   display: flex;
@@ -357,6 +391,7 @@
   box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
 }
 
+<<<<<<< HEAD
 .help-text {
   font-size: 0.8rem;
   color: #718096;
@@ -365,6 +400,9 @@
 }
 
 /* Aperçu de la carte */
+=======
+/* ✅ Aperçu fixe */
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .card-preview {
   background: white;
   border-radius: 16px;
@@ -372,6 +410,17 @@
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
+<<<<<<< HEAD
+=======
+}
+
+.card-preview.fixed-preview {
+  position: sticky;
+  top: 2rem;
+  height: fit-content;
+  max-height: calc(100vh - 4rem);
+  overflow-y: auto;
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
 
 .card-preview h3 {
@@ -471,7 +520,11 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
+<<<<<<< HEAD
 /* ✅ NOUVEAU: Aperçu des actions */
+=======
+/* ✅ Aperçu des actions */
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .actions-preview {
   border-top: 1px solid #e2e8f0;
   padding-top: 1.5rem;
@@ -925,6 +978,7 @@
     grid-template-columns: 1fr;
   }
   
+<<<<<<< HEAD
   .stats-overview {
     grid-template-columns: repeat(2, 1fr);
 >>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
@@ -944,6 +998,12 @@
   }
 =======
 >>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
+=======
+  .card-preview.fixed-preview {
+    position: static;
+    max-height: none;
+  }
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
 
 @media (max-width: 768px) {
@@ -959,7 +1019,13 @@
     font-size: 2rem;
   }
   
+<<<<<<< HEAD
   .card-content {
+=======
+  .config-section,
+  .card-preview,
+  .qr-section {
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
     padding: 1.5rem;
   }
   
@@ -968,6 +1034,7 @@
     text-align: center;
     gap: 1rem;
   }
+<<<<<<< HEAD
   
   .user-avatar {
     width: 60px;
@@ -1012,6 +1079,8 @@
   .qr-section-card {
     padding: 1rem;
   }
+=======
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
 
 /* Animations */
@@ -1026,6 +1095,7 @@
   }
 }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
 @keyframes slideInFromLeft {
   from {
@@ -1052,6 +1122,9 @@
 .business-card-container {
 =======
 .stats-header,
+=======
+.card-header,
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 .config-section,
 .card-preview,
 .qr-section {
@@ -1095,6 +1168,7 @@
   transition: left 0.5s ease;
 }
 
+<<<<<<< HEAD
 .generate-btn:hover::before,
 .download-btn:hover::before,
 .copy-btn:hover::before,
@@ -1119,4 +1193,8 @@
 
 .business-card-download {
   animation: cardPulse 3s infinite;
+=======
+.qr-section {
+  animation-delay: 0.3s;
+>>>>>>> parent of e787ca1 (Interface optimisée de carte de visite avec statistiques séparées et aperçu fixe)
 }
