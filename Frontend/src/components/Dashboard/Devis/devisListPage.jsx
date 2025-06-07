@@ -786,33 +786,41 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
         </div>
       ) : (
         <>
-          {/* ✅ Grille des cartes devis avec statuts métier */}
-          <div className="prospects-grid">
+          {/* ✅ NOUVEAU DESIGN: Grille des cartes devis */}
+          <div className="devis-grid">
             {currentDevis.map((devisItem) => {
               const client = clients.find(c => c._id === (typeof devisItem.clientId === "object" ? devisItem.clientId?._id : devisItem.clientId));
               
               return (
                 <div 
                   key={devisItem._id} 
-                  className={`prospect-card ${selectedDevis.includes(devisItem._id) ? 'selected' : ''}`}
+                  className={`devis-card ${selectedDevis.includes(devisItem._id) ? 'selected' : ''}`}
                 >
-                  {/* ✅ Checkbox de sélection */}
-                  <div className="card-select">
-                    <input
-                      type="checkbox"
-                      checked={selectedDevis.includes(devisItem._id)}
-                      onChange={() => handleSelectDevis(devisItem._id)}
-                    />
-                  </div>
+                  {/* ✅ NOUVEAU: Section supérieure avec design moderne */}
+                  <div className="devis-card-top">
+                    {/* Checkbox de sélection */}
+                    <div className="card-select" style={{ position: 'absolute', top: '1rem', left: '1rem' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedDevis.includes(devisItem._id)}
+                        onChange={() => handleSelectDevis(devisItem._id)}
+                      />
+                    </div>
 
-                  {/* Avatar et indicateur de statut cliquable */}
-                  <div className="card-header">
-                    <div className="prospect-avatar">
+                    {/* Avatar pour le devis */}
+                    <div className="devis-avatar">
                       {devisItem.title ? devisItem.title.charAt(0).toUpperCase() : "D"}
                     </div>
+
+                    {/* Indicateur de statut */}
                     <div 
                       className="status-indicator clickable"
-                      style={{ backgroundColor: getStatusColor(devisItem.status) }}
+                      style={{ 
+                        backgroundColor: getStatusColor(devisItem.status),
+                        position: 'absolute',
+                        top: '1rem',
+                        right: '1rem'
+                      }}
                       title={getNextStatusLabel(devisItem.status)}
                       onClick={() => handleStatusClick(devisItem._id, devisItem.status)}
                     >
@@ -820,79 +828,66 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
                     </div>
                   </div>
 
-                  {/* Informations principales */}
-                  <div className="card-content">
-                    <h3 className="prospect-name">{devisItem.title || "Devis sans titre"}</h3>
-                    
-                    <div className="contact-info">
-                      <div className="contact-item">
-                        <span className="contact-icon">👤</span>
-                        <span className="contact-text">{client?.name || "Client inconnu"}</span>
-                      </div>
-                      <div className="contact-item">
-                        <span className="contact-icon">📅</span>
-                        <span className="contact-text">{formatDate(devisItem.dateDevis)}</span>
-                      </div>
-                      <div className="contact-item">
-                        <span className="contact-icon">💰</span>
-                        <span className="contact-text">{calculateTTC(devisItem).toFixed(2)} € TTC</span>
+                  {/* ✅ NOUVEAU: Section contenu principal */}
+                  <div className="devis-card-content">
+                    <div className="devis-card-header">
+                      <h3 className="devis-card-title">{devisItem.title || "Devis sans titre"}</h3>
+                      
+                      <div className="devis-card-meta">
+                        <div className="devis-card-date">
+                          <span>📅</span>
+                          <span>{formatDate(devisItem.dateDevis)}</span>
+                        </div>
+                        <div className="devis-card-amount">
+                          <span>💰</span>
+                          <span>{calculateTTC(devisItem).toFixed(2)} € TTC</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* Statut en texte */}
-                    <div className="status-text">
-                      <span 
-                        className="status-badge"
-                        style={{ 
-                          backgroundColor: getStatusColor(devisItem.status),
-                          color: 'white'
-                        }}
+                    {/* Informations client */}
+                    <div className="devis-client-info">
+                      <span className="devis-client-icon">👤</span>
+                      <span className="devis-client-name">{client?.name || "Client inconnu"}</span>
+                    </div>
+
+                    {/* Badge de statut */}
+                    <div className="devis-status-badge" style={{ backgroundColor: getStatusColor(devisItem.status), color: 'white' }}>
+                      {getStatusIcon(devisItem.status)} {getStatusLabel(devisItem.status)}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="devis-card-actions">
+                      <button 
+                        onClick={() => onEditDevis && onEditDevis(devisItem)}
+                        className="card-btn card-btn-edit"
                       >
-                        {getStatusIcon(devisItem.status)} {getStatusLabel(devisItem.status)}
-                      </span>
+                        ✏️ Modifier
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleDownloadPDF(devisItem)}
+                        className="card-btn card-btn-pdf"
+                        disabled={loading}
+                      >
+                        {loading ? "⏳" : "📄"} PDF
+                      </button>
+                      
+                      <button 
+                        onClick={() => handleDelete(devisItem._id)}
+                        className="card-btn card-btn-delete"
+                        title="Supprimer"
+                      >
+                        🗑️
+                      </button>
                     </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="card-actions">
-                    <button 
-                      onClick={() => onEditDevis && onEditDevis(devisItem)}
-                      className="action-btn edit-action"
-                      title="Modifier le devis"
-                    >
-                      ✏️
-                    </button>
-                    
-                    <button 
-                      onClick={() => handleDownloadPDF(devisItem)}
-                      className="action-btn primary-action"
-                      title="Télécharger PDF"
-                      disabled={loading}
-                    >
-                      📄
-                    </button>
-                    
-                    <button 
-                      onClick={() => handleDelete(devisItem._id)}
-                      className="action-btn delete-action"
-                      title="Supprimer"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-
-                  {/* Métadonnées */}
-                  <div className="card-footer">
-                    <span className="join-date">
-                      Créé le {new Date(devisItem.date || Date.now()).toLocaleDateString('fr-FR')}
-                    </span>
                   </div>
                 </div>
               );
             })}
           </div>
 
-          {/* ✅ Contrôles de pagination */}
+          {/* ✅ NOUVEAU: Contrôles de pagination */}
           {totalPages > 1 && (
             <div className="pagination-controls">
               <div className="pagination-wrapper">
