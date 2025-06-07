@@ -40,12 +40,19 @@ const DevisPreview = ({
   const totalTVA = Object.values(tauxTVA).reduce((sum, t) => sum + t.tva, 0);
   const totalTTC = totalHT + totalTVA;
 
+  // ✅ CORRECTION: Fonction sécurisée pour récupérer les infos client
   const getClientInfo = () => {
-    if (devisData.clientId && clients.length > 0) {
-      const client = clients.find(c => c._id === devisData.clientId);
-      return client || {};
+    if (!devisData.clientId || !clients.length) {
+      return { name: '', email: '', phone: '' };
     }
-    return {};
+    
+    // Gérer le cas où clientId est un objet ou une string
+    const clientId = typeof devisData.clientId === 'object' && devisData.clientId !== null 
+      ? devisData.clientId._id 
+      : devisData.clientId;
+    
+    const client = clients.find(c => c._id === clientId);
+    return client || { name: '', email: '', phone: '' };
   };
 
   const clientInfo = getClientInfo();
@@ -186,8 +193,9 @@ const DevisPreview = ({
               />
             </div>
             <div className="metadata-item">
-              <label>ID Client :</label>
-              <span className="client-id">{devisData.clientId || "N/A"}</span>
+              <label>Client :</label>
+              {/* ✅ CORRECTION: Affichage sécurisé du nom du client */}
+              <span className="client-id">{clientInfo.name || "Client non défini"}</span>
             </div>
           </div>
         </div>
@@ -244,7 +252,6 @@ const DevisPreview = ({
                       />
                     </td>
                     <td>
-                      {/* ✅ CORRECTION: € à droite du chiffre */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <EditableInput 
                           name="article-unitPrice" 
