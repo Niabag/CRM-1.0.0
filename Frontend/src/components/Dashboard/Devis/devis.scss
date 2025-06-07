@@ -1,4 +1,4 @@
-/* Design moderne pour la section devis */
+/* Design moderne pour la section devis - Aperçu uniquement */
 
 .devis-page {
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
@@ -6,331 +6,13 @@
   padding: 2rem;
 }
 
-.devis-container {
-  max-width: 1400px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  height: calc(100vh - 4rem);
-}
-
-/* Section gauche - Formulaire */
-.devis-form-section {
-  background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-}
-
-.devis-form-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f1f3f4;
-}
-
-.devis-form-title {
-  font-size: 2rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin: 0;
-}
-
-.form-section {
-  margin-bottom: 2rem;
-}
-
-.form-section-title {
-  font-size: 1.2rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 1rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.form-section-title::before {
-  content: '';
-  width: 4px;
-  height: 20px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 2px;
-}
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-.form-label {
-  display: block;
-  font-weight: 500;
-  color: #4a5568;
-  margin-bottom: 0.5rem;
-  font-size: 0.9rem;
-}
-
-.form-input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 1rem;
-  transition: all 0.3s ease;
-  background: #f8f9fa;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #667eea;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-  transform: translateY(-1px);
-}
-
-.form-select {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 1rem;
-  background: #f8f9fa;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.form-select:focus {
-  outline: none;
-  border-color: #667eea;
-  background: white;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.file-upload {
-  position: relative;
-  display: inline-block;
-  cursor: pointer;
-  width: 100%;
-}
-
-.file-upload-input {
-  position: absolute;
-  opacity: 0;
-  width: 100%;
-  height: 100%;
-  cursor: pointer;
-}
-
-.file-upload-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 1rem;
-  border: 2px dashed #cbd5e0;
-  border-radius: 12px;
-  background: #f8f9fa;
-  color: #718096;
-  font-weight: 500;
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-.file-upload-label:hover {
-  border-color: #667eea;
-  background: #edf2f7;
-  color: #667eea;
-}
-
-/* Articles section */
-.articles-section {
-  background: #f8f9fa;
-  border-radius: 16px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-}
-
-.articles-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.add-article-btn {
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.add-article-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(72, 187, 120, 0.3);
-}
-
-.article-item {
-  background: white;
-  border-radius: 12px;
-  padding: 1rem;
-  margin-bottom: 1rem;
-  border: 1px solid #e2e8f0;
-  transition: all 0.3s ease;
-}
-
-.article-item:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  transform: translateY(-2px);
-}
-
-.article-grid {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr auto;
-  gap: 1rem;
-  align-items: end;
-}
-
-.remove-article-btn {
-  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
-  color: white;
-  border: none;
-  padding: 0.5rem;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.remove-article-btn:hover {
-  transform: scale(1.1);
-  box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
-}
-
-/* Boutons d'action */
-.form-actions {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 2rem;
-  border-top: 2px solid #f1f3f4;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  flex: 1;
-  font-size: 1rem;
-}
-
-.btn-primary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-  border: none;
-  padding: 1rem 2rem;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.btn-secondary:hover {
-  background: #5a6268;
-  transform: translateY(-2px);
-}
-
-/* Section droite - Aperçu */
-.devis-preview-section {
-  background: white;
-  border-radius: 20px;
-  padding: 2rem;
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  overflow-y: auto;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(10px);
-}
-
-.preview-header {
-  text-align: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 2px solid #f1f3f4;
-}
-
-.preview-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2d3748;
-  margin: 0;
-}
-
-.preview-toolbar {
-  display: flex;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 2rem;
-  flex-wrap: wrap;
-}
-
-.toolbar-btn {
-  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
-  color: white;
-  border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 10px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.toolbar-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
-}
-
-.pdf-download-btn {
-  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%) !important;
-}
-
-.pdf-download-btn:hover {
-  box-shadow: 0 8px 25px rgba(237, 137, 54, 0.3) !important;
-}
-
 /* Liste des devis */
 .devis-list-section {
-  grid-column: 1 / -1;
+  max-width: 1400px;
+  margin: 0 auto 2rem auto;
   background: white;
   border-radius: 20px;
   padding: 2rem;
-  margin-bottom: 2rem;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
 }
 
@@ -340,7 +22,7 @@
 }
 
 .devis-list-title {
-  font-size: 1.8rem;
+  font-size: 2rem;
   font-weight: 700;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
@@ -444,6 +126,118 @@
   box-shadow: 0 8px 25px rgba(245, 101, 101, 0.3);
 }
 
+/* Container de l'aperçu */
+.devis-preview-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+}
+
+.preview-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid #f1f3f4;
+}
+
+.preview-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin: 0 0 0.5rem 0;
+}
+
+.preview-subtitle {
+  font-size: 1.2rem;
+  color: #718096;
+  font-weight: 500;
+}
+
+.total-amount {
+  color: #48bb78;
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+
+.preview-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+}
+
+.btn-save {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-save:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(72, 187, 120, 0.3);
+}
+
+.btn-save:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.btn-new {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-new:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 10px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+  transform: translateY(-2px);
+}
+
 /* États vides */
 .empty-state {
   text-align: center;
@@ -484,34 +278,14 @@
 
 /* Responsive design */
 @media (max-width: 1200px) {
-  .devis-container {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    height: auto;
-  }
-  
-  .devis-form-section,
-  .devis-preview-section {
-    max-height: none;
+  .devis-page {
+    padding: 1rem;
   }
 }
 
 @media (max-width: 768px) {
   .devis-page {
     padding: 1rem;
-  }
-  
-  .article-grid {
-    grid-template-columns: 1fr;
-    gap: 0.5rem;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .preview-toolbar {
-    flex-direction: column;
   }
   
   .devis-grid {
@@ -526,6 +300,29 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 0.5rem;
+  }
+  
+  .preview-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .btn-save,
+  .btn-new {
+    width: 100%;
+    max-width: 300px;
+  }
+  
+  .preview-title {
+    font-size: 1.4rem;
+  }
+  
+  .preview-subtitle {
+    font-size: 1rem;
+  }
+  
+  .total-amount {
+    font-size: 1.2rem;
   }
 }
 
@@ -545,29 +342,25 @@
   animation: fadeInUp 0.5s ease-out;
 }
 
-.article-item {
-  animation: fadeInUp 0.3s ease-out;
+.devis-preview-container {
+  animation: fadeInUp 0.6s ease-out;
 }
 
 /* Scrollbar personnalisée */
-.devis-form-section::-webkit-scrollbar,
-.devis-preview-section::-webkit-scrollbar {
+.devis-preview-container::-webkit-scrollbar {
   width: 6px;
 }
 
-.devis-form-section::-webkit-scrollbar-track,
-.devis-preview-section::-webkit-scrollbar-track {
+.devis-preview-container::-webkit-scrollbar-track {
   background: #f1f1f1;
   border-radius: 3px;
 }
 
-.devis-form-section::-webkit-scrollbar-thumb,
-.devis-preview-section::-webkit-scrollbar-thumb {
+.devis-preview-container::-webkit-scrollbar-thumb {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 3px;
 }
 
-.devis-form-section::-webkit-scrollbar-thumb:hover,
-.devis-preview-section::-webkit-scrollbar-thumb:hover {
+.devis-preview-container::-webkit-scrollbar-thumb:hover {
   background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
 }
