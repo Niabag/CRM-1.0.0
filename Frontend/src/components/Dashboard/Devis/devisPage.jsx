@@ -36,7 +36,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
   const [devisList, setDevisList] = useState([]);
   const [currentDevis, setCurrentDevis] = useState(() => {
-    // ✅ CORRECTION: Initialiser avec le client pré-sélectionné
     const baseDevis = initialDevisFromClient || DEFAULT_DEVIS;
     return {
       ...baseDevis,
@@ -56,12 +55,10 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       try {
         let data;
         
-        // ✅ Si un client spécifique est sélectionné, récupérer uniquement ses devis
         if (filterClientId) {
           console.log("🎯 Récupération des devis pour le client:", filterClientId);
           data = await apiRequest(API_ENDPOINTS.DEVIS.BY_CLIENT(filterClientId));
         } else {
-          // Sinon, récupérer tous les devis de l'utilisateur
           data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
         }
         
@@ -76,7 +73,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     };
     
     fetchDevis();
-  }, [filterClientId]); // ✅ Recharger quand le client change
+  }, [filterClientId]);
 
   useEffect(() => {
     if (initialDevisFromClient) {
@@ -86,11 +83,9 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   }, [initialDevisFromClient]);
 
-  // ✅ CORRECTION: Mettre à jour le devis courant quand selectedClientId change
   useEffect(() => {
     if (selectedClientId) {
       setFilterClientId(selectedClientId);
-      // ✅ Mettre à jour le devis courant avec le client sélectionné
       setCurrentDevis(prev => ({
         ...prev,
         clientId: selectedClientId
@@ -111,19 +106,13 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
   const handleReset = () => {
     const newDevis = {
       ...DEFAULT_DEVIS,
-      clientId: filterClientId || selectedClientId || "" // ✅ Pré-remplir avec le client sélectionné
+      clientId: filterClientId || selectedClientId || ""
     };
     setCurrentDevis(newDevis);
   };
 
   const handleSave = async (updatedDevis, isEdit = false) => {
-    // ✅ CORRECTION: Utiliser le clientId du devis courant ou le client sélectionné
     const clientId = normalizeClientId(updatedDevis.clientId) || selectedClientId;
-    
-    console.log("🔍 Debug sauvegarde:");
-    console.log("- updatedDevis.clientId:", updatedDevis.clientId);
-    console.log("- selectedClientId:", selectedClientId);
-    console.log("- clientId final:", clientId);
     
     if (!clientId) {
       alert("❌ Veuillez sélectionner un client");
@@ -138,20 +127,16 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
       const method = isEdit ? "PUT" : "POST";
       
-      // ✅ S'assurer que le clientId est bien inclus dans les données envoyées
       const devisData = {
         ...updatedDevis,
         clientId: clientId
       };
-      
-      console.log("📤 Données envoyées:", devisData);
       
       await apiRequest(url, {
         method,
         body: JSON.stringify(devisData),
       });
 
-      // ✅ Recharger les devis du client spécifique ou tous les devis
       let data;
       if (filterClientId) {
         data = await apiRequest(API_ENDPOINTS.DEVIS.BY_CLIENT(filterClientId));
@@ -162,7 +147,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
       alert("✅ Devis enregistré avec succès !");
       
-      // ✅ Réinitialiser avec le client pré-sélectionné
       const newDevis = {
         ...DEFAULT_DEVIS,
         clientId: filterClientId || selectedClientId || ""
@@ -209,21 +193,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         import('jspdf')
       ]);
 
-      // ✅ CORRECTION: Créer un élément temporaire avec contenu complet
-      const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.top = '0';
-      tempDiv.style.width = '210mm';
-      tempDiv.style.minHeight = '297mm'; // ✅ Hauteur minimale A4
-      tempDiv.style.background = 'white';
-      tempDiv.style.padding = '20px';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
-      tempDiv.style.fontSize = '14px';
-      tempDiv.style.lineHeight = '1.4';
-      tempDiv.style.color = '#000';
-      document.body.appendChild(tempDiv);
-
       // ✅ Obtenir les informations du client
       const clientInfo = clients.find(c => c._id === devis.clientId) || {};
       
@@ -236,103 +205,138 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       }, 0);
       const totalTVA = totalTTC - totalHT;
 
-      // ✅ Créer le contenu HTML complet
-      const devisHTML = `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background: white; color: black; min-height: 250mm;">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #ccc; padding-bottom: 20px;">
-            <div>
-              <h2 style="margin: 0; color: #333; font-size: 24px;">${devis.entrepriseName || 'Entreprise'}</h2>
-              <p style="margin: 5px 0;">${devis.entrepriseAddress || ''}</p>
-              <p style="margin: 5px 0;">${devis.entrepriseCity || ''}</p>
-              <p style="margin: 5px 0;">${devis.entreprisePhone || ''}</p>
-              <p style="margin: 5px 0;">${devis.entrepriseEmail || ''}</p>
+      // ✅ SOLUTION: Créer un élément temporaire avec contenu HTML complet et styles inline
+      const tempDiv = document.createElement('div');
+      tempDiv.style.cssText = `
+        position: absolute;
+        left: -9999px;
+        top: 0;
+        width: 794px;
+        min-height: 1123px;
+        background: white;
+        padding: 40px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        line-height: 1.4;
+        color: #000;
+        box-sizing: border-box;
+      `;
+      
+      document.body.appendChild(tempDiv);
+
+      // ✅ Créer le contenu HTML avec styles inline complets
+      tempDiv.innerHTML = `
+        <div style="font-family: Arial, sans-serif; background: white; color: black; min-height: 1000px; padding: 20px;">
+          <!-- En-tête -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 40px; border-bottom: 3px solid #333; padding-bottom: 20px;">
+            <div style="flex: 1;">
+              <h2 style="margin: 0 0 15px 0; color: #333; font-size: 24px; font-weight: bold;">${devis.entrepriseName || 'Entreprise'}</h2>
+              <p style="margin: 5px 0; font-size: 14px;">${devis.entrepriseAddress || ''}</p>
+              <p style="margin: 5px 0; font-size: 14px;">${devis.entrepriseCity || ''}</p>
+              <p style="margin: 5px 0; font-size: 14px;">${devis.entreprisePhone || ''}</p>
+              <p style="margin: 5px 0; font-size: 14px;">${devis.entrepriseEmail || ''}</p>
             </div>
-            <div style="text-align: right;">
-              <h1 style="margin: 0; font-size: 48px; color: #333; font-weight: bold;">DEVIS</h1>
-              <p style="margin: 5px 0;"><strong>N°:</strong> ${devis._id || 'N/A'}</p>
-              <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(devis.dateDevis)}</p>
-              <p style="margin: 5px 0;"><strong>Validité:</strong> ${formatDate(devis.dateValidite)}</p>
+            <div style="text-align: right; flex: 1;">
+              <h1 style="margin: 0 0 20px 0; font-size: 48px; color: #333; font-weight: bold; letter-spacing: 2px;">DEVIS</h1>
+              <p style="margin: 8px 0; font-size: 14px;"><strong>N°:</strong> ${devis._id?.slice(-8) || 'N/A'}</p>
+              <p style="margin: 8px 0; font-size: 14px;"><strong>Date:</strong> ${formatDate(devis.dateDevis)}</p>
+              <p style="margin: 8px 0; font-size: 14px;"><strong>Validité:</strong> ${formatDate(devis.dateValidite)}</p>
             </div>
           </div>
           
-          <div style="margin-bottom: 30px;">
-            <h3 style="color: #333; border-bottom: 1px solid #ccc; padding-bottom: 5px; font-size: 18px;">Client</h3>
-            <p style="margin: 5px 0; font-weight: bold; font-size: 16px;">${clientInfo.name || devis.clientName || 'Client'}</p>
-            <p style="margin: 5px 0;">${clientInfo.email || devis.clientEmail || ''}</p>
-            <p style="margin: 5px 0;">${clientInfo.phone || devis.clientPhone || ''}</p>
-            <p style="margin: 5px 0;">${devis.clientAddress || ''}</p>
+          <!-- Informations client -->
+          <div style="margin-bottom: 40px; background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #007bff;">
+            <h3 style="color: #333; margin: 0 0 15px 0; font-size: 18px; font-weight: bold;">DESTINATAIRE</h3>
+            <p style="margin: 8px 0; font-weight: bold; font-size: 16px; color: #333;">${clientInfo.name || devis.clientName || 'Client'}</p>
+            <p style="margin: 5px 0; font-size: 14px;">${clientInfo.email || devis.clientEmail || ''}</p>
+            <p style="margin: 5px 0; font-size: 14px;">${clientInfo.phone || devis.clientPhone || ''}</p>
+            <p style="margin: 5px 0; font-size: 14px;">${devis.clientAddress || ''}</p>
           </div>
 
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+          <!-- Tableau des prestations -->
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
             <thead>
               <tr style="background: #333; color: white;">
-                <th style="border: 1px solid #ccc; padding: 12px; text-align: left; font-size: 14px;">Description</th>
-                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">Qté</th>
-                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">Prix HT</th>
-                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">TVA</th>
-                <th style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 14px;">Total HT</th>
+                <th style="border: 1px solid #333; padding: 15px 10px; text-align: left; font-size: 14px; font-weight: bold;">Description</th>
+                <th style="border: 1px solid #333; padding: 15px 10px; text-align: center; font-size: 14px; font-weight: bold; width: 80px;">Qté</th>
+                <th style="border: 1px solid #333; padding: 15px 10px; text-align: center; font-size: 14px; font-weight: bold; width: 100px;">Prix HT</th>
+                <th style="border: 1px solid #333; padding: 15px 10px; text-align: center; font-size: 14px; font-weight: bold; width: 80px;">TVA</th>
+                <th style="border: 1px solid #333; padding: 15px 10px; text-align: center; font-size: 14px; font-weight: bold; width: 100px;">Total HT</th>
               </tr>
             </thead>
             <tbody>
-              ${devis.articles.map(article => {
+              ${devis.articles.map((article, index) => {
                 const price = parseFloat(article.unitPrice || 0);
                 const qty = parseFloat(article.quantity || 0);
                 const total = price * qty;
+                const bgColor = index % 2 === 0 ? '#ffffff' : '#f8f9fa';
                 return `
-                  <tr>
-                    <td style="border: 1px solid #ccc; padding: 12px; font-size: 13px;">${article.description || ''}</td>
-                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px;">${qty} ${article.unit || ''}</td>
-                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px;">${price.toFixed(2)} €</td>
-                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px;">${article.tvaRate || 20}%</td>
-                    <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-size: 13px; font-weight: bold;">${total.toFixed(2)} €</td>
+                  <tr style="background: ${bgColor};">
+                    <td style="border: 1px solid #ddd; padding: 12px 10px; font-size: 13px; vertical-align: top;">${article.description || ''}</td>
+                    <td style="border: 1px solid #ddd; padding: 12px 10px; text-align: center; font-size: 13px;">${qty} ${article.unit || ''}</td>
+                    <td style="border: 1px solid #ddd; padding: 12px 10px; text-align: center; font-size: 13px;">${price.toFixed(2)} €</td>
+                    <td style="border: 1px solid #ddd; padding: 12px 10px; text-align: center; font-size: 13px;">${article.tvaRate || 20}%</td>
+                    <td style="border: 1px solid #ddd; padding: 12px 10px; text-align: center; font-size: 13px; font-weight: bold; color: #28a745;">${total.toFixed(2)} €</td>
                   </tr>
                 `;
               }).join('')}
             </tbody>
           </table>
 
-          <div style="text-align: right; margin-bottom: 30px; padding: 20px; background: #f8f9fa; border-radius: 8px;">
-            <p style="margin: 5px 0; font-size: 16px;"><strong>Total HT: ${totalHT.toFixed(2)} €</strong></p>
-            <p style="margin: 5px 0; font-size: 16px;"><strong>Total TVA: ${totalTVA.toFixed(2)} €</strong></p>
-            <p style="margin: 5px 0; font-size: 20px; color: #28a745;"><strong>Total TTC: ${totalTTC.toFixed(2)} €</strong></p>
+          <!-- Totaux -->
+          <div style="text-align: right; margin-bottom: 40px;">
+            <div style="display: inline-block; background: #f8f9fa; padding: 25px; border-radius: 12px; border: 2px solid #007bff; min-width: 300px;">
+              <p style="margin: 8px 0; font-size: 16px; color: #333;"><strong>Total HT: ${totalHT.toFixed(2)} €</strong></p>
+              <p style="margin: 8px 0; font-size: 16px; color: #333;"><strong>Total TVA: ${totalTVA.toFixed(2)} €</strong></p>
+              <hr style="margin: 15px 0; border: none; border-top: 2px solid #007bff;">
+              <p style="margin: 8px 0; font-size: 22px; font-weight: bold; color: #28a745;">TOTAL TTC: ${totalTTC.toFixed(2)} €</p>
+            </div>
           </div>
 
-          <div style="margin-top: 50px;">
-            <h4 style="color: #333; margin-bottom: 15px;">Conditions :</h4>
-            <p style="margin: 5px 0;">• Devis valable jusqu'au ${formatDate(devis.dateValidite) || 'date à définir'}</p>
-            <p style="margin: 5px 0;">• Règlement à 30 jours fin de mois</p>
-            <p style="margin: 5px 0;">• TVA applicable selon la réglementation en vigueur</p>
+          <!-- Conditions -->
+          <div style="margin-bottom: 40px; background: #f8f9fa; padding: 20px; border-radius: 8px;">
+            <h4 style="color: #333; margin: 0 0 15px 0; font-size: 16px; font-weight: bold;">CONDITIONS :</h4>
+            <p style="margin: 8px 0; font-size: 14px;">• Devis valable jusqu'au ${formatDate(devis.dateValidite) || 'date à définir'}</p>
+            <p style="margin: 8px 0; font-size: 14px;">• Règlement à 30 jours fin de mois</p>
+            <p style="margin: 8px 0; font-size: 14px;">• TVA applicable selon la réglementation en vigueur</p>
           </div>
 
-          <div style="margin-top: 60px; text-align: center; font-style: italic;">
-            <p style="margin-bottom: 30px; font-size: 16px;"><strong>Bon pour accord - Date et signature :</strong></p>
-            <div style="margin-top: 40px; border-bottom: 2px solid #000; width: 300px; margin-left: auto; margin-right: auto;"></div>
+          <!-- Signature -->
+          <div style="margin-top: 60px; text-align: center;">
+            <p style="margin-bottom: 40px; font-size: 16px; font-weight: bold; color: #333;">Bon pour accord - Date et signature :</p>
+            <div style="margin: 0 auto; width: 300px; height: 80px; border-bottom: 2px solid #333;"></div>
           </div>
         </div>
       `;
 
-      tempDiv.innerHTML = devisHTML;
-
       console.log("📝 Contenu HTML créé, attente du rendu...");
       
-      // Attendre que le contenu soit rendu
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // ✅ Attendre que le contenu soit complètement rendu
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       console.log("📷 Début capture canvas...");
 
       // ✅ Capturer avec des paramètres optimisés
       const canvas = await html2canvas(tempDiv, {
-        scale: 1.5, // ✅ Scale modéré pour qualité/performance
+        scale: 2, // ✅ Haute qualité
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
         width: tempDiv.scrollWidth,
-        height: Math.max(tempDiv.scrollHeight, 1000), // ✅ Hauteur minimale garantie
+        height: Math.max(tempDiv.scrollHeight, 1123), // ✅ Hauteur A4 minimale
         scrollX: 0,
         scrollY: 0,
         windowWidth: 1200,
         windowHeight: 1600,
-        logging: false
+        logging: false,
+        onclone: (clonedDoc) => {
+          // ✅ S'assurer que les styles sont appliqués dans le clone
+          const clonedDiv = clonedDoc.querySelector('div');
+          if (clonedDiv) {
+            clonedDiv.style.visibility = 'visible';
+            clonedDiv.style.display = 'block';
+          }
+        }
       });
 
       console.log("✅ Canvas créé:", canvas.width, 'x', canvas.height);
@@ -345,8 +349,8 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       // Nettoyer l'élément temporaire
       document.body.removeChild(tempDiv);
 
-      // Créer le PDF avec les bonnes dimensions
-      const imgData = canvas.toDataURL('image/png', 0.95);
+      // ✅ Créer le PDF avec les bonnes dimensions
+      const imgData = canvas.toDataURL('image/png', 1.0); // ✅ Qualité maximale
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       // Calculer les dimensions pour s'adapter à A4
@@ -357,7 +361,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       
       console.log("📄 Dimensions PDF:", imgWidth, 'x', imgHeight);
       
-      // Si l'image est plus haute qu'une page, la diviser
+      // ✅ Gestion multi-pages si nécessaire
       if (imgHeight > pdfHeight - 20) {
         console.log("📄 Division en plusieurs pages nécessaire");
         const pageHeight = pdfHeight - 20;
@@ -390,7 +394,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
             canvas.width, sourceHeight
           );
           
-          const tempImgData = tempCanvas.toDataURL('image/png', 0.95);
+          const tempImgData = tempCanvas.toDataURL('image/png', 1.0);
           pdf.addImage(tempImgData, 'PNG', 10, 10, imgWidth, currentHeight);
           
           remainingHeight -= pageHeight;
@@ -452,7 +456,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
 
   const totalTTC = calculateTTC(currentDevis);
 
-  // ✅ Filtrer les devis affichés selon le client sélectionné
   const filteredDevisList = filterClientId 
     ? devisList.filter(devis => {
         const devisClientId = normalizeClientId(devis.clientId);
@@ -460,7 +463,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       })
     : devisList;
 
-  // ✅ Obtenir le nom du client sélectionné
   const selectedClient = filterClientId 
     ? clients.find(c => c._id === filterClientId)
     : null;
@@ -551,7 +553,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         )}
       </div>
 
-      {/* Aperçu du devis - Section unique */}
+      {/* Aperçu du devis */}
       <div className="devis-preview-container">
         <div className="preview-header">
           <h2 className="preview-title">
@@ -574,7 +576,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
             💾 {loading ? "Enregistrement..." : "Enregistrer le devis"}
           </button>
           
-          {/* ✅ NOUVEAU: Bouton "Nouveau devis" seulement quand on modifie un devis existant */}
           {currentDevis._id && (
             <button
               className="btn-new"
