@@ -317,8 +317,9 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
           >
             💾 {loading ? "Enregistrement..." : "Enregistrer le devis"}
           </button>
-          {/* ✅ SUPPRIMÉ: Le bouton "Nouveau devis" n'apparaît plus dans la vue client spécifique */}
-          {!selectedClient && (
+          
+          {/* ✅ NOUVEAU: Bouton "Nouveau devis" seulement quand on modifie un devis existant */}
+          {currentDevis._id && (
             <button
               className="btn-new"
               onClick={handleReset}
