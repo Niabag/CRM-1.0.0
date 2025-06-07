@@ -42,18 +42,24 @@ const BusinessCard = ({ userId, user }) => {
     }
   }, [userId, cardConfig.actions]);
 
-  // ✅ NOUVELLE FONCTION: Générer le QR code
+  // ✅ FONCTION CORRIGÉE: Générer le QR code
   const generateQRCode = () => {
     if (!userId) {
       console.error("❌ userId manquant pour générer le QR code");
+      alert("❌ Impossible de générer le QR code : utilisateur non identifié");
       return;
     }
     
-    const actionsData = encodeURIComponent(JSON.stringify(cardConfig.actions.filter(a => a.active)));
-    const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
-    
-    setQrValue(targetUrl);
-    console.log("✅ QR code généré:", targetUrl);
+    try {
+      const actionsData = encodeURIComponent(JSON.stringify(cardConfig.actions.filter(a => a.active)));
+      const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
+      
+      setQrValue(targetUrl);
+      console.log("✅ QR code généré:", targetUrl);
+    } catch (error) {
+      console.error("❌ Erreur lors de la génération du QR code:", error);
+      alert("❌ Erreur lors de la génération du QR code");
+    }
   };
 
   const fetchStats = async () => {
