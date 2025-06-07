@@ -26,6 +26,7 @@ export const API_ENDPOINTS = {
   // Devis
   DEVIS: {
     BASE: `${API_CONFIG.BASE_URL}/devis`,
+    BY_CLIENT: (clientId) => `${API_CONFIG.BASE_URL}/devis/client/${clientId}`, // ✅ NOUVEAU
     UPDATE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
     DELETE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
   },

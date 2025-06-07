@@ -28,7 +28,7 @@ const calculateTTC = (devis) => {
   }, 0);
 };
 
-const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
+const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedClientId = null }) => {
   const normalizeClientId = (c) => {
     if (!c) return null;
     return typeof c === "object" && c !== null ? c._id : c;
@@ -37,7 +37,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
   const [devisList, setDevisList] = useState([]);
   const [currentDevis, setCurrentDevis] = useState(initialDevisFromClient || DEFAULT_DEVIS);
   const [filterClientId, setFilterClientId] = useState(
-    normalizeClientId(initialDevisFromClient?.clientId)
+    selectedClientId || normalizeClientId(initialDevisFromClient?.clientId)
   );
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -47,8 +47,19 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
       setLoading(true);
       setError(null);
       try {
-        const data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
+        let data;
+        
+        // ✅ Si un client spécifique est sélectionné, récupérer uniquement ses devis
+        if (filterClientId) {
+          console.log("🎯 Récupération des devis pour le client:", filterClientId);
+          data = await apiRequest(API_ENDPOINTS.DEVIS.BY_CLIENT(filterClientId));
+        } else {
+          // Sinon, récupérer tous les devis de l'utilisateur
+          data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
+        }
+        
         setDevisList(Array.isArray(data) ? data : []);
+        console.log("📋 Devis récupérés:", data.length);
       } catch (err) {
         console.error("Erreur récupération des devis:", err);
         setError("Erreur lors de la récupération des devis");
@@ -58,14 +69,22 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
     };
     
     fetchDevis();
-  }, []);
+  }, [filterClientId]); // ✅ Recharger quand le client change
 
   useEffect(() => {
     if (initialDevisFromClient) {
       setCurrentDevis(initialDevisFromClient);
-      setFilterClientId(normalizeClientId(initialDevisFromClient.clientId));
+      const clientId = normalizeClientId(initialDevisFromClient.clientId);
+      setFilterClientId(clientId);
     }
   }, [initialDevisFromClient]);
+
+  // ✅ Mettre à jour le filtre quand selectedClientId change
+  useEffect(() => {
+    if (selectedClientId) {
+      setFilterClientId(selectedClientId);
+    }
+  }, [selectedClientId]);
 
   const handleSelectDevis = (devis) => {
     const normalizedClientId = normalizeClientId(devis.clientId);
@@ -75,12 +94,14 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
       articles: Array.isArray(devis.articles) ? devis.articles : [],
     };
     setCurrentDevis(updatedDevis);
-    setFilterClientId(normalizedClientId);
   };
 
   const handleReset = () => {
-    setCurrentDevis(DEFAULT_DEVIS);
-    setFilterClientId(null);
+    const newDevis = {
+      ...DEFAULT_DEVIS,
+      clientId: filterClientId || "" // ✅ Pré-remplir avec le client sélectionné
+    };
+    setCurrentDevis(newDevis);
   };
 
   const handleSave = async (updatedDevis, isEdit = false) => {
@@ -103,13 +124,23 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
         body: JSON.stringify({ ...updatedDevis, clientId }),
       });
 
-      // Recharger la liste des devis
-      const data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
+      // ✅ Recharger les devis du client spécifique ou tous les devis
+      let data;
+      if (filterClientId) {
+        data = await apiRequest(API_ENDPOINTS.DEVIS.BY_CLIENT(filterClientId));
+      } else {
+        data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
+      }
       setDevisList(Array.isArray(data) ? data : []);
 
       alert("✅ Devis enregistré avec succès !");
-      setCurrentDevis(DEFAULT_DEVIS);
-      setFilterClientId(null);
+      
+      // ✅ Réinitialiser avec le client pré-sélectionné
+      const newDevis = {
+        ...DEFAULT_DEVIS,
+        clientId: filterClientId || ""
+      };
+      setCurrentDevis(newDevis);
     } catch (error) {
       console.error("Erreur sauvegarde:", error);
       alert(`❌ Erreur lors de l'enregistrement: ${error.message}`);
@@ -173,7 +204,20 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
 
   const totalTTC = calculateTTC(currentDevis);
 
-  if (loading) {
+  // ✅ Filtrer les devis affichés selon le client sélectionné
+  const filteredDevisList = filterClientId 
+    ? devisList.filter(devis => {
+        const devisClientId = normalizeClientId(devis.clientId);
+        return devisClientId === filterClientId;
+      })
+    : devisList;
+
+  // ✅ Obtenir le nom du client sélectionné
+  const selectedClient = filterClientId 
+    ? clients.find(c => c._id === filterClientId)
+    : null;
+
+  if (loading && devisList.length === 0) {
     return (
       <div className="loading-state">
         <div>⏳ Chargement...</div>
@@ -186,7 +230,14 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
       {/* Liste des devis existants */}
       <div className="devis-list-section">
         <div className="devis-list-header">
-          <h2 className="devis-list-title">📄 Mes Devis</h2>
+          <h2 className="devis-list-title">
+            📄 {selectedClient ? `Devis de ${selectedClient.name}` : "Mes Devis"}
+          </h2>
+          {selectedClient && (
+            <p style={{textAlign: 'center', color: '#718096', marginTop: '0.5rem'}}>
+              📧 {selectedClient.email} • 📞 {selectedClient.phone}
+            </p>
+          )}
         </div>
         
         {error && (
@@ -199,14 +250,19 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
           </button>
         )}
 
-        {devisList.length === 0 ? (
+        {filteredDevisList.length === 0 ? (
           <div className="empty-state">
             <div className="empty-icon">📄</div>
-            <p className="empty-message">Aucun devis créé pour le moment</p>
+            <p className="empty-message">
+              {selectedClient 
+                ? `Aucun devis créé pour ${selectedClient.name}`
+                : "Aucun devis créé pour le moment"
+              }
+            </p>
           </div>
         ) : (
           <div className="devis-grid">
-            {devisList
+            {filteredDevisList
               .filter((devis) => devis.title && devis.title.trim() !== "")
               .map((devis) => (
                 <div key={devis._id} className="devis-card">
@@ -245,7 +301,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
           <h2 className="preview-title">
             {currentDevis._id 
               ? `✏️ Modification du devis : ${currentDevis.title || "Sans titre"}` 
-              : "🆕 Nouveau devis"
+              : `🆕 Nouveau devis${selectedClient ? ` pour ${selectedClient.name}` : ""}`
             }
           </h2>
           <div className="preview-subtitle">
@@ -261,14 +317,12 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
           >
             💾 {loading ? "Enregistrement..." : "Enregistrer le devis"}
           </button>
-          {currentDevis._id && (
-            <button
-              className="btn-new"
-              onClick={handleReset}
-            >
-              🆕 Nouveau devis
-            </button>
-          )}
+          <button
+            className="btn-new"
+            onClick={handleReset}
+          >
+            🆕 Nouveau devis
+          </button>
         </div>
 
         {currentDevis && (

@@ -18,6 +18,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState(null);
   const [currentDevis, setCurrentDevis] = useState(null);
+  const [selectedClientId, setSelectedClientId] = useState(null); // ✅ NOUVEAU
   const [user, setUser] = useState({});
 
   const toggleSidebar = () => setIsOpen(!isOpen);
@@ -100,6 +101,7 @@ const Dashboard = () => {
     }
   };
 
+  // ✅ MODIFIÉ: Créer un devis pour un client spécifique
   const handleCreateDevis = (client) => {
     const newDevis = {
       ...DEFAULT_DEVIS,
@@ -109,7 +111,24 @@ const Dashboard = () => {
       clientPhone: client.phone
     };
     setCurrentDevis(newDevis);
+    setSelectedClientId(client._id); // ✅ Définir le client sélectionné
     setActiveTab("devis");
+  };
+
+  // ✅ NOUVEAU: Voir les devis d'un client spécifique
+  const handleViewClientDevis = (client) => {
+    setSelectedClientId(client._id);
+    setCurrentDevis(null); // Réinitialiser le devis actuel
+    setActiveTab("devis");
+  };
+
+  // ✅ MODIFIÉ: Réinitialiser la sélection client quand on change d'onglet
+  const handleTabChange = (tabId) => {
+    setActiveTab(tabId);
+    if (tabId !== "devis") {
+      setSelectedClientId(null);
+      setCurrentDevis(null);
+    }
   };
 
   const menuItems = [
@@ -146,7 +165,7 @@ const Dashboard = () => {
               <div
                 key={item.id}
                 className={`menu-item ${activeTab === item.id ? "active" : ""}`}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => handleTabChange(item.id)} // ✅ MODIFIÉ
               >
                 <span className="menu-icon">{item.icon}</span>
                 {isOpen && <span className="menu-label">{item.label}</span>}
@@ -195,6 +214,13 @@ const Dashboard = () => {
                         ➕ Créer un devis
                       </button>
                       <button 
+                        onClick={() => handleViewClientDevis(client)} // ✅ NOUVEAU
+                        className="primary-btn"
+                        style={{background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'}}
+                      >
+                        📄 Voir ses devis
+                      </button>
+                      <button 
                         onClick={() => handleDeleteClient(client._id)}
                         className="danger-btn"
                       >
@@ -212,9 +238,11 @@ const Dashboard = () => {
           <Devis 
             clients={clients} 
             initialDevisFromClient={currentDevis}
+            selectedClientId={selectedClientId} // ✅ NOUVEAU
             onBack={() => {
               setActiveTab("clients");
               setCurrentDevis(null);
+              setSelectedClientId(null); // ✅ Réinitialiser
             }}
           />
         )}

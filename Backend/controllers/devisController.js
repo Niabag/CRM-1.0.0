@@ -15,7 +15,7 @@ exports.createDevis = async (req, res) => {
       entrepriseCity,
       entreprisePhone,
       entrepriseEmail,
-      logoUrl, // ✅
+      logoUrl,
       articles = [],
     } = req.body;
 
@@ -39,7 +39,7 @@ exports.createDevis = async (req, res) => {
       entrepriseCity,
       entreprisePhone,
       entrepriseEmail,
-      logoUrl, // ✅
+      logoUrl,
       articles,
     });
 
@@ -54,7 +54,7 @@ exports.createDevis = async (req, res) => {
   }
 };
 
-
+// ✅ NOUVEAU: Récupérer les devis d'un utilisateur spécifique
 exports.getUserDevis = async (req, res) => {
   try {
     const devisList = await Devis.find({ userId: req.userId })
@@ -66,19 +66,47 @@ exports.getUserDevis = async (req, res) => {
   }
 };
 
+// ✅ NOUVEAU: Récupérer les devis d'un client spécifique
+exports.getClientDevis = async (req, res) => {
+  try {
+    const { clientId } = req.params;
+    
+    // Vérifier que le client appartient à l'utilisateur connecté
+    const Client = require("../models/client");
+    const client = await Client.findOne({ _id: clientId, userId: req.userId });
+    
+    if (!client) {
+      return res.status(404).json({ message: "Client introuvable ou non autorisé" });
+    }
+
+    // Récupérer uniquement les devis de ce client
+    const devisList = await Devis.find({ 
+      clientId: clientId,
+      userId: req.userId 
+    }).populate("clientId", "name email");
+    
+    res.json(devisList);
+  } catch (error) {
+    console.error("Erreur récupération devis client :", error);
+    res.status(500).json({ message: "Erreur lors de la récupération des devis du client", error });
+  }
+};
+
 exports.updateDevis = async (req, res) => {
   try {
     const devisId = req.params.id;
+
+    // Vérifier que le devis appartient à l'utilisateur
+    const existingDevis = await Devis.findOne({ _id: devisId, userId: req.userId });
+    if (!existingDevis) {
+      return res.status(404).json({ message: "Devis introuvable ou non autorisé." });
+    }
 
     const updatedDevis = await Devis.findByIdAndUpdate(
       devisId,
       req.body,
       { new: true }
     );
-
-    if (!updatedDevis) {
-      return res.status(404).json({ message: "Devis introuvable." });
-    }
 
     res.json(updatedDevis);
   } catch (error) {
@@ -89,16 +117,9 @@ exports.updateDevis = async (req, res) => {
 
 exports.deleteDevis = async (req, res) => {
   try {
-    const devis = await Devis.findById(req.params.id);
+    const devis = await Devis.findOne({ _id: req.params.id, userId: req.userId });
     if (!devis) {
-      return res.status(404).json({ message: "Devis introuvable." });
-    }
-
-    // Optionnel : vérifie si c'est bien l'utilisateur qui a créé ce devis
-    if (devis.userId.toString() !== req.userId) {
-      console.log("🔐 User ID du token :", req.userId);
-console.log("📄 User ID du devis :", devis.userId);
-      return res.status(403).json({ message: "Accès interdit." });
+      return res.status(404).json({ message: "Devis introuvable ou non autorisé." });
     }
 
     await devis.deleteOne();
