@@ -150,7 +150,7 @@
   font-weight: 500;
 }
 
-/* ✅ NOUVEAU: Layout en colonnes fixes */
+/* ✅ Layout en colonnes fixes */
 .card-main-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -358,7 +358,36 @@
   box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
 }
 
-/* ✅ NOUVEAU: Options de téléchargement */
+/* ✅ NOUVEAU: Style pour la checkbox carte de visite */
+.checkbox-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  border: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.checkbox-option:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(159, 122, 234, 0.3);
+}
+
+.checkbox-option input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: white;
+}
+
+/* Options de téléchargement */
 .download-options {
   display: flex;
   gap: 0.5rem;
@@ -398,18 +427,9 @@
   font-size: 0.8rem;
 }
 
-/* ✅ NOUVEAU: Bouton carte de visite */
-.upload-btn.card-btn {
-  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
-}
-
 .upload-btn:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
-}
-
-.upload-btn.card-btn:hover {
-  box-shadow: 0 4px 15px rgba(159, 122, 234, 0.3);
 }
 
 /* Aperçu de la carte */

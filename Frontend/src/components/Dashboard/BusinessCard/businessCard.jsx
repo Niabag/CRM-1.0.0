@@ -237,21 +237,15 @@ const BusinessCard = ({ userId, user }) => {
     link.click();
   };
 
-  // ✅ NOUVELLE FONCTION: Utiliser la carte générée pour les téléchargements
-  const useGeneratedCard = async () => {
-    const cardUrl = await generateBusinessCard();
-    
-    // Mettre à jour toutes les actions de téléchargement
-    setCardConfig(prev => ({
-      ...prev,
-      actions: prev.actions.map(action => 
-        action.type === 'download' 
-          ? { ...action, file: cardUrl }
-          : action
-      )
-    }));
-    
-    alert('✅ Carte de visite appliquée à tous les téléchargements !');
+  // ✅ FONCTION MODIFIÉE: Utiliser la carte générée pour les téléchargements
+  const handleUseGeneratedCard = (actionId, useCard) => {
+    if (useCard) {
+      generateBusinessCard().then(cardUrl => {
+        updateAction(actionId, 'file', cardUrl);
+      });
+    } else {
+      updateAction(actionId, 'file', '/images/welcome.png');
+    }
   };
 
   const copyQRLink = () => {
@@ -329,12 +323,13 @@ const BusinessCard = ({ userId, user }) => {
         </div>
       </div>
 
+      {/* ✅ EN-TÊTE REMIS EN HAUT */}
       <div className="card-header">
         <h2>💼 Carte de Visite Numérique</h2>
         <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
       </div>
 
-      {/* ✅ NOUVEAU: Layout en colonnes fixes */}
+      {/* ✅ Layout en colonnes fixes */}
       <div className="card-main-content">
         {/* Colonne de gauche - Configuration */}
         <div className="card-config-column">
@@ -479,35 +474,15 @@ const BusinessCard = ({ userId, user }) => {
                       <div className="form-group">
                         <label>Fichier à télécharger :</label>
                         <div className="download-options">
-                          <div className="file-upload">
+                          {/* ✅ CHECKBOX CARTE DE VISITE */}
+                          <label className="checkbox-option">
                             <input
-                              type="file"
-                              accept="image/*,application/pdf,.doc,.docx"
-                              onChange={(e) => {
-                                const file = e.target.files[0];
-                                if (file) {
-                                  const reader = new FileReader();
-                                  reader.onloadend = () => {
-                                    updateAction(action.id, 'file', reader.result);
-                                  };
-                                  reader.readAsDataURL(file);
-                                }
-                              }}
-                              id={`download-file-${action.id}`}
+                              type="checkbox"
+                              checked={action.file && action.file.startsWith('data:image')}
+                              onChange={(e) => handleUseGeneratedCard(action.id, e.target.checked)}
                             />
-                            <label htmlFor={`download-file-${action.id}`} className="upload-btn small">
-                              📎 Fichier personnalisé
-                            </label>
-                          </div>
-                          
-                          {/* ✅ NOUVEAU: Bouton pour utiliser la carte générée */}
-                          <button 
-                            type="button"
-                            onClick={useGeneratedCard}
-                            className="upload-btn small card-btn"
-                          >
                             💼 Carte de visite
-                          </button>
+                          </label>
                         </div>
                       </div>
                     )}
