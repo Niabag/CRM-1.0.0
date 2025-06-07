@@ -187,7 +187,7 @@ const DevisPreview = ({
             </div>
             <div className="metadata-item">
               <label>Client :</label>
-              {/* ✅ CORRECTION: Afficher le nom du client au lieu de l'objet */}
+              {/* ✅ CORRECTION: Afficher le nom du client au lieu de l'ID */}
               <span className="client-id">
                 {clientInfo.name || devisData.clientName || "Client non défini"}
               </span>
@@ -247,6 +247,8 @@ const DevisPreview = ({
                       />
                     </td>
                     <td>
+                      {/* ✅ CORRECTION: € à gauche du champ */}
+                      €{" "}
                       <EditableInput 
                         name="article-unitPrice" 
                         value={article.unitPrice || ""} 
@@ -254,7 +256,7 @@ const DevisPreview = ({
                         index={index} 
                         type="number"
                         placeholder="0"
-                      /> €
+                      />
                     </td>
                     <td>
                       <span className="tva-text-only">{article.tvaRate || "20"}%</span>
