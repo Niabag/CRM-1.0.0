@@ -6,17 +6,14 @@ import './businessCard.scss';
 const BusinessCard = ({ userId, user }) => {
   const [cardConfig, setCardConfig] = useState({
     cardImage: '/images/default-business-card.png',
-    downloadImage: '/images/welcome.png',
-    redirectType: 'form', // 'form', 'website', 'download'
-    websiteUrl: '',
     showQR: true,
     qrPosition: 'bottom-right',
     qrSize: 150,
-    // Actions multiples
+    // Actions multiples avec choix d'activation
     actions: [
-      { id: 1, type: 'download', file: '/images/welcome.png', delay: 0, active: true },
+      { id: 1, type: 'download', file: '/images/welcome.png', delay: 0, active: false },
       { id: 2, type: 'form', url: '', delay: 1000, active: true },
-      { id: 3, type: 'redirect', url: 'https://google.com', delay: 3000, active: true }
+      { id: 3, type: 'redirect', url: 'https://google.com', delay: 3000, active: false }
     ]
   });
   
@@ -37,7 +34,6 @@ const BusinessCard = ({ userId, user }) => {
 
   useEffect(() => {
     if (userId) {
-      // Vérifier si une carte existe déjà
       checkExistingCard();
       generateQRCode();
       fetchStats();
@@ -46,16 +42,21 @@ const BusinessCard = ({ userId, user }) => {
 
   // Vérifier si une carte existe
   const checkExistingCard = () => {
-    // Simuler la vérification d'une carte existante
-    // Dans un vrai projet, cela ferait un appel API
     const existingCard = localStorage.getItem(`business-card-${userId}`);
-    setHasCard(!!existingCard);
+    if (existingCard) {
+      try {
+        const savedCard = JSON.parse(existingCard);
+        setCardConfig(prev => ({ ...prev, ...savedCard }));
+        setHasCard(true);
+      } catch (error) {
+        console.error('Erreur chargement carte:', error);
+      }
+    }
   };
 
   // Récupération des statistiques
   const fetchStats = async () => {
     try {
-      // Simuler des données de statistiques (à remplacer par de vraies données)
       const mockStats = {
         scansToday: Math.floor(Math.random() * 50) + 10,
         scansThisMonth: Math.floor(Math.random() * 500) + 100,
@@ -85,8 +86,17 @@ const BusinessCard = ({ userId, user }) => {
   const generateQRCode = () => {
     if (!userId) return;
     
+    // Filtrer uniquement les actions actives
+    const activeActions = cardConfig.actions.filter(a => a.active);
+    
+    if (activeActions.length === 0) {
+      // Si aucune action active, utiliser l'URL simple
+      setQrValue(FRONTEND_ROUTES.CLIENT_REGISTER(userId));
+      return;
+    }
+    
     // URL avec actions multiples encodées
-    const actionsData = encodeURIComponent(JSON.stringify(cardConfig.actions.filter(a => a.active)));
+    const actionsData = encodeURIComponent(JSON.stringify(activeActions));
     const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
     
     setQrValue(targetUrl);
@@ -97,40 +107,30 @@ const BusinessCard = ({ userId, user }) => {
     if (file) {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setCardConfig(prev => ({
-          ...prev,
-          cardImage: reader.result
-        }));
-        setHasCard(true);
-        // Sauvegarder dans localStorage
-        localStorage.setItem(`business-card-${userId}`, JSON.stringify({
+        const newConfig = {
           ...cardConfig,
           cardImage: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handleDownloadImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCardConfig(prev => ({
-          ...prev,
-          downloadImage: reader.result
-        }));
+        };
+        setCardConfig(newConfig);
+        setHasCard(true);
+        // Sauvegarder dans localStorage
+        localStorage.setItem(`business-card-${userId}`, JSON.stringify(newConfig));
       };
       reader.readAsDataURL(file);
     }
   };
 
   const handleConfigChange = (field, value) => {
-    setCardConfig(prev => ({
-      ...prev,
+    const newConfig = {
+      ...cardConfig,
       [field]: value
-    }));
+    };
+    setCardConfig(newConfig);
+    
+    // Sauvegarder automatiquement
+    if (hasCard) {
+      localStorage.setItem(`business-card-${userId}`, JSON.stringify(newConfig));
+    }
   };
 
   // Gestion des actions multiples
@@ -141,31 +141,46 @@ const BusinessCard = ({ userId, user }) => {
       file: '/images/welcome.png',
       url: '',
       delay: 0,
-      active: true
+      active: false
     };
     
-    setCardConfig(prev => ({
-      ...prev,
-      actions: [...prev.actions, newAction]
-    }));
+    const newConfig = {
+      ...cardConfig,
+      actions: [...cardConfig.actions, newAction]
+    };
+    setCardConfig(newConfig);
+    
+    if (hasCard) {
+      localStorage.setItem(`business-card-${userId}`, JSON.stringify(newConfig));
+    }
   };
 
   const updateAction = (actionId, field, value) => {
-    setCardConfig(prev => ({
-      ...prev,
-      actions: prev.actions.map(action => 
+    const newConfig = {
+      ...cardConfig,
+      actions: cardConfig.actions.map(action => 
         action.id === actionId 
           ? { ...action, [field]: value }
           : action
       )
-    }));
+    };
+    setCardConfig(newConfig);
+    
+    if (hasCard) {
+      localStorage.setItem(`business-card-${userId}`, JSON.stringify(newConfig));
+    }
   };
 
   const removeAction = (actionId) => {
-    setCardConfig(prev => ({
-      ...prev,
-      actions: prev.actions.filter(action => action.id !== actionId)
-    }));
+    const newConfig = {
+      ...cardConfig,
+      actions: cardConfig.actions.filter(action => action.id !== actionId)
+    };
+    setCardConfig(newConfig);
+    
+    if (hasCard) {
+      localStorage.setItem(`business-card-${userId}`, JSON.stringify(newConfig));
+    }
   };
 
   const moveAction = (actionId, direction) => {
@@ -180,10 +195,15 @@ const BusinessCard = ({ userId, user }) => {
     
     [newActions[currentIndex], newActions[targetIndex]] = [newActions[targetIndex], newActions[currentIndex]];
     
-    setCardConfig(prev => ({
-      ...prev,
+    const newConfig = {
+      ...cardConfig,
       actions: newActions
-    }));
+    };
+    setCardConfig(newConfig);
+    
+    if (hasCard) {
+      localStorage.setItem(`business-card-${userId}`, JSON.stringify(newConfig));
+    }
   };
 
   const downloadBusinessCard = () => {
@@ -268,25 +288,45 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
+  const getActionTypeIcon = (type) => {
+    switch (type) {
+      case 'download': return '📥';
+      case 'form': return '📝';
+      case 'redirect': return '🌐';
+      default: return '❓';
+    }
+  };
+
   return (
     <div className="business-card-container">
       {/* En-tête principal */}
       <div className="card-header">
-        <h2>💼 Carte de Visite Numérique</h2>
-        <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
+        <div className="header-content">
+          <div className="header-text">
+            <h2>💼 Carte de Visite Numérique</h2>
+            <p>Créez votre carte de visite interactive avec QR code personnalisé</p>
+          </div>
+          <div className="header-actions">
+            {hasCard && (
+              <button onClick={downloadBusinessCard} className="btn-download-header">
+                💾 Télécharger la carte
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
-      {/* ✅ Section statistiques séparée */}
+      {/* Section statistiques séparée */}
       <div className="stats-section">
         <h3>📊 Statistiques d'utilisation</h3>
         
-        <div className="stats-overview">
+        <div className="stats-grid">
           <div className="stat-card highlight">
             <div className="stat-icon">📊</div>
             <div className="stat-content">
               <h4>{stats.totalScans}</h4>
               <p>Scans totaux</p>
-              <span className="stat-trend">+{stats.scansToday} aujourd'hui</span>
+              <span className="stat-trend positive">+{stats.scansToday} aujourd'hui</span>
             </div>
           </div>
           
@@ -295,7 +335,7 @@ const BusinessCard = ({ userId, user }) => {
             <div className="stat-content">
               <h4>{stats.scansThisMonth}</h4>
               <p>Ce mois</p>
-              <span className="stat-trend">+{Math.round((stats.scansThisMonth / 30) * 100) / 100}/jour</span>
+              <span className="stat-trend neutral">+{Math.round((stats.scansThisMonth / 30) * 100) / 100}/jour</span>
             </div>
           </div>
           
@@ -304,7 +344,7 @@ const BusinessCard = ({ userId, user }) => {
             <div className="stat-content">
               <h4>{stats.conversions}</h4>
               <p>Conversions</p>
-              <span className="stat-trend">{stats.conversionRate}% taux</span>
+              <span className="stat-trend positive">{stats.conversionRate}% taux</span>
             </div>
           </div>
           
@@ -313,7 +353,7 @@ const BusinessCard = ({ userId, user }) => {
             <div className="stat-content">
               <h4>{stats.topHours[0]?.hour || '--'}</h4>
               <p>Heure de pic</p>
-              <span className="stat-trend">{stats.topHours[0]?.scans || 0} scans</span>
+              <span className="stat-trend neutral">{stats.topHours[0]?.scans || 0} scans</span>
             </div>
           </div>
         </div>
@@ -332,9 +372,10 @@ const BusinessCard = ({ userId, user }) => {
         </div>
       </div>
 
-      <div className="card-content">
+      <div className="main-content">
         {/* Configuration */}
-        <div className="card-config">
+        <div className="config-panel">
+          {/* Design de la carte */}
           <div className="config-section">
             <h3>🎨 Design de la carte</h3>
             
@@ -343,7 +384,7 @@ const BusinessCard = ({ userId, user }) => {
                 <div className="notice-icon">💼</div>
                 <div className="notice-content">
                   <h4>Créer la carte</h4>
-                  <p>Commencez par importer votre carte de visite pour la personnaliser</p>
+                  <p>Importez votre carte de visite pour commencer</p>
                 </div>
               </div>
             )}
@@ -364,18 +405,19 @@ const BusinessCard = ({ userId, user }) => {
             </div>
 
             <div className="form-group">
-              <label>
+              <label className="checkbox-label">
                 <input
                   type="checkbox"
                   checked={cardConfig.showQR}
                   onChange={(e) => handleConfigChange('showQR', e.target.checked)}
                 />
+                <span className="checkmark"></span>
                 Afficher le QR code sur la carte
               </label>
             </div>
 
             {cardConfig.showQR && (
-              <>
+              <div className="qr-config">
                 <div className="form-group">
                   <label>Position du QR code :</label>
                   <select
@@ -390,33 +432,49 @@ const BusinessCard = ({ userId, user }) => {
                 </div>
 
                 <div className="form-group">
-                  <label>Taille du QR code :</label>
+                  <label>Taille du QR code : {cardConfig.qrSize}px</label>
                   <input
                     type="range"
                     min="100"
                     max="200"
                     value={cardConfig.qrSize}
                     onChange={(e) => handleConfigChange('qrSize', parseInt(e.target.value))}
+                    className="range-slider"
                   />
-                  <span>{cardConfig.qrSize}px</span>
                 </div>
-              </>
+              </div>
             )}
           </div>
 
-          {/* Section actions multiples */}
+          {/* Actions après scan */}
           <div className="config-section">
             <h3>🎯 Actions après scan</h3>
             <p className="section-description">
-              Configurez plusieurs actions qui se déclencheront dans l'ordre après le scan du QR code
+              Choisissez les actions qui se déclencheront après le scan du QR code
             </p>
             
             <div className="actions-list">
               {cardConfig.actions.map((action, index) => (
                 <div key={action.id} className={`action-item ${!action.active ? 'disabled' : ''}`}>
                   <div className="action-header">
-                    <div className="action-order">#{index + 1}</div>
+                    <div className="action-info">
+                      <div className="action-order">#{index + 1}</div>
+                      <div className="action-type-display">
+                        <span className="action-icon">{getActionTypeIcon(action.type)}</span>
+                        <span className="action-label">{getActionTypeLabel(action.type)}</span>
+                      </div>
+                    </div>
+                    
                     <div className="action-controls">
+                      <label className="toggle-switch">
+                        <input
+                          type="checkbox"
+                          checked={action.active}
+                          onChange={(e) => updateAction(action.id, 'active', e.target.checked)}
+                        />
+                        <span className="toggle-slider"></span>
+                      </label>
+                      
                       <button 
                         onClick={() => moveAction(action.id, 'up')}
                         disabled={index === 0}
@@ -443,81 +501,72 @@ const BusinessCard = ({ userId, user }) => {
                     </div>
                   </div>
                   
-                  <div className="action-config">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Type d'action :</label>
-                        <select
-                          value={action.type}
-                          onChange={(e) => updateAction(action.id, 'type', e.target.value)}
-                        >
-                          <option value="download">📥 Téléchargement</option>
-                          <option value="form">📝 Formulaire</option>
-                          <option value="redirect">🌐 Redirection</option>
-                        </select>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Délai (ms) :</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="500"
-                          value={action.delay}
-                          onChange={(e) => updateAction(action.id, 'delay', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                    
-                    {action.type === 'redirect' && (
-                      <div className="form-group">
-                        <label>URL :</label>
-                        <input
-                          type="url"
-                          placeholder="https://monsite.com"
-                          value={action.url || ''}
-                          onChange={(e) => updateAction(action.id, 'url', e.target.value)}
-                        />
-                      </div>
-                    )}
-                    
-                    {action.type === 'download' && (
-                      <div className="form-group">
-                        <label>Fichier à télécharger :</label>
-                        <div className="file-upload">
+                  {action.active && (
+                    <div className="action-config">
+                      <div className="form-row">
+                        <div className="form-group">
+                          <label>Type d'action :</label>
+                          <select
+                            value={action.type}
+                            onChange={(e) => updateAction(action.id, 'type', e.target.value)}
+                          >
+                            <option value="download">📥 Téléchargement</option>
+                            <option value="form">📝 Formulaire</option>
+                            <option value="redirect">🌐 Redirection</option>
+                          </select>
+                        </div>
+                        
+                        <div className="form-group">
+                          <label>Délai (ms) :</label>
                           <input
-                            type="file"
-                            accept="image/*,application/pdf,.doc,.docx"
-                            onChange={(e) => {
-                              const file = e.target.files[0];
-                              if (file) {
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                  updateAction(action.id, 'file', reader.result);
-                                };
-                                reader.readAsDataURL(file);
-                              }
-                            }}
-                            id={`download-file-${action.id}`}
+                            type="number"
+                            min="0"
+                            step="500"
+                            value={action.delay}
+                            onChange={(e) => updateAction(action.id, 'delay', parseInt(e.target.value))}
                           />
-                          <label htmlFor={`download-file-${action.id}`} className="upload-btn small">
-                            📎 Choisir
-                          </label>
                         </div>
                       </div>
-                    )}
-                    
-                    <div className="form-group">
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={action.active}
-                          onChange={(e) => updateAction(action.id, 'active', e.target.checked)}
-                        />
-                        Action active
-                      </label>
+                      
+                      {action.type === 'redirect' && (
+                        <div className="form-group">
+                          <label>URL de redirection :</label>
+                          <input
+                            type="url"
+                            placeholder="https://monsite.com"
+                            value={action.url || ''}
+                            onChange={(e) => updateAction(action.id, 'url', e.target.value)}
+                          />
+                        </div>
+                      )}
+                      
+                      {action.type === 'download' && (
+                        <div className="form-group">
+                          <label>Fichier à télécharger :</label>
+                          <div className="file-upload">
+                            <input
+                              type="file"
+                              accept="image/*,application/pdf,.doc,.docx"
+                              onChange={(e) => {
+                                const file = e.target.files[0];
+                                if (file) {
+                                  const reader = new FileReader();
+                                  reader.onloadend = () => {
+                                    updateAction(action.id, 'file', reader.result);
+                                  };
+                                  reader.readAsDataURL(file);
+                                }
+                              }}
+                              id={`download-file-${action.id}`}
+                            />
+                            <label htmlFor={`download-file-${action.id}`} className="upload-btn small">
+                              📎 Choisir un fichier
+                            </label>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -528,37 +577,33 @@ const BusinessCard = ({ userId, user }) => {
           </div>
         </div>
 
-        {/* ✅ Aperçu fixe sans menu de droite */}
-        <div className="card-preview">
-          <h3>👁️ Aperçu de la carte</h3>
-          
-          <div className="preview-container">
-            <div className="business-card-preview">
-              <img 
-                src={cardConfig.cardImage} 
-                alt="Carte de visite"
-                className="card-image"
-              />
-              
-              {cardConfig.showQR && qrValue && (
-                <div className={`qr-overlay ${cardConfig.qrPosition}`}>
-                  <QRCode 
-                    value={qrValue} 
-                    size={cardConfig.qrSize * 0.6} // Réduction pour l'aperçu
-                    bgColor="white"
-                    fgColor="black"
-                  />
-                </div>
-              )}
+        {/* Aperçu fixe */}
+        <div className="preview-panel">
+          <div className="preview-section">
+            <h3>👁️ Aperçu de la carte</h3>
+            
+            <div className="preview-container">
+              <div className="business-card-preview">
+                <img 
+                  src={cardConfig.cardImage} 
+                  alt="Carte de visite"
+                  className="card-image"
+                />
+                
+                {cardConfig.showQR && qrValue && (
+                  <div className={`qr-overlay ${cardConfig.qrPosition}`}>
+                    <QRCode 
+                      value={qrValue} 
+                      size={Math.min(cardConfig.qrSize * 0.6, 120)}
+                      bgColor="white"
+                      fgColor="black"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="preview-actions">
-            <button onClick={downloadBusinessCard} className="btn-download">
-              💾 Télécharger la carte
-            </button>
-          </div>
-          
           {/* Aperçu des actions */}
           <div className="actions-preview">
             <h4>🎬 Séquence d'actions</h4>
@@ -578,64 +623,60 @@ const BusinessCard = ({ userId, user }) => {
                   </div>
                 </div>
               ))}
+              
+              {cardConfig.actions.filter(action => action.active).length === 0 && (
+                <div className="no-actions">
+                  <span className="no-actions-icon">⚠️</span>
+                  <span>Aucune action active</span>
+                </div>
+              )}
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* QR Code et actions */}
-      <div className="qr-section">
-        <h3>📱 QR Code</h3>
-        
-        <div className="qr-display">
-          <div className="qr-code-wrapper">
-            {qrValue && (
-              <QRCode 
-                value={qrValue} 
-                size={200}
-                bgColor="white"
-                fgColor="black"
-              />
-            )}
-          </div>
-          
-          <div className="qr-info">
-            <div className="qr-details">
-              <h4>Actions configurées :</h4>
-              <div className="action-info">
-                {cardConfig.actions
-                  .filter(action => action.active)
-                  .map((action, index) => (
-                  <div key={action.id} className="action-summary">
-                    <span className="action-number">#{index + 1}</span>
-                    <span className="action-type">{getActionTypeLabel(action.type)}</span>
-                    <span className="action-timing">
-                      {action.delay > 0 ? `+${action.delay}ms` : 'Immédiat'}
-                    </span>
-                  </div>
-                ))}
+          {/* QR Code et actions */}
+          <div className="qr-section">
+            <h4>📱 QR Code</h4>
+            
+            <div className="qr-display">
+              <div className="qr-code-wrapper">
+                {qrValue && (
+                  <QRCode 
+                    value={qrValue} 
+                    size={150}
+                    bgColor="white"
+                    fgColor="black"
+                  />
+                )}
               </div>
               
-              <div className="qr-link">
-                <strong>Lien :</strong>
-                <a href={qrValue} target="_blank" rel="noopener noreferrer">
-                  {qrValue}
-                </a>
+              <div className="qr-actions">
+                <button onClick={copyQRLink} className="btn-qr-action">
+                  📋 Copier
+                </button>
+                
+                <button onClick={testQRCode} className="btn-qr-action">
+                  🧪 Tester
+                </button>
+                
+                <button onClick={generateQRCode} className="btn-qr-action">
+                  🔄 Régénérer
+                </button>
               </div>
             </div>
             
-            <div className="qr-actions">
-              <button onClick={copyQRLink} className="btn-copy">
-                📋 Copier le lien
-              </button>
+            <div className="qr-info">
+              <div className="active-actions-count">
+                <span className="count-badge">
+                  {cardConfig.actions.filter(a => a.active).length}
+                </span>
+                <span>action(s) active(s)</span>
+              </div>
               
-              <button onClick={testQRCode} className="btn-test">
-                🧪 Tester le QR code
-              </button>
-              
-              <button onClick={generateQRCode} className="btn-refresh">
-                🔄 Régénérer
-              </button>
+              <div className="qr-link">
+                <a href={qrValue} target="_blank" rel="noopener noreferrer">
+                  Voir le lien complet
+                </a>
+              </div>
             </div>
           </div>
         </div>
