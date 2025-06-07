@@ -221,7 +221,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
   return (
     <div className="devis-page">
       {onBack && (
-        <button className="back-button" onClick={onBack}>
+        <button className="back-button\" onClick={onBack}>
           ← Retour aux prospects
         </button>
       )}
