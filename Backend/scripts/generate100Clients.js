@@ -109,12 +109,14 @@ const generate100Clients = async () => {
     
     // Trouver l'utilisateur Jean Dupont
     console.log('🔍 Recherche de l\'utilisateur Jean Dupont...');
-    const jeanDupont = await User.findOne({ 
+    let jeanDupont = await User.findOne({ 
       $or: [
         { email: 'jean.dupont@example.com' },
         { name: { $regex: /jean.*dupont/i } }
       ]
     });
+    
+    let userId;
     
     if (!jeanDupont) {
       console.log('❌ Utilisateur Jean Dupont non trouvé. Création en cours...');
@@ -129,12 +131,11 @@ const generate100Clients = async () => {
       
       const savedUser = await newJeanDupont.save();
       console.log('✅ Utilisateur Jean Dupont créé avec succès');
-      
-      // Utiliser le nouvel utilisateur
-      var userId = savedUser._id;
+      userId = savedUser._id;
+      jeanDupont = savedUser;
     } else {
       console.log('✅ Utilisateur Jean Dupont trouvé:', jeanDupont.name, '(' + jeanDupont.email + ')');
-      var userId = jeanDupont._id;
+      userId = jeanDupont._id;
     }
     
     // Supprimer les clients existants de Jean Dupont (optionnel)
@@ -187,7 +188,7 @@ const generate100Clients = async () => {
     
     console.log('🎉 Génération terminée avec succès !');
     console.log(`📊 Résumé:`);
-    console.log(`   - Utilisateur: ${jeanDupont?.name || 'Jean Dupont'} (${jeanDupont?.email || 'jean.dupont@example.com'})`);
+    console.log(`   - Utilisateur: ${jeanDupont.name} (${jeanDupont.email})`);
     console.log(`   - ${insertedClients.length} clients générés`);
     
     // Statistiques par statut
@@ -204,7 +205,7 @@ const generate100Clients = async () => {
     
     console.log('');
     console.log('🔐 Informations de connexion:');
-    console.log(`   📧 Email: ${jeanDupont?.email || 'jean.dupont@example.com'}`);
+    console.log(`   📧 Email: ${jeanDupont.email}`);
     console.log(`   🔑 Mot de passe: password123`);
     
     process.exit(0);
