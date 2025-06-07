@@ -5,39 +5,68 @@ import "./devis.scss";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
-  return new Date(dateStr).toLocaleDateString("fr-FR");
+  try {
+    return new Date(dateStr).toLocaleDateString("fr-FR");
+  } catch (error) {
+    return "";
+  }
 };
 
 const calculateTTC = (devis) => {
+  if (!devis || !Array.isArray(devis.articles)) return 0;
+  
   return devis.articles.reduce((total, article) => {
     const price = parseFloat(article.unitPrice || 0);
     const qty = parseFloat(article.quantity || 0);
     const tva = parseFloat(article.tvaRate || 0);
+    
+    if (isNaN(price) || isNaN(qty) || isNaN(tva)) return total;
+    
     const ht = price * qty;
     return total + ht + (ht * tva / 100);
   }, 0);
 };
 
-const Devis = ({ clients, initialDevisFromClient = null }) => {
-  const normalizeClientId = (c) => typeof c === "object" && c !== null ? c._id : c;
+const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
+  const normalizeClientId = (c) => {
+    if (!c) return null;
+    return typeof c === "object" && c !== null ? c._id : c;
+  };
 
   const [devisList, setDevisList] = useState([]);
   const [currentDevis, setCurrentDevis] = useState(initialDevisFromClient || DEFAULT_DEVIS);
-  const [filterClientId, setFilterClientId] = useState(normalizeClientId(initialDevisFromClient?.clientId));
+  const [filterClientId, setFilterClientId] = useState(
+    normalizeClientId(initialDevisFromClient?.clientId)
+  );
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    if (!token) return;
+
     const fetchDevis = async () => {
+      setLoading(true);
+      setError(null);
       try {
         const res = await fetch("http://localhost:5000/api/devis", {
           headers: { Authorization: `Bearer ${token}` },
         });
+        
+        if (!res.ok) {
+          throw new Error(`Erreur HTTP: ${res.status}`);
+        }
+        
         const data = await res.json();
-        setDevisList(data);
+        setDevisList(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error("Erreur récupération des devis", err);
+        console.error("Erreur récupération des devis:", err);
+        setError("Erreur lors de la récupération des devis");
+      } finally {
+        setLoading(false);
       }
     };
+    
     fetchDevis();
   }, []);
 
@@ -66,8 +95,18 @@ const Devis = ({ clients, initialDevisFromClient = null }) => {
 
   const handleSave = async (updatedDevis, isEdit = false) => {
     const token = localStorage.getItem("token");
-    const clientId = normalizeClientId(updatedDevis.clientId);
+    if (!token) {
+      alert("❌ Token d'authentification manquant");
+      return;
+    }
 
+    const clientId = normalizeClientId(updatedDevis.clientId);
+    if (!clientId) {
+      alert("❌ Veuillez sélectionner un client");
+      return;
+    }
+
+    setLoading(true);
     try {
       const url = isEdit
         ? `http://localhost:5000/api/devis/${updatedDevis._id}`
@@ -83,24 +122,29 @@ const Devis = ({ clients, initialDevisFromClient = null }) => {
         body: JSON.stringify({ ...updatedDevis, clientId }),
       });
 
-      const result = await response.json();
-
       if (!response.ok) {
-        alert("❌ Erreur lors de l'enregistrement du devis.");
-        return;
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Erreur lors de l'enregistrement");
       }
 
+      // Recharger la liste des devis
       const res = await fetch("http://localhost:5000/api/devis", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      setDevisList(data);
+      
+      if (res.ok) {
+        const data = await res.json();
+        setDevisList(Array.isArray(data) ? data : []);
+      }
 
       alert("✅ Devis enregistré avec succès !");
       setCurrentDevis(DEFAULT_DEVIS);
       setFilterClientId(null);
     } catch (error) {
-      alert("❌ Une erreur est survenue lors de l'enregistrement.");
+      console.error("Erreur sauvegarde:", error);
+      alert(`❌ Erreur lors de l'enregistrement: ${error.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -109,18 +153,25 @@ const Devis = ({ clients, initialDevisFromClient = null }) => {
     if (!confirm) return;
 
     const token = localStorage.getItem("token");
+    setLoading(true);
     try {
       const res = await fetch(`http://localhost:5000/api/devis/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) throw new Error("Suppression échouée");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || "Erreur lors de la suppression");
+      }
 
       setDevisList((prev) => prev.filter((d) => d._id !== id));
       alert("✅ Devis supprimé");
     } catch (err) {
-      alert("❌ Erreur lors de la suppression du devis");
+      console.error("Erreur suppression:", err);
+      alert(`❌ Erreur lors de la suppression: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -141,31 +192,63 @@ const Devis = ({ clients, initialDevisFromClient = null }) => {
   const handleAddArticle = () => {
     const updated = {
       ...currentDevis,
-      articles: [...currentDevis.articles, { description: "", unitPrice: "", quantity: "1", unit: "", tvaRate: "20" }],
+      articles: [
+        ...currentDevis.articles,
+        { description: "", unitPrice: "", quantity: "1", unit: "", tvaRate: "20" }
+      ],
+    };
+    setCurrentDevis(updated);
+  };
+
+  const handleRemoveArticle = (index) => {
+    const updated = {
+      ...currentDevis,
+      articles: currentDevis.articles.filter((_, i) => i !== index)
     };
     setCurrentDevis(updated);
   };
 
   const totalTTC = calculateTTC(currentDevis);
 
+  if (loading) {
+    return <div className="loading">Chargement...</div>;
+  }
+
+  if (error) {
+    return <div className="error-message">{error}</div>;
+  }
+
   return (
     <div className="devis-page">
+      {onBack && (
+        <button className="back-button" onClick={onBack}>
+          ← Retour aux prospects
+        </button>
+      )}
+
       <div className="devis-list-section">
         <h3>Modifier/Télécharger un devis existant</h3>
         <div className="containerDevisListItems">
-          {devisList
-            .filter((devis) => devis.title && devis.title.trim() !== "")
-            .map((devis) => (
-              <div key={devis._id} className="devis-item">
-                <div className="devis-info">
-                  <div className="devis-sub">
-                    📅 {formatDate(devis.dateDevis)} — 💰 {calculateTTC(devis).toFixed(2)} € TTC
+          {devisList.length === 0 ? (
+            <p>Aucun devis trouvé</p>
+          ) : (
+            devisList
+              .filter((devis) => devis.title && devis.title.trim() !== "")
+              .map((devis) => (
+                <div key={devis._id} className="devis-item">
+                  <div className="devis-info">
+                    <strong>{devis.title}</strong>
+                    <div className="devis-sub">
+                      📅 {formatDate(devis.dateDevis)} — 💰 {calculateTTC(devis).toFixed(2)} € TTC
+                    </div>
+                  </div>
+                  <div className="devis-actions">
+                    <button onClick={() => handleSelectDevis(devis)}>✏️ Modifier</button>
+                    <button onClick={() => handleDelete(devis._id)}>🗑️ Supprimer</button>
                   </div>
                 </div>
-                <button onClick={() => handleSelectDevis(devis)}>✏️ Modifier</button>
-                <button onClick={() => handleDelete(devis._id)}>🗑️ Supprimer</button>
-              </div>
-            ))}
+              ))
+          )}
         </div>
       </div>
 
@@ -181,8 +264,11 @@ const Devis = ({ clients, initialDevisFromClient = null }) => {
         )}
 
         <div className="actions">
-          <button onClick={() => handleSave(currentDevis, !!currentDevis._id)}>
-            💾 Enregistrer le devis
+          <button 
+            onClick={() => handleSave(currentDevis, !!currentDevis._id)}
+            disabled={loading}
+          >
+            💾 {loading ? "Enregistrement..." : "Enregistrer le devis"}
           </button>
           {currentDevis._id && (
             <button className="cancel-button" onClick={handleReset}>
@@ -197,7 +283,9 @@ const Devis = ({ clients, initialDevisFromClient = null }) => {
             totalTTC={totalTTC}
             onFieldChange={handleFieldChange}
             onAddArticle={handleAddArticle}
+            onRemoveArticle={handleRemoveArticle}
             onReset={handleReset}
+            clients={clients}
           />
         )}
       </div>

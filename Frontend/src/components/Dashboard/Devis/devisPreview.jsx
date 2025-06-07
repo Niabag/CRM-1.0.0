@@ -4,7 +4,14 @@ import jsPDF from 'jspdf';
 import EditableInput from './editableInput';
 import './devisPreview.scss';
 
-const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
+const DevisPreview = ({ 
+  devisData, 
+  onFieldChange, 
+  onAddArticle, 
+  onRemoveArticle,
+  onReset, 
+  clients = [] 
+}) => {
   const previewRef = useRef();
 
   if (!devisData || !Array.isArray(devisData.articles)) {
@@ -20,10 +27,10 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
   devisData.articles.forEach((item) => {
     const price = parseFloat(item.unitPrice || "0");
     const qty = parseFloat(item.quantity || "0");
-    const ht = price * qty;
     const taux = item.tvaRate || "20";
 
-    if (!isNaN(ht) && tauxTVA[taux]) {
+    if (!isNaN(price) && !isNaN(qty) && tauxTVA[taux]) {
+      const ht = price * qty;
       tauxTVA[taux].ht += ht;
       tauxTVA[taux].tva += ht * (parseFloat(taux) / 100);
     }
@@ -34,10 +41,21 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
   const totalTTC = totalHT + totalTVA;
 
   const handleDownload = async () => {
-    const previewElement = previewRef.current;
-    previewElement.classList.add("pdf-mode");
+    try {
+      const previewElement = previewRef.current;
+      if (!previewElement) {
+        alert("❌ Erreur lors de la génération du PDF");
+        return;
+      }
 
-    html2canvas(previewElement, { scale: 2 }).then((canvas) => {
+      previewElement.classList.add("pdf-mode");
+
+      const canvas = await html2canvas(previewElement, { 
+        scale: 2,
+        useCORS: true,
+        allowTaint: true 
+      });
+      
       previewElement.classList.remove("pdf-mode");
 
       const imgData = canvas.toDataURL("image/png");
@@ -57,17 +75,32 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
         heightLeft -= 297;
       }
 
-      const fileName = devisData.title?.replace(/\s+/g, "-") || `devis-${devisData._id || "sans-id"}`;
+      const fileName = devisData.title?.replace(/\s+/g, "-") || `devis-${devisData._id || "nouveau"}`;
       pdf.save(`${fileName}.pdf`);
-    });
+    } catch (error) {
+      console.error("Erreur génération PDF:", error);
+      alert("❌ Erreur lors de la génération du PDF");
+    }
   };
+
+  const getClientInfo = () => {
+    if (devisData.clientId && clients.length > 0) {
+      const client = clients.find(c => c._id === devisData.clientId);
+      return client || {};
+    }
+    return {};
+  };
+
+  const clientInfo = getClientInfo();
 
   return (
     <div className="devis-preview">
       <div className="preview-toolbar">
         <button onClick={onAddArticle}>➕ Ajouter une ligne</button>
         <button onClick={onReset}>🔁 Réinitialiser</button>
-        <button className="pdf-download-button" onClick={handleDownload}>📄 Télécharger en PDF</button>
+        <button className="pdf-download-button" onClick={handleDownload}>
+          📄 Télécharger en PDF
+        </button>
       </div>
 
       <div className="preview-content" ref={previewRef}>
@@ -96,11 +129,36 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
           </div>
 
           <div className="company">
-            <EditableInput name="entrepriseName" value={devisData.entrepriseName} placeholder="Nom de l’entreprise" onChange={onFieldChange} />
-            <EditableInput name="entrepriseAddress" value={devisData.entrepriseAddress} placeholder="Adresse" onChange={onFieldChange} />
-            <EditableInput name="entrepriseCity" value={devisData.entrepriseCity} placeholder="Ville" onChange={onFieldChange} />
-            <EditableInput name="entreprisePhone" value={devisData.entreprisePhone} placeholder="Téléphone" onChange={onFieldChange} />
-            <EditableInput name="entrepriseEmail" value={devisData.entrepriseEmail} placeholder="Email" onChange={onFieldChange} />
+            <EditableInput 
+              name="entrepriseName" 
+              value={devisData.entrepriseName || ""} 
+              placeholder="Nom de l'entreprise" 
+              onChange={onFieldChange} 
+            />
+            <EditableInput 
+              name="entrepriseAddress" 
+              value={devisData.entrepriseAddress || ""} 
+              placeholder="Adresse" 
+              onChange={onFieldChange} 
+            />
+            <EditableInput 
+              name="entrepriseCity" 
+              value={devisData.entrepriseCity || ""} 
+              placeholder="Ville" 
+              onChange={onFieldChange} 
+            />
+            <EditableInput 
+              name="entreprisePhone" 
+              value={devisData.entreprisePhone || ""} 
+              placeholder="Téléphone" 
+              onChange={onFieldChange} 
+            />
+            <EditableInput 
+              name="entrepriseEmail" 
+              value={devisData.entrepriseEmail || ""} 
+              placeholder="Email" 
+              onChange={onFieldChange} 
+            />
           </div>
         </div>
 
@@ -109,11 +167,18 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
             <tbody>
               <tr>
                 <td>Date devis :</td>
-                <td><EditableInput type="date" name="dateDevis" value={devisData.dateDevis} onChange={onFieldChange} /></td>
+                <td>
+                  <EditableInput 
+                    type="date" 
+                    name="dateDevis" 
+                    value={devisData.dateDevis || ""} 
+                    onChange={onFieldChange} 
+                  />
+                </td>
               </tr>
               <tr>
                 <td>N° client :</td>
-                <td>{devisData.clientId?._id || devisData.clientId || ""}</td>
+                <td>{devisData.clientId || ""}</td>
               </tr>
               <tr>
                 <td>N° Devis :</td>
@@ -121,17 +186,44 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
               </tr>
               <tr>
                 <td>Date de validité :</td>
-                <td><EditableInput type="date" name="dateValidite" value={devisData.dateValidite} onChange={onFieldChange} /></td>
+                <td>
+                  <EditableInput 
+                    type="date" 
+                    name="dateValidite" 
+                    value={devisData.dateValidite || ""} 
+                    onChange={onFieldChange} 
+                  />
+                </td>
               </tr>
             </tbody>
           </table>
         </div>
 
         <div className="client-info">
-          <EditableInput name="clientName" value={devisData.clientName} placeholder="Dénomination" onChange={onFieldChange} />
-          <EditableInput name="clientStreet" value={devisData.clientStreet} placeholder="Adresse client" onChange={onFieldChange} />
-          <EditableInput name="clientPostalCode" value={devisData.clientPostalCode} placeholder="Code Postal" onChange={onFieldChange} />
-          <EditableInput name="clientCity" value={devisData.clientCity} placeholder="Ville" onChange={onFieldChange} />
+          <EditableInput 
+            name="clientName" 
+            value={devisData.clientName || clientInfo.name || ""} 
+            placeholder="Nom du client" 
+            onChange={onFieldChange} 
+          />
+          <EditableInput 
+            name="clientEmail" 
+            value={devisData.clientEmail || clientInfo.email || ""} 
+            placeholder="Email du client" 
+            onChange={onFieldChange} 
+          />
+          <EditableInput 
+            name="clientPhone" 
+            value={devisData.clientPhone || clientInfo.phone || ""} 
+            placeholder="Téléphone du client" 
+            onChange={onFieldChange} 
+          />
+          <EditableInput 
+            name="clientAddress" 
+            value={devisData.clientAddress || ""} 
+            placeholder="Adresse du client" 
+            onChange={onFieldChange} 
+          />
         </div>
 
         <div className="header">
@@ -147,17 +239,55 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
               <th>Prix unitaire</th>
               <th>TVA</th>
               <th>Total HT</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             {devisData.articles.map((article, index) => {
-              const total = parseFloat(article.unitPrice || "0") * parseFloat(article.quantity || "0");
+              const price = parseFloat(article.unitPrice || "0");
+              const qty = parseFloat(article.quantity || "0");
+              const total = isNaN(price) || isNaN(qty) ? 0 : price * qty;
+              
               return (
                 <tr key={index}>
-                  <td><EditableInput name="article-description" value={article.description} onChange={onFieldChange} index={index} /></td>
-                  <td><EditableInput name="article-unit" value={article.unit} onChange={onFieldChange} index={index} /></td>
-                  <td><EditableInput name="article-quantity" value={article.quantity} onChange={onFieldChange} index={index} /></td>
-                  <td><EditableInput name="article-unitPrice" value={article.unitPrice} onChange={onFieldChange} index={index} /> €</td>
+                  <td>
+                    <EditableInput 
+                      name="article-description" 
+                      value={article.description || ""} 
+                      onChange={onFieldChange} 
+                      index={index} 
+                      placeholder="Description"
+                    />
+                  </td>
+                  <td>
+                    <EditableInput 
+                      name="article-unit" 
+                      value={article.unit || ""} 
+                      onChange={onFieldChange} 
+                      index={index} 
+                      placeholder="u"
+                    />
+                  </td>
+                  <td>
+                    <EditableInput 
+                      name="article-quantity" 
+                      value={article.quantity || ""} 
+                      onChange={onFieldChange} 
+                      index={index} 
+                      type="number"
+                      placeholder="1"
+                    />
+                  </td>
+                  <td>
+                    <EditableInput 
+                      name="article-unitPrice" 
+                      value={article.unitPrice || ""} 
+                      onChange={onFieldChange} 
+                      index={index} 
+                      type="number"
+                      placeholder="0"
+                    /> €
+                  </td>
                   <td>
                     <span className="tva-text-only">{article.tvaRate || "20"}%</span>
                     <select
@@ -171,7 +301,16 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
                       <option value="5.5">5.5%</option>
                     </select>
                   </td>
-                  <td>{!isNaN(total) ? total.toFixed(2) : "0.00"} €</td>
+                  <td>{total.toFixed(2)} €</td>
+                  <td>
+                    <button 
+                      className="remove-article-btn"
+                      onClick={() => onRemoveArticle && onRemoveArticle(index)}
+                      title="Supprimer cette ligne"
+                    >
+                      🗑️
+                    </button>
+                  </td>
                 </tr>
               );
             })}
@@ -184,7 +323,9 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
               <tr><th>Total HT</th><th>Taux TVA</th><th>Total TVA</th><th>Total TTC</th></tr>
             </thead>
             <tbody>
-              {Object.entries(tauxTVA).map(([rate, { ht, tva }]) => (
+              {Object.entries(tauxTVA)
+                .filter(([, { ht }]) => ht > 0)
+                .map(([rate, { ht, tva }]) => (
                 <tr key={rate}>
                   <td>{ht.toFixed(2)} €</td>
                   <td>{rate}%</td>
@@ -209,9 +350,9 @@ const DevisPreview = ({ devisData, onFieldChange, onAddArticle, onReset }) => {
         </div>
 
         <div className="signature-line">
-          <div>Date :</div>
-          <div>Mention :</div>
-          <div>Signature :</div>
+          <div>Date : _______________</div>
+          <div>Mention : _______________</div>
+          <div>Signature : _______________</div>
         </div>
       </div>
     </div>
