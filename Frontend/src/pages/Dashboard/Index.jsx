@@ -6,6 +6,7 @@ import ProspectsPage from "../../components/Dashboard/Prospects/prospectsPage"; 
 import Analytics from "../../components/Dashboard/Analytics/analytics";
 import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
+import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard"; // ✅ NOUVEAU
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from "../../config/api";
 import "./dashboard.scss";
 import "./QRCodeGenerator.scss";
@@ -108,7 +109,7 @@ const Dashboard = () => {
     { id: "clients", icon: "👤", label: "Prospects" },
     { id: "devis", icon: "📄", label: "Devis" },
     { id: "notifications", icon: "🔔", label: "Notifications" },
-    { id: "carte", icon: "💼", label: "Carte" },
+    { id: "carte", icon: "💼", label: "Carte de visite" }, // ✅ MODIFIÉ
     { id: "settings", icon: "⚙️", label: "Paramètres" }
   ];
 
@@ -193,40 +194,12 @@ const Dashboard = () => {
 
         {activeTab === "settings" && <Settings />}
 
+        {/* ✅ NOUVEAU: Page de carte de visite numérique */}
         {activeTab === "carte" && (
-          <div className="qr-container">
-            <h2>💼 Carte de visite digitale</h2>
-            <div className="qr-content">
-              <div className="qr-info">
-                <h3>Générez votre QR code</h3>
-                <p>Permettez à vos prospects de s'inscrire directement en scannant ce code</p>
-                <button onClick={generateQRCode} className="generate-btn">
-                  🎯 Générer le QR Code
-                </button>
-                {error && <div className="error-message">{error}</div>}
-              </div>
-              
-              {qrValue && (
-                <div className="qr-display">
-                  <div className="qr-code-wrapper">
-                    <QRCode value={qrValue} size={200} />
-                  </div>
-                  <div className="qr-details">
-                    <p><strong>Lien d'inscription:</strong></p>
-                    <a href={qrValue} target="_blank" rel="noopener noreferrer" className="qr-link">
-                      {qrValue}
-                    </a>
-                    <button 
-                      onClick={() => navigator.clipboard.writeText(qrValue)}
-                      className="copy-btn"
-                    >
-                      📋 Copier le lien
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
+          <BusinessCard 
+            userId={userId}
+            user={user}
+          />
         )}
       </div>
     </div>

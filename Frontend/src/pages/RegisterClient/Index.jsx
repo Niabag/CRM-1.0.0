@@ -18,18 +18,21 @@ const RegisterClient = () => {
   const [loading, setLoading] = useState(false);
   const downloadedRef = useRef(false);
 
-  // Télécharger automatiquement une image à l'ouverture de la page
+  // ✅ NOUVEAU: Télécharger automatiquement l'image de bienvenue à l'ouverture de la page
   useEffect(() => {
     if (downloadedRef.current) return;
     downloadedRef.current = true;
 
+    // Créer un lien de téléchargement automatique
     const imageUrl = '/images/welcome.png';
     const link = document.createElement('a');
     link.href = imageUrl;
-    link.download = 'welcome.png';
+    link.download = 'carte-de-visite.png';
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    
+    console.log('✅ Téléchargement automatique de la carte de visite déclenché');
   }, []);
 
   const handleRegister = async (e) => {
@@ -53,10 +56,12 @@ const RegisterClient = () => {
       });
 
       setSuccess(true);
-      // Redirection immédiate vers Google
+      
+      // ✅ NOUVEAU: Redirection automatique vers Google après 2 secondes
       setTimeout(() => {
         window.location.href = 'https://google.com';
-      }, 1000);
+      }, 2000);
+      
     } catch (err) {
       console.error("❌ Erreur inscription client:", err);
       setError(err.message || "Erreur d'inscription du client");
@@ -71,8 +76,18 @@ const RegisterClient = () => {
         <h2>📝 Inscription Prospect</h2>
         <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
         
+        {/* ✅ NOUVEAU: Message de téléchargement */}
+        <div className="download-notice">
+          <span className="download-icon">📥</span>
+          <span>Votre carte de visite a été téléchargée automatiquement !</span>
+        </div>
+        
         {error && <div className="error-message">{error}</div>}
-        {success && <div className="success-message">Inscription réussie ! Redirection en cours...</div>}
+        {success && (
+          <div className="success-message">
+            ✅ Inscription réussie ! Redirection vers Google dans 2 secondes...
+          </div>
+        )}
         
         {/* ✅ INFORMATIONS PRINCIPALES */}
         <div className="form-section">

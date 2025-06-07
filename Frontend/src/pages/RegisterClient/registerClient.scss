@@ -32,6 +32,26 @@
   font-size: 1rem;
 }
 
+/* ✅ NOUVEAU: Notice de téléchargement */
+.download-notice {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
+  color: #22543d;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border: 1px solid #68d391;
+  font-weight: 500;
+  text-align: center;
+  justify-content: center;
+}
+
+.download-icon {
+  font-size: 1.2rem;
+}
+
 /* ✅ NOUVEAU: Sections du formulaire */
 .form-section {
   margin-bottom: 30px;
@@ -145,6 +165,13 @@
   text-align: center;
   font-weight: 500;
   border: 1px solid #c3e6cb;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }
 
 /* Responsive */
