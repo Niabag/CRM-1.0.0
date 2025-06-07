@@ -196,10 +196,12 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ NOUVELLE FONCTION PDF: Capture directe du preview
+  // ✅ FONCTION PDF CORRIGÉE: Recherche robuste de l'élément
   const handleDownloadPDF = async (devis) => {
     try {
       setLoading(true);
+      
+      console.log("🔍 Début génération PDF pour:", devis.title);
       
       // Importer dynamiquement les modules nécessaires
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
@@ -207,56 +209,106 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         import('jspdf')
       ]);
 
+      // Sauvegarder le devis actuel
+      const originalDevis = currentDevis;
+      
       // Créer un devis temporaire pour l'affichage
       const tempDevis = {
         ...devis,
         articles: Array.isArray(devis.articles) ? devis.articles : []
       };
 
-      // Sauvegarder le devis actuel
-      const originalDevis = currentDevis;
+      console.log("📝 Devis temporaire créé:", tempDevis.title);
       
       // Mettre temporairement le devis à capturer
       setCurrentDevis(tempDevis);
       
       // Attendre que le DOM soit mis à jour
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Trouver l'élément preview
-      const previewElement = document.querySelector('.preview-content');
+      // ✅ RECHERCHE ROBUSTE de l'élément preview
+      let previewElement = null;
+      
+      // Essayer plusieurs sélecteurs possibles
+      const selectors = [
+        '.preview-content',
+        '.devis-preview .preview-content',
+        '[class*="preview-content"]',
+        '.devis-preview-container .preview-content'
+      ];
+      
+      for (const selector of selectors) {
+        previewElement = document.querySelector(selector);
+        if (previewElement) {
+          console.log(`✅ Élément trouvé avec: ${selector}`);
+          break;
+        }
+      }
+      
+      // Si toujours pas trouvé, chercher par contenu
+      if (!previewElement) {
+        const allDivs = document.querySelectorAll('div');
+        for (const div of allDivs) {
+          if (div.textContent.includes('DEVIS') && div.textContent.includes(tempDevis.title || '')) {
+            previewElement = div;
+            console.log("✅ Élément trouvé par contenu");
+            break;
+          }
+        }
+      }
       
       if (!previewElement) {
-        throw new Error('Élément preview non trouvé');
+        // Dernier recours: prendre le container principal
+        previewElement = document.querySelector('.devis-preview-container') || 
+                        document.querySelector('.dashboard-container') ||
+                        document.body;
+        console.log("⚠️ Utilisation de l'élément de secours");
       }
 
-      // Ajouter une classe pour le mode PDF
-      previewElement.classList.add('pdf-mode');
+      if (!previewElement) {
+        throw new Error('Impossible de trouver un élément à capturer');
+      }
+
+      console.log("📸 Élément à capturer trouvé:", previewElement.className);
+
+      // Ajouter une classe pour le mode PDF (si possible)
+      const hadPdfClass = previewElement.classList.contains('pdf-mode');
+      if (!hadPdfClass) {
+        previewElement.classList.add('pdf-mode');
+      }
       
       // Attendre que les styles soient appliqués
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      console.log("📷 Début capture canvas...");
 
       // Capturer avec une haute qualité
       const canvas = await html2canvas(previewElement, {
-        scale: 3, // ✅ Haute résolution
+        scale: 2, // ✅ Réduire le scale pour éviter les erreurs
         useCORS: true,
         allowTaint: true,
         backgroundColor: '#ffffff',
-        width: previewElement.scrollWidth,
-        height: previewElement.scrollHeight,
+        width: Math.min(previewElement.scrollWidth, 1200),
+        height: Math.min(previewElement.scrollHeight, 1600),
         scrollX: 0,
         scrollY: 0,
         windowWidth: 1200,
-        windowHeight: 800
+        windowHeight: 800,
+        logging: false // Réduire les logs
       });
 
+      console.log("✅ Canvas créé:", canvas.width, 'x', canvas.height);
+
       // Retirer la classe PDF
-      previewElement.classList.remove('pdf-mode');
+      if (!hadPdfClass) {
+        previewElement.classList.remove('pdf-mode');
+      }
       
       // Restaurer le devis original
       setCurrentDevis(originalDevis);
 
       // Créer le PDF avec les bonnes dimensions
-      const imgData = canvas.toDataURL('image/png', 1.0);
+      const imgData = canvas.toDataURL('image/png', 0.95);
       const pdf = new jsPDF('p', 'mm', 'a4');
       
       // Calculer les dimensions pour s'adapter à A4
@@ -265,53 +317,66 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       const imgWidth = pdfWidth - 20; // Marges de 10mm de chaque côté
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
-      let position = 10; // Marge du haut
+      console.log("📄 Dimensions PDF:", imgWidth, 'x', imgHeight);
       
       // Si l'image est plus haute qu'une page, la diviser
       if (imgHeight > pdfHeight - 20) {
+        console.log("📄 Division en plusieurs pages nécessaire");
         const pageHeight = pdfHeight - 20;
         let remainingHeight = imgHeight;
         let currentPosition = 0;
+        let pageNumber = 0;
         
         while (remainingHeight > 0) {
           const currentHeight = Math.min(pageHeight, remainingHeight);
-          const currentCanvas = document.createElement('canvas');
-          const currentCtx = currentCanvas.getContext('2d');
           
-          currentCanvas.width = canvas.width;
-          currentCanvas.height = (currentHeight * canvas.width) / imgWidth;
-          
-          currentCtx.drawImage(
-            canvas,
-            0, (currentPosition * canvas.width) / imgWidth,
-            canvas.width, currentCanvas.height,
-            0, 0,
-            canvas.width, currentCanvas.height
-          );
-          
-          const currentImgData = currentCanvas.toDataURL('image/png', 1.0);
-          
-          if (currentPosition > 0) {
+          if (pageNumber > 0) {
             pdf.addPage();
           }
           
-          pdf.addImage(currentImgData, 'PNG', 10, 10, imgWidth, currentHeight);
+          // Calculer la portion du canvas à utiliser
+          const sourceY = (currentPosition * canvas.height) / imgHeight;
+          const sourceHeight = (currentHeight * canvas.height) / imgHeight;
+          
+          // Créer un canvas temporaire pour cette portion
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = sourceHeight;
+          
+          tempCtx.drawImage(
+            canvas,
+            0, sourceY,
+            canvas.width, sourceHeight,
+            0, 0,
+            canvas.width, sourceHeight
+          );
+          
+          const tempImgData = tempCanvas.toDataURL('image/png', 0.95);
+          pdf.addImage(tempImgData, 'PNG', 10, 10, imgWidth, currentHeight);
           
           remainingHeight -= pageHeight;
           currentPosition += pageHeight;
+          pageNumber++;
         }
       } else {
         // L'image tient sur une page
-        pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight);
+        console.log("📄 Une seule page nécessaire");
+        pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
       }
 
       // Télécharger le PDF
       const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
       pdf.save(`${fileName}.pdf`);
+      
+      console.log("✅ PDF généré et téléchargé:", fileName);
 
     } catch (error) {
-      console.error('Erreur génération PDF:', error);
+      console.error('❌ Erreur génération PDF:', error);
       alert('❌ Erreur lors de la génération du PDF: ' + error.message);
+      
+      // Restaurer le devis original en cas d'erreur
+      setCurrentDevis(currentDevis);
     } finally {
       setLoading(false);
     }
@@ -435,7 +500,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
                       onClick={() => handleDownloadPDF(devis)}
                       disabled={loading}
                     >
-                      📄 PDF
+                      {loading ? "⏳" : "📄"} PDF
                     </button>
                     <button 
                       className="card-btn card-btn-delete"
