@@ -48,34 +48,47 @@ const DevisPreview = ({
         return;
       }
 
+      // Activer le mode PDF pour masquer les éléments d'édition
       previewElement.classList.add("pdf-mode");
 
+      // Configuration haute qualité pour html2canvas
       const canvas = await html2canvas(previewElement, { 
-        scale: 2,
+        scale: 3, // Augmenté pour une meilleure qualité
         useCORS: true,
-        allowTaint: true 
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: previewElement.scrollWidth,
+        height: previewElement.scrollHeight,
+        windowWidth: 1200,
+        windowHeight: 800
       });
       
+      // Retirer le mode PDF
       previewElement.classList.remove("pdf-mode");
 
-      const imgData = canvas.toDataURL("image/png");
+      const imgData = canvas.toDataURL("image/png", 1.0); // Qualité maximale
       const pdf = new jsPDF("p", "mm", "a4");
-      const imgWidth = 210;
+      
+      // Calculs pour un rendu optimal
+      const pdfWidth = 210; // A4 width in mm
+      const pdfHeight = 297; // A4 height in mm
       const margin = 10;
-      const contentWidth = imgWidth - margin * 2;
-      const imgHeight = (canvas.height * contentWidth) / canvas.width;
+      const contentWidth = pdfWidth - margin * 2;
+      const imgWidth = canvas.width;
+      const imgHeight = canvas.height;
+      const ratio = Math.min(contentWidth / (imgWidth * 0.264583), (pdfHeight - margin * 2) / (imgHeight * 0.264583));
+      
+      const scaledWidth = imgWidth * 0.264583 * ratio;
+      const scaledHeight = imgHeight * 0.264583 * ratio;
+      
+      // Centrer l'image
+      const x = (pdfWidth - scaledWidth) / 2;
+      const y = margin;
 
-      let heightLeft = imgHeight;
-      pdf.addImage(imgData, "PNG", margin, margin, contentWidth, imgHeight);
-      heightLeft -= 297;
+      pdf.addImage(imgData, "PNG", x, y, scaledWidth, scaledHeight, undefined, 'FAST');
 
-      while (heightLeft > 0) {
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", margin, margin, contentWidth, imgHeight);
-        heightLeft -= 297;
-      }
-
-      const fileName = devisData.title?.replace(/\s+/g, "-") || `devis-${devisData._id || "nouveau"}`;
+      const fileName = devisData.title?.replace(/[^a-zA-Z0-9]/g, "-") || `devis-${devisData._id || "nouveau"}`;
       pdf.save(`${fileName}.pdf`);
     } catch (error) {
       console.error("Erreur génération PDF:", error);
@@ -96,21 +109,26 @@ const DevisPreview = ({
   return (
     <div className="devis-preview">
       <div className="preview-toolbar">
-        <button onClick={onAddArticle}>➕ Ajouter une ligne</button>
-        <button onClick={onReset}>🔄 Réinitialiser</button>
-        <button className="pdf-download-button" onClick={handleDownload}>
-          📄 Télécharger en PDF
+        <button onClick={onAddArticle} className="toolbar-btn add-btn">
+          ➕ Ajouter une ligne
+        </button>
+        <button onClick={onReset} className="toolbar-btn reset-btn">
+          🔄 Nouveau devis
+        </button>
+        <button className="toolbar-btn pdf-btn" onClick={handleDownload}>
+          📄 Télécharger PDF
         </button>
       </div>
 
       <div className="preview-content" ref={previewRef}>
-        <div className="logo-and-company">
-          <div className="logo">
+        {/* En-tête avec logo et titre */}
+        <div className="document-header">
+          <div className="logo-section">
             {devisData.logoUrl ? (
-              <img src={devisData.logoUrl} alt="logo" />
+              <img src={devisData.logoUrl} alt="Logo entreprise" className="company-logo" />
             ) : (
-              <label className="logo-upload">
-                📷 Ajout logo
+              <label className="logo-upload-area">
+                📷 Cliquez pour ajouter un logo
                 <input
                   type="file"
                   accept="image/*"
@@ -127,232 +145,272 @@ const DevisPreview = ({
               </label>
             )}
           </div>
-
-          <div className="company">
-            <EditableInput 
-              name="entrepriseName" 
-              value={devisData.entrepriseName || ""} 
-              placeholder="Nom de l'entreprise" 
-              onChange={onFieldChange} 
-            />
-            <EditableInput 
-              name="entrepriseAddress" 
-              value={devisData.entrepriseAddress || ""} 
-              placeholder="Adresse" 
-              onChange={onFieldChange} 
-            />
-            <EditableInput 
-              name="entrepriseCity" 
-              value={devisData.entrepriseCity || ""} 
-              placeholder="Ville" 
-              onChange={onFieldChange} 
-            />
-            <EditableInput 
-              name="entreprisePhone" 
-              value={devisData.entreprisePhone || ""} 
-              placeholder="Téléphone" 
-              onChange={onFieldChange} 
-            />
-            <EditableInput 
-              name="entrepriseEmail" 
-              value={devisData.entrepriseEmail || ""} 
-              placeholder="Email" 
-              onChange={onFieldChange} 
-            />
+          
+          <div className="document-title">
+            <h1>DEVIS</h1>
           </div>
         </div>
 
-        <div className="client-meta">
-          <table>
-            <tbody>
-              <tr>
-                <td>Date devis :</td>
-                <td>
-                  <EditableInput 
-                    type="date" 
-                    name="dateDevis" 
-                    value={devisData.dateDevis || ""} 
-                    onChange={onFieldChange} 
-                  />
-                </td>
-              </tr>
-              <tr>
-                <td>N° client :</td>
-                <td>{devisData.clientId || ""}</td>
-              </tr>
-              <tr>
-                <td>N° Devis :</td>
-                <td>{devisData._id || devisData.devisNumber || "À définir"}</td>
-              </tr>
-              <tr>
-                <td>Date de validité :</td>
-                <td>
-                  <EditableInput 
-                    type="date" 
-                    name="dateValidite" 
-                    value={devisData.dateValidite || ""} 
-                    onChange={onFieldChange} 
-                  />
-                </td>
-              </tr>
-            </tbody>
-          </table>
+        {/* Informations entreprise et client */}
+        <div className="parties-info">
+          <div className="entreprise-section">
+            <h3>Émetteur</h3>
+            <div className="info-group">
+              <EditableInput 
+                name="entrepriseName" 
+                value={devisData.entrepriseName || ""} 
+                placeholder="Nom de l'entreprise" 
+                onChange={onFieldChange}
+                className="company-name"
+              />
+              <EditableInput 
+                name="entrepriseAddress" 
+                value={devisData.entrepriseAddress || ""} 
+                placeholder="Adresse" 
+                onChange={onFieldChange} 
+              />
+              <EditableInput 
+                name="entrepriseCity" 
+                value={devisData.entrepriseCity || ""} 
+                placeholder="Code postal et ville" 
+                onChange={onFieldChange} 
+              />
+              <EditableInput 
+                name="entreprisePhone" 
+                value={devisData.entreprisePhone || ""} 
+                placeholder="Téléphone" 
+                onChange={onFieldChange} 
+              />
+              <EditableInput 
+                name="entrepriseEmail" 
+                value={devisData.entrepriseEmail || ""} 
+                placeholder="Email" 
+                onChange={onFieldChange} 
+              />
+            </div>
+          </div>
+
+          <div className="client-section">
+            <h3>Destinataire</h3>
+            <div className="info-group">
+              <EditableInput 
+                name="clientName" 
+                value={devisData.clientName || clientInfo.name || ""} 
+                placeholder="Nom du client" 
+                onChange={onFieldChange}
+                className="client-name"
+              />
+              <EditableInput 
+                name="clientEmail" 
+                value={devisData.clientEmail || clientInfo.email || ""} 
+                placeholder="Email du client" 
+                onChange={onFieldChange} 
+              />
+              <EditableInput 
+                name="clientPhone" 
+                value={devisData.clientPhone || clientInfo.phone || ""} 
+                placeholder="Téléphone du client" 
+                onChange={onFieldChange} 
+              />
+              <EditableInput 
+                name="clientAddress" 
+                value={devisData.clientAddress || ""} 
+                placeholder="Adresse du client" 
+                onChange={onFieldChange} 
+              />
+            </div>
+          </div>
         </div>
 
-        <div className="client-info">
-          <EditableInput 
-            name="clientName" 
-            value={devisData.clientName || clientInfo.name || ""} 
-            placeholder="Nom du client" 
-            onChange={onFieldChange} 
-          />
-          <EditableInput 
-            name="clientEmail" 
-            value={devisData.clientEmail || clientInfo.email || ""} 
-            placeholder="Email du client" 
-            onChange={onFieldChange} 
-          />
-          <EditableInput 
-            name="clientPhone" 
-            value={devisData.clientPhone || clientInfo.phone || ""} 
-            placeholder="Téléphone du client" 
-            onChange={onFieldChange} 
-          />
-          <EditableInput 
-            name="clientAddress" 
-            value={devisData.clientAddress || ""} 
-            placeholder="Adresse du client" 
-            onChange={onFieldChange} 
-          />
+        {/* Métadonnées du devis */}
+        <div className="devis-metadata">
+          <div className="metadata-grid">
+            <div className="metadata-item">
+              <label>Date du devis :</label>
+              <EditableInput 
+                type="date" 
+                name="dateDevis" 
+                value={devisData.dateDevis || ""} 
+                onChange={onFieldChange} 
+              />
+            </div>
+            <div className="metadata-item">
+              <label>Numéro de devis :</label>
+              <span className="devis-number">{devisData._id || devisData.devisNumber || "À définir"}</span>
+            </div>
+            <div className="metadata-item">
+              <label>Date de validité :</label>
+              <EditableInput 
+                type="date" 
+                name="dateValidite" 
+                value={devisData.dateValidite || ""} 
+                onChange={onFieldChange} 
+              />
+            </div>
+            <div className="metadata-item">
+              <label>Client ID :</label>
+              <span className="client-id">{devisData.clientId || "N/A"}</span>
+            </div>
+          </div>
         </div>
 
-        <div className="header">
-          <h1>DEVIS</h1>
-        </div>
-
-        <table className="devis-table">
-          <thead>
-            <tr>
-              <th>Description</th>
-              <th>Unité</th>
-              <th>Qté</th>
-              <th>Prix unitaire</th>
-              <th>TVA</th>
-              <th>Total HT</th>
-              <th className="actions-column">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {devisData.articles.map((article, index) => {
-              const price = parseFloat(article.unitPrice || "0");
-              const qty = parseFloat(article.quantity || "0");
-              const total = isNaN(price) || isNaN(qty) ? 0 : price * qty;
-              
-              return (
-                <tr key={index}>
-                  <td>
-                    <EditableInput 
-                      name="article-description" 
-                      value={article.description || ""} 
-                      onChange={onFieldChange} 
-                      index={index} 
-                      placeholder="Description"
-                    />
-                  </td>
-                  <td>
-                    <EditableInput 
-                      name="article-unit" 
-                      value={article.unit || ""} 
-                      onChange={onFieldChange} 
-                      index={index} 
-                      placeholder="u"
-                    />
-                  </td>
-                  <td>
-                    <EditableInput 
-                      name="article-quantity" 
-                      value={article.quantity || ""} 
-                      onChange={onFieldChange} 
-                      index={index} 
-                      type="number"
-                      placeholder="1"
-                    />
-                  </td>
-                  <td>
-                    <EditableInput 
-                      name="article-unitPrice" 
-                      value={article.unitPrice || ""} 
-                      onChange={onFieldChange} 
-                      index={index} 
-                      type="number"
-                      placeholder="0"
-                    /> €
-                  </td>
-                  <td>
-                    <span className="tva-text-only">{article.tvaRate || "20"}%</span>
-                    <select
-                      className="tva-select"
-                      name="article-tvaRate"
-                      value={article.tvaRate || "20"}
-                      onChange={(e) => onFieldChange("article-tvaRate", e.target.value, index)}
-                    >
-                      <option value="20">20%</option>
-                      <option value="10">10%</option>
-                      <option value="5.5">5.5%</option>
-                    </select>
-                  </td>
-                  <td>{total.toFixed(2)} €</td>
-                  <td className="actions-column">
-                    <button 
-                      className="remove-article-btn"
-                      onClick={() => onRemoveArticle && onRemoveArticle(index)}
-                      title="Supprimer cette ligne"
-                    >
-                      🗑️
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-
-        <div className="totals-boxes">
-          <table className="tva-breakdown">
+        {/* Tableau des prestations */}
+        <div className="prestations-section">
+          <h3>Détail des prestations</h3>
+          <table className="prestations-table">
             <thead>
-              <tr><th>Total HT</th><th>Taux TVA</th><th>Total TVA</th><th>Total TTC</th></tr>
+              <tr>
+                <th>Description</th>
+                <th>Unité</th>
+                <th>Qté</th>
+                <th>Prix unitaire HT</th>
+                <th>TVA</th>
+                <th>Total HT</th>
+                <th className="actions-column">Actions</th>
+              </tr>
             </thead>
             <tbody>
-              {Object.entries(tauxTVA)
-                .filter(([, { ht }]) => ht > 0)
-                .map(([rate, { ht, tva }]) => (
-                <tr key={rate}>
-                  <td>{ht.toFixed(2)} €</td>
-                  <td>{rate}%</td>
-                  <td>{tva.toFixed(2)} €</td>
-                  <td>{(ht + tva).toFixed(2)} €</td>
+              {devisData.articles.map((article, index) => {
+                const price = parseFloat(article.unitPrice || "0");
+                const qty = parseFloat(article.quantity || "0");
+                const total = isNaN(price) || isNaN(qty) ? 0 : price * qty;
+                
+                return (
+                  <tr key={index}>
+                    <td className="description-cell">
+                      <EditableInput 
+                        name="article-description" 
+                        value={article.description || ""} 
+                        onChange={onFieldChange} 
+                        index={index} 
+                        placeholder="Description de la prestation"
+                      />
+                    </td>
+                    <td>
+                      <EditableInput 
+                        name="article-unit" 
+                        value={article.unit || ""} 
+                        onChange={onFieldChange} 
+                        index={index} 
+                        placeholder="u"
+                      />
+                    </td>
+                    <td>
+                      <EditableInput 
+                        name="article-quantity" 
+                        value={article.quantity || ""} 
+                        onChange={onFieldChange} 
+                        index={index} 
+                        type="number"
+                        placeholder="1"
+                      />
+                    </td>
+                    <td>
+                      <EditableInput 
+                        name="article-unitPrice" 
+                        value={article.unitPrice || ""} 
+                        onChange={onFieldChange} 
+                        index={index} 
+                        type="number"
+                        placeholder="0"
+                      /> €
+                    </td>
+                    <td>
+                      <span className="tva-text-only">{article.tvaRate || "20"}%</span>
+                      <select
+                        className="tva-select"
+                        name="article-tvaRate"
+                        value={article.tvaRate || "20"}
+                        onChange={(e) => onFieldChange("article-tvaRate", e.target.value, index)}
+                      >
+                        <option value="20">20%</option>
+                        <option value="10">10%</option>
+                        <option value="5.5">5.5%</option>
+                      </select>
+                    </td>
+                    <td className="total-cell">{total.toFixed(2)} €</td>
+                    <td className="actions-column">
+                      <button 
+                        className="remove-article-btn"
+                        onClick={() => onRemoveArticle && onRemoveArticle(index)}
+                        title="Supprimer cette ligne"
+                      >
+                        🗑️
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Récapitulatif des totaux */}
+        <div className="totaux-section">
+          <div className="totaux-detail">
+            <h4>Récapitulatif TVA</h4>
+            <table className="tva-table">
+              <thead>
+                <tr>
+                  <th>Base HT</th>
+                  <th>Taux TVA</th>
+                  <th>Montant TVA</th>
+                  <th>Total TTC</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {Object.entries(tauxTVA)
+                  .filter(([, { ht }]) => ht > 0)
+                  .map(([rate, { ht, tva }]) => (
+                  <tr key={rate}>
+                    <td>{ht.toFixed(2)} €</td>
+                    <td>{rate}%</td>
+                    <td>{tva.toFixed(2)} €</td>
+                    <td>{(ht + tva).toFixed(2)} €</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-          <table className="total-summary">
-            <tbody>
-              <tr><td><strong>Total HT :</strong></td><td>{totalHT.toFixed(2)} €</td></tr>
-              <tr><td><strong>Total TVA :</strong></td><td>{totalTVA.toFixed(2)} €</td></tr>
-              <tr><td><strong>Total TTC :</strong></td><td>{totalTTC.toFixed(2)} €</td></tr>
-            </tbody>
-          </table>
+          <div className="totaux-finaux">
+            <div className="total-line">
+              <span>Total HT :</span>
+              <span>{totalHT.toFixed(2)} €</span>
+            </div>
+            <div className="total-line">
+              <span>Total TVA :</span>
+              <span>{totalTVA.toFixed(2)} €</span>
+            </div>
+            <div className="total-line final-total">
+              <span>Total TTC :</span>
+              <span>{totalTTC.toFixed(2)} €</span>
+            </div>
+          </div>
         </div>
 
-        <div className="signature">
-          <i>Veuillez retourner le devis signé, daté avec la mention : "Bon pour accord"</i>
-        </div>
-
-        <div className="signature-line">
-          <div>Date : _______________</div>
-          <div>Mention : _______________</div>
-          <div>Signature : _______________</div>
+        {/* Conditions et signature */}
+        <div className="conditions-section">
+          <div className="conditions-text">
+            <p><strong>Conditions :</strong></p>
+            <p>• Devis valable jusqu'au {devisData.dateValidite ? new Date(devisData.dateValidite).toLocaleDateString('fr-FR') : "date à définir"}</p>
+            <p>• Règlement à 30 jours fin de mois</p>
+            <p>• TVA non applicable, art. 293 B du CGI (si applicable)</p>
+          </div>
+          
+          <div className="signature-area">
+            <p className="signature-instruction">
+              <em>Bon pour accord - Date et signature du client :</em>
+            </p>
+            <div className="signature-box">
+              <div className="signature-line">
+                <span>Date : _______________</span>
+              </div>
+              <div className="signature-line">
+                <span>Signature :</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>

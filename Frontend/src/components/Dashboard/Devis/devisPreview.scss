@@ -1,4 +1,4 @@
-/* Design moderne pour l'aperçu du devis avec édition directe */
+/* Design professionnel pour l'aperçu du devis */
 
 .devis-preview {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -9,278 +9,265 @@
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
+/* Barre d'outils */
 .preview-toolbar {
   display: flex;
   justify-content: center;
   gap: 1rem;
   margin-bottom: 2rem;
   flex-wrap: wrap;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-radius: 12px;
 }
 
-.preview-toolbar button {
-  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+.toolbar-btn {
   border: none;
   color: white;
   padding: 0.75rem 1.5rem;
   font-size: 14px;
   border-radius: 10px;
   cursor: pointer;
-  font-weight: 500;
+  font-weight: 600;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  min-width: 150px;
+  justify-content: center;
 }
 
-.preview-toolbar button:hover {
+.add-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+}
+
+.reset-btn {
+  background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+}
+
+.pdf-btn {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+}
+
+.toolbar-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(66, 153, 225, 0.3);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
-.pdf-download-button {
-  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%) !important;
-}
-
-.pdf-download-button:hover {
-  box-shadow: 0 8px 25px rgba(237, 137, 54, 0.3) !important;
-}
-
+/* Contenu principal */
 .preview-content {
-  position: relative;
-  padding: 2rem;
   background: white;
+  padding: 3rem;
   border: 2px solid #e2e8f0;
   border-radius: 12px;
   margin: 1rem 0;
+  min-height: 800px;
 }
 
-/* En-tête du devis */
-.header {
-  position: absolute;
-  top: 2rem;
-  right: 2rem;
-  margin: 0;
-}
-
-.header h1 {
-  font-weight: 700;
-  font-size: 2.5rem;
-  margin: 0;
-  padding: 0;
-  color: #2d3748;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-/* Logo et informations entreprise */
-.logo-and-company {
+/* En-tête du document */
+.document-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 2rem;
-  position: relative;
+  margin-bottom: 3rem;
+  padding-bottom: 2rem;
+  border-bottom: 3px solid #e2e8f0;
 }
 
-.logo {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: 0;
-  width: 140px;
-  height: 120px;
-  border: 2px dashed #cbd5e0;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
-  transition: all 0.3s ease;
+.logo-section {
+  flex: 1;
 }
 
-.logo:hover {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
-}
-
-.logo img {
-  max-width: 100%;
-  max-height: 100%;
+.company-logo {
+  max-width: 200px;
+  max-height: 100px;
   object-fit: contain;
   border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.logo-upload {
-  cursor: pointer;
+.logo-upload-area {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100%;
-  height: 100%;
-  font-style: italic;
-  color: #718096;
+  width: 200px;
+  height: 100px;
+  border: 2px dashed #cbd5e0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  cursor: pointer;
+  transition: all 0.3s ease;
   font-weight: 500;
+  color: #718096;
   text-align: center;
-  transition: color 0.3s ease;
+  padding: 1rem;
 }
 
-.logo-upload:hover {
+.logo-upload-area:hover {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%);
   color: #667eea;
 }
 
-.company {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  max-width: 300px;
-  margin-left: 0;
+.document-title {
+  flex: 1;
+  text-align: right;
 }
 
-.company input,
-.company .editable-input {
-  display: block;
-  border: 1px dashed #cbd5e0;
-  width: 100%;
-  padding: 0.5rem;
-  background-color: rgba(248, 249, 250, 0.8);
-  border-radius: 6px;
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
+.document-title h1 {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
+  color: #2d3748;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+  letter-spacing: 2px;
 }
 
-.company input:focus,
-.company .editable-input:focus {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.05);
-  outline: none;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+/* Informations des parties */
+.parties-info {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 3rem;
+  margin-bottom: 3rem;
 }
 
-/* Métadonnées du devis */
-.client-meta {
-  display: flex;
-  justify-content: flex-start;
-  font-size: 14px;
-  margin: 2rem 0;
+.entreprise-section,
+.client-section {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  padding: 2rem;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
 }
 
-.client-meta table {
-  border-collapse: collapse;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-}
-
-.client-meta td {
-  border: 1px solid #e2e8f0;
-  padding: 0.75rem 1rem;
-  background: #f8f9fa;
-}
-
-.client-meta td:first-child {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+.entreprise-section h3,
+.client-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.2rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.client-meta input,
-.client-meta .editable-input {
-  border: 1px dashed #cbd5e0;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-  width: 120px;
-  transition: all 0.3s ease;
-}
-
-.client-meta input:focus,
-.client-meta .editable-input:focus {
-  border-color: #667eea;
-  background: white;
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-}
-
-/* Informations client */
-.client-info {
-  position: absolute;
-  top: 180px;
-  right: 2rem;
+.info-group {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.company-name,
+.client-name {
+  font-weight: 600 !important;
+  font-size: 1.1rem !important;
+  color: #2d3748 !important;
+}
+
+/* Métadonnées du devis */
+.devis-metadata {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   padding: 1.5rem;
   border-radius: 12px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 3rem;
 }
 
-.client-info input,
-.client-info .editable-input {
-  width: 280px;
-  border: 1px dashed #cbd5e0;
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.metadata-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.metadata-item label {
+  font-weight: 600;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.devis-number,
+.client-id {
+  background: rgba(255, 255, 255, 0.2);
   padding: 0.5rem;
-  background: rgba(255, 255, 255, 0.8);
   border-radius: 6px;
-  transition: all 0.3s ease;
+  font-weight: 600;
 }
 
-.client-info input:focus,
-.client-info .editable-input:focus {
-  border-color: #667eea;
-  background: white;
-  outline: none;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+/* Section prestations */
+.prestations-section {
+  margin-bottom: 3rem;
 }
 
-/* Tableau des articles */
-.devis-table {
+.prestations-section h3 {
+  margin: 0 0 1.5rem 0;
+  color: #2d3748;
+  font-size: 1.3rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border-bottom: 2px solid #e2e8f0;
+  padding-bottom: 0.5rem;
+}
+
+.prestations-table {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 220px;
-  font-size: 14px;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
 }
 
-.devis-table th,
-.devis-table td {
-  border: 1px solid #e2e8f0;
-  padding: 1rem 0.75rem;
-  text-align: center;
-}
-
-.devis-table th {
+.prestations-table th {
   background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
   color: white;
+  padding: 1rem 0.75rem;
+  text-align: center;
   font-weight: 600;
   font-size: 0.9rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-.devis-table tbody tr {
+.prestations-table td {
+  padding: 1rem 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: middle;
+}
+
+.prestations-table tbody tr {
   transition: all 0.3s ease;
 }
 
-.devis-table tbody tr:hover {
+.prestations-table tbody tr:hover {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
 }
 
-.devis-table tbody tr:nth-child(even) {
+.prestations-table tbody tr:nth-child(even) {
   background: #f8f9fa;
 }
 
+.description-cell {
+  text-align: left !important;
+  max-width: 300px;
+}
+
+.total-cell {
+  font-weight: 600;
+  color: #48bb78;
+}
+
+/* Champs éditables */
 .editable-input {
   width: 100%;
   border: 1px dashed #cbd5e0;
   background: rgba(255, 255, 255, 0.8);
   padding: 0.5rem;
-  text-align: center;
-  margin: 0;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.3s ease;
   font-size: 0.9rem;
 }
@@ -290,7 +277,7 @@
   background: white;
   outline: none;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
 }
 
 .editable-input:hover {
@@ -309,7 +296,7 @@
   background: rgba(255, 255, 255, 0.8);
   padding: 0.5rem;
   text-align: center;
-  border-radius: 4px;
+  border-radius: 6px;
   transition: all 0.3s ease;
   cursor: pointer;
 }
@@ -321,12 +308,7 @@
   box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
 }
 
-.tva-select:hover {
-  border-color: #a0aec0;
-  background: rgba(255, 255, 255, 0.95);
-}
-
-/* Bouton de suppression d'article */
+/* Bouton suppression */
 .remove-article-btn {
   background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
   color: white;
@@ -347,120 +329,121 @@
 }
 
 .actions-column {
-  width: 60px;
+  width: 80px;
 }
 
-/* Totaux */
-.totals-boxes {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
+/* Section totaux */
+.totaux-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 2rem;
+  margin-bottom: 3rem;
 }
 
-.tva-breakdown,
-.total-summary {
+.totaux-detail h4 {
+  margin: 0 0 1rem 0;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.tva-table {
+  width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
-  width: 48%;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
-.tva-breakdown th,
-.tva-breakdown td,
-.total-summary td {
-  border: 1px solid #e2e8f0;
-  padding: 0.75rem 1rem;
-  text-align: right;
-}
-
-.tva-breakdown th {
+.tva-table th {
   background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
   color: white;
+  padding: 0.75rem;
+  text-align: center;
   font-weight: 600;
-  text-transform: uppercase;
   font-size: 0.8rem;
-  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
-.total-summary td:first-child {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  font-weight: 600;
-  color: #2d3748;
+.tva-table td {
+  padding: 0.75rem;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.total-summary td:last-child {
+.totaux-finaux {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-self: end;
+}
+
+.total-line {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: #f8f9fa;
+  border-radius: 6px;
+  font-weight: 500;
+}
+
+.final-total {
   background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
   font-weight: 700;
+  font-size: 1.1rem;
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
 }
 
-/* Signature */
-.signature {
-  text-align: center;
-  margin-top: 3rem;
-  font-style: italic;
-  font-size: 14px;
-  color: #718096;
-  padding: 1rem;
+/* Conditions et signature */
+.conditions-section {
   background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 8px;
+  padding: 2rem;
+  border-radius: 12px;
   border-left: 4px solid #667eea;
 }
 
-.signature-line {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 2rem;
-  font-size: 13px;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
+.conditions-text {
+  margin-bottom: 2rem;
 }
 
-.signature-line div {
-  flex: 1;
+.conditions-text p {
+  margin: 0.5rem 0;
+  color: #4a5568;
+  line-height: 1.6;
+}
+
+.signature-area {
   text-align: center;
+}
+
+.signature-instruction {
+  font-style: italic;
+  color: #718096;
+  margin-bottom: 2rem;
+}
+
+.signature-box {
+  display: flex;
+  justify-content: space-around;
+  gap: 2rem;
+}
+
+.signature-line {
+  flex: 1;
+  padding: 1rem;
+  border-bottom: 2px solid #2d3748;
   color: #4a5568;
   font-weight: 500;
 }
 
-/* Messages d'erreur */
-.devis-preview .error-message {
-  color: #e53e3e;
-  font-weight: bold;
-  text-align: center;
-  padding: 2rem;
-  border: 2px solid #fed7d7;
-  background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
-  border-radius: 12px;
-  margin: 1rem 0;
-}
-
 /* Mode PDF - Masquer les éléments d'édition */
-.pdf-mode input,
 .pdf-mode .editable-input,
-.pdf-mode .company input,
-.pdf-mode .client-info input {
+.pdf-mode .tva-select,
+.pdf-mode .logo-upload-area {
   border: none !important;
   outline: none !important;
   background: transparent !important;
   box-shadow: none !important;
-}
-
-.pdf-mode .logo {
-  border: none !important;
-}
-
-.pdf-mode .client-meta td,
-.pdf-mode .devis-table th,
-.pdf-mode .devis-table td,
-.pdf-mode .tva-breakdown td,
-.pdf-mode .total-summary td {
-  border: 1px solid #2d3748 !important;
 }
 
 .pdf-mode .tva-select {
@@ -479,72 +462,51 @@
   display: none !important;
 }
 
+.pdf-mode .prestations-table th:last-child {
+  display: none !important;
+}
+
 /* Responsive design */
 @media (max-width: 768px) {
   .preview-content {
-    padding: 1rem;
+    padding: 1.5rem;
   }
   
-  .logo-and-company {
+  .document-header {
     flex-direction: column;
-    align-items: center;
+    gap: 2rem;
+    text-align: center;
+  }
+  
+  .parties-info {
+    grid-template-columns: 1fr;
     gap: 2rem;
   }
   
-  .logo {
-    position: static;
-    transform: none;
-    margin-bottom: 1rem;
+  .metadata-grid {
+    grid-template-columns: 1fr;
   }
   
-  .company {
-    max-width: 100%;
-    width: 100%;
-  }
-  
-  .client-info {
-    position: static;
-    width: 100%;
-    margin: 2rem 0;
-  }
-  
-  .client-info input,
-  .client-info .editable-input {
-    width: 100%;
-  }
-  
-  .devis-table {
-    margin-top: 2rem;
+  .prestations-table {
     font-size: 12px;
   }
   
-  .devis-table th,
-  .devis-table td {
+  .prestations-table th,
+  .prestations-table td {
     padding: 0.5rem 0.25rem;
   }
   
-  .totals-boxes {
+  .totaux-section {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  .signature-box {
     flex-direction: column;
     gap: 1rem;
   }
   
-  .tva-breakdown,
-  .total-summary {
-    width: 100%;
-  }
-  
-  .signature-line {
-    flex-direction: column;
-    gap: 1rem;
-  }
-  
-  .header {
-    position: static;
-    text-align: center;
-    margin-bottom: 2rem;
-  }
-  
-  .header h1 {
+  .document-title h1 {
     font-size: 2rem;
   }
 }
@@ -565,42 +527,13 @@
   animation: slideInFromTop 0.5s ease-out;
 }
 
-/* Effets de focus améliorés */
-.editable-input:focus,
-.company input:focus,
-.client-info input:focus,
-.client-meta input:focus,
-.tva-select:focus {
+/* Effets de focus */
+.editable-input:focus {
   animation: focusPulse 0.3s ease-out;
 }
 
 @keyframes focusPulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.02);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* Scrollbar personnalisée */
-.devis-preview::-webkit-scrollbar {
-  width: 8px;
-}
-
-.devis-preview::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
-}
-
-.devis-preview::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 4px;
-}
-
-.devis-preview::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+  0% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+  100% { transform: scale(1); }
 }

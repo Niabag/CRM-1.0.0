@@ -248,9 +248,9 @@
 
 .client-actions {
   display: flex;
-  flex-direction: column; /* ✅ MODIFIÉ: Colonne pour plus de boutons */
   gap: 10px;
   margin-top: 20px;
+  justify-content: center; /* ✅ Centrer le bouton unique */
 }
 
 .primary-btn {
@@ -263,7 +263,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  width: 100%; /* ✅ MODIFIÉ: Pleine largeur */
+  flex: 1;
 }
 
 .primary-btn:hover {
@@ -281,7 +281,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  width: 100%; /* ✅ MODIFIÉ: Pleine largeur */
+  min-width: 120px; /* ✅ Largeur minimale pour le bouton unique */
 }
 
 .danger-btn:hover {
@@ -424,10 +424,6 @@
   
   .clients-grid {
     grid-template-columns: 1fr;
-  }
-  
-  .client-actions {
-    flex-direction: column; /* Déjà en colonne */
   }
   
   .qr-display {
