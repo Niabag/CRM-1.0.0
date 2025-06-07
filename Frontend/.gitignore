@@ -1,24 +1,48 @@
-# Logs
-logs
-*.log
+# Dépendances
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
-lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Variables d'environnement
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
+# Fichiers de build
+dist/
+build/
+.vite/
+
+# Logs
+logs
+*.log
+
+# Fichiers temporaires
+.tmp/
+temp/
+
+# Fichiers de cache
+.cache/
+.parcel-cache/
+.vite-cache/
+
+# Fichiers de l'éditeur
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers système
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+Thumbs.db
+
+# Fichiers de test
+coverage/
+.nyc_output/
+
+# Fichiers ESLint
+.eslintcache

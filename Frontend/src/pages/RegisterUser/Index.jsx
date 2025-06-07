@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS, apiRequest } from "../../config/api";
 import "./registerUser.scss";
 
 const RegisterUser = () => {
@@ -16,23 +17,16 @@ const RegisterUser = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/register", {
+      await apiRequest(API_ENDPOINTS.AUTH.REGISTER, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, password }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        alert("✅ Compte créé avec succès !");
-        navigate("/login");
-      } else {
-        setError(data.message || "Erreur lors de la création du compte");
-      }
+      alert("✅ Compte créé avec succès !");
+      navigate("/login");
     } catch (err) {
-      console.error("Erreur d'inscription:", err);
-      setError("Erreur de connexion au serveur");
+      console.error("❌ Erreur d'inscription:", err);
+      setError(err.message || "Erreur lors de la création du compte");
     } finally {
       setLoading(false);
     }
@@ -59,10 +53,11 @@ const RegisterUser = () => {
         />
         <input 
           type="password" 
-          placeholder="Mot de passe" 
+          placeholder="Mot de passe (min. 6 caractères)" 
           value={password}
           onChange={(e) => setPassword(e.target.value)} 
           required 
+          minLength={6}
         />
         <button type="submit" disabled={loading}>
           {loading ? "Création en cours..." : "S'inscrire"}

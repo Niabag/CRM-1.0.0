@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_ENDPOINTS, apiRequest } from "../../config/api";
 import "./login.scss";
 
 const Login = () => {
@@ -15,23 +16,19 @@ const Login = () => {
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/api/users/login", {
+      const data = await apiRequest(API_ENDPOINTS.AUTH.LOGIN, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        localStorage.setItem("token", data.token);
-        navigate("/dashboard");
-      } else {
-        setError(data.message || "Identifiants incorrects");
-      }
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      console.log("✅ Connexion réussie");
+      navigate("/dashboard");
     } catch (err) {
-      console.error("Erreur de connexion:", err);
-      setError("Erreur de connexion au serveur");
+      console.error("❌ Erreur de connexion:", err);
+      setError(err.message || "Erreur de connexion");
     } finally {
       setLoading(false);
     }

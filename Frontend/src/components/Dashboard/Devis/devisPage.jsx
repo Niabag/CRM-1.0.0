@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import DevisPreview from "./devisPreview";
+import { API_ENDPOINTS, apiRequest } from "../../../config/api";
 import { DEFAULT_DEVIS } from "./constants";
 import "./devis.scss";
 
@@ -42,22 +43,11 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     const fetchDevis = async () => {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch("http://localhost:5000/api/devis", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        
-        if (!res.ok) {
-          throw new Error(`Erreur HTTP: ${res.status}`);
-        }
-        
-        const data = await res.json();
+        const data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
         setDevisList(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erreur récupération des devis:", err);
@@ -94,12 +84,6 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
   };
 
   const handleSave = async (updatedDevis, isEdit = false) => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      alert("❌ Token d'authentification manquant");
-      return;
-    }
-
     const clientId = normalizeClientId(updatedDevis.clientId);
     if (!clientId) {
       alert("❌ Veuillez sélectionner un client");
@@ -109,33 +93,19 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
     setLoading(true);
     try {
       const url = isEdit
-        ? `http://localhost:5000/api/devis/${updatedDevis._id}`
-        : "http://localhost:5000/api/devis";
+        ? API_ENDPOINTS.DEVIS.UPDATE(updatedDevis._id)
+        : API_ENDPOINTS.DEVIS.BASE;
 
       const method = isEdit ? "PUT" : "POST";
-      const response = await fetch(url, {
+      
+      await apiRequest(url, {
         method,
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
         body: JSON.stringify({ ...updatedDevis, clientId }),
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Erreur lors de l'enregistrement");
-      }
-
       // Recharger la liste des devis
-      const res = await fetch("http://localhost:5000/api/devis", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        setDevisList(Array.isArray(data) ? data : []);
-      }
+      const data = await apiRequest(API_ENDPOINTS.DEVIS.BASE);
+      setDevisList(Array.isArray(data) ? data : []);
 
       alert("✅ Devis enregistré avec succès !");
       setCurrentDevis(DEFAULT_DEVIS);
@@ -152,18 +122,11 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
     const confirm = window.confirm("❗ Supprimer ce devis ?");
     if (!confirm) return;
 
-    const token = localStorage.getItem("token");
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/devis/${id}`, {
+      await apiRequest(API_ENDPOINTS.DEVIS.DELETE(id), {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Erreur lors de la suppression");
-      }
 
       setDevisList((prev) => prev.filter((d) => d._id !== id));
       alert("✅ Devis supprimé");
@@ -221,7 +184,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack }) => {
   return (
     <div className="devis-page">
       {onBack && (
-        <button className="back-button\" onClick={onBack}>
+        <button className="back-button" onClick={onBack}>
           ← Retour aux prospects
         </button>
       )}

@@ -1,10 +1,10 @@
-// Dashboard.jsx
 import { useEffect, useState } from "react";
 import QRCode from "react-qr-code";
 import Devis from "../../components/Dashboard/Devis/devisPage";
+import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from "../../config/api";
+import { DEFAULT_DEVIS } from "../../components/Dashboard/Devis/constants";
 import "./dashboard.scss";
 import "./QRCodeGenerator.scss";
-import { DEFAULT_DEVIS } from "../../components/Dashboard/Devis/constants";
 
 const Dashboard = () => {
   const [clients, setClients] = useState([]);
@@ -40,20 +40,11 @@ const Dashboard = () => {
   }, []);
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
     const fetchClients = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch("http://localhost:5000/api/clients", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!response.ok) {
-          throw new Error(`Erreur HTTP: ${response.status}`);
-        }
-        const data = await response.json();
+        const data = await apiRequest(API_ENDPOINTS.CLIENTS.BASE);
         setClients(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Erreur lors de la récupération des clients:", err);
@@ -62,12 +53,13 @@ const Dashboard = () => {
         setLoading(false);
       }
     };
+
     fetchClients();
   }, []);
 
   const generateQRCode = () => {
     if (userId) {
-      const generatedLink = `http://localhost:5173/register-client/${userId}`;
+      const generatedLink = FRONTEND_ROUTES.CLIENT_REGISTER(userId);
       setQrValue(generatedLink);
       setError(null);
     } else {
@@ -79,17 +71,10 @@ const Dashboard = () => {
     const confirmDelete = window.confirm("❗ Supprimer ce client et tous ses devis ?");
     if (!confirmDelete) return;
 
-    const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`http://localhost:5000/api/clients/${clientId}`, {
+      await apiRequest(API_ENDPOINTS.CLIENTS.DELETE(clientId), {
         method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
       });
-      
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.message || "Erreur lors de la suppression");
-      }
 
       setClients((prev) => prev.filter((c) => c._id !== clientId));
       alert("✅ Client supprimé avec succès");
