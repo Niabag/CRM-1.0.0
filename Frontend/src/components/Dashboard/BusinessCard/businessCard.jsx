@@ -541,21 +541,6 @@ const BusinessCard = ({ userId, user }) => {
               <span className="stat-trend">{stats.topHours[0]?.scans || 0} scans</span>
             </div>
           </div>
-
-          {/* ✅ NOUVEAU: Indicateur de sauvegarde */}
-          <div className="stat-card">
-            <div className="stat-icon">{savedCardData ? '💾' : '⚠️'}</div>
-            <div className="stat-content">
-              <h3>{savedCardData ? 'Sauvegardée' : 'Non sauvée'}</h3>
-              <p>Carte en BDD</p>
-              <span className="stat-trend">
-                {savedCardData 
-                  ? `Modifiée le ${new Date(savedCardData.updatedAt).toLocaleDateString('fr-FR')}`
-                  : 'Ajoutez une image'
-                }
-              </span>
-            </div>
-          </div>
         </div>
         
         <div className="recent-activity">
