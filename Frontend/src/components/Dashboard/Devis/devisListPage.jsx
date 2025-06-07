@@ -45,10 +45,20 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
       const devisArray = Array.isArray(data) ? data : [];
       setDevisList(devisArray);
       
-      // ✅ GROUPER LES DEVIS PAR CLIENT
-      const grouped = devisArray.reduce((acc, devis) => {
+      // ✅ CORRECTION: Filtrer les devis avec clientId valide et grouper
+      const validDevis = devisArray.filter(devis => {
+        const clientId = typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId;
+        return clientId && clientId !== null; // ✅ Exclure les devis sans client
+      });
+
+      const grouped = validDevis.reduce((acc, devis) => {
         const clientId = typeof devis.clientId === "object" ? devis.clientId._id : devis.clientId;
-        const client = clients.find(c => c._id === clientId) || { name: "Client inconnu", _id: clientId };
+        const client = clients.find(c => c._id === clientId) || { 
+          name: "Client inconnu", 
+          _id: clientId,
+          email: "N/A",
+          phone: "N/A"
+        };
         
         if (!acc[client.name]) {
           acc[client.name] = {
@@ -62,6 +72,17 @@ const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
       
       setGroupedDevis(grouped);
       console.log("📋 Devis groupés par client:", grouped);
+      
+      // ✅ NOUVEAU: Afficher les devis orphelins dans la console pour debug
+      const orphanDevis = devisArray.filter(devis => {
+        const clientId = typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId;
+        return !clientId || clientId === null;
+      });
+      
+      if (orphanDevis.length > 0) {
+        console.warn(`⚠️ ${orphanDevis.length} devis sans client trouvés:`, orphanDevis);
+      }
+      
     } catch (err) {
       console.error("Erreur récupération des devis:", err);
       setError("Erreur lors de la récupération des devis");
