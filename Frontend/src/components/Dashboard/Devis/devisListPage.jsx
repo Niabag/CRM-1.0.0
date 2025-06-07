@@ -26,17 +26,36 @@ const calculateTTC = (devis) => {
   }, 0);
 };
 
-const DevisListPage = ({ clients = [], onEditDevis }) => {
+const DevisListPage = ({ clients = [], onEditDevis, onCreateDevis }) => {
   const [devisList, setDevisList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [selectedClientFilter, setSelectedClientFilter] = useState("");
   const [groupedDevis, setGroupedDevis] = useState({});
   const [orphanDevis, setOrphanDevis] = useState([]);
+  
+  // ✅ NOUVEAUX ÉTATS: Filtres et recherche comme la page prospects
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('date');
+  const [selectedDevis, setSelectedDevis] = useState([]);
+  
+  // ✅ NOUVEAUX ÉTATS: Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
 
   useEffect(() => {
     fetchAllDevis();
   }, []);
+
+  // ✅ NOUVEAU: Réinitialiser la page quand les filtres changent
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter, sortBy]);
+
+  // ✅ NOUVEAU: Réinitialiser la sélection quand on change de page
+  useEffect(() => {
+    setSelectedDevis([]);
+  }, [currentPage]);
 
   const fetchAllDevis = async () => {
     setLoading(true);
@@ -54,19 +73,16 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
         const clientId = typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId;
         
         if (clientId && clientId !== null) {
-          // Vérifier si le client existe dans la liste des clients
           const clientExists = clients.find(c => c._id === clientId);
           if (clientExists) {
             validDevis.push(devis);
           } else {
-            // Client supprimé mais devis encore présent
             orphanDevisList.push({
               ...devis,
               orphanReason: `Client supprimé (ID: ${clientId})`
             });
           }
         } else {
-          // Devis sans clientId
           orphanDevisList.push({
             ...devis,
             orphanReason: 'Aucun client associé'
@@ -109,6 +125,56 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
     }
   };
 
+  // ✅ NOUVEAU: Fonction pour obtenir tous les devis (valides + orphelins) pour les filtres
+  const getAllDevis = () => {
+    const validDevis = Object.values(groupedDevis).flatMap(group => group.devis);
+    return [...validDevis, ...orphanDevis];
+  };
+
+  // ✅ NOUVEAU: Filtrer et trier les devis comme la page prospects
+  const filteredDevis = getAllDevis()
+    .filter(devis => {
+      const client = clients.find(c => c._id === (typeof devis.clientId === "object" ? devis.clientId?._id : devis.clientId));
+      const clientName = client?.name || "Client inconnu";
+      
+      const matchesSearch = devis.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           clientName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           devis.description?.toLowerCase().includes(searchTerm.toLowerCase());
+      
+      const matchesStatus = statusFilter === 'all' || 
+                           (statusFilter === 'orphan' && devis.orphanReason) ||
+                           (statusFilter === 'valid' && !devis.orphanReason);
+      
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      switch (sortBy) {
+        case 'title':
+          return (a.title || "").localeCompare(b.title || "");
+        case 'client':
+          const clientA = clients.find(c => c._id === (typeof a.clientId === "object" ? a.clientId?._id : a.clientId))?.name || "";
+          const clientB = clients.find(c => c._id === (typeof b.clientId === "object" ? b.clientId?._id : b.clientId))?.name || "";
+          return clientA.localeCompare(clientB);
+        case 'amount':
+          return calculateTTC(b) - calculateTTC(a);
+        case 'date':
+        default:
+          return new Date(b.dateDevis || 0) - new Date(a.dateDevis || 0);
+      }
+    });
+
+  // ✅ NOUVEAU: Calculs de pagination
+  const totalPages = Math.ceil(filteredDevis.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const currentDevis = filteredDevis.slice(startIndex, endIndex);
+
+  // ✅ NOUVEAU: Statistiques pour l'en-tête
+  const allDevis = getAllDevis();
+  const validDevisCount = allDevis.filter(d => !d.orphanReason).length;
+  const orphanDevisCount = allDevis.filter(d => d.orphanReason).length;
+  const totalRevenue = allDevis.reduce((sum, d) => sum + calculateTTC(d), 0);
+
   const handleDelete = async (id) => {
     const confirm = window.confirm("❗ Supprimer ce devis ?");
     if (!confirm) return;
@@ -119,15 +185,113 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
         method: "DELETE",
       });
 
-      // Recharger les devis après suppression
       await fetchAllDevis();
       alert("✅ Devis supprimé");
+      
+      // ✅ NOUVEAU: Ajuster la page si nécessaire après suppression
+      const newFilteredLength = filteredDevis.length - 1;
+      const newTotalPages = Math.ceil(newFilteredLength / ITEMS_PER_PAGE);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
     } catch (err) {
       console.error("Erreur suppression:", err);
       alert(`❌ Erreur lors de la suppression: ${err.message}`);
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ NOUVEAU: Sélection des devis
+  const handleSelectDevis = (devisId) => {
+    setSelectedDevis(prev => 
+      prev.includes(devisId) 
+        ? prev.filter(id => id !== devisId)
+        : [...prev, devisId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedDevis.length === currentDevis.length) {
+      setSelectedDevis([]);
+    } else {
+      setSelectedDevis(currentDevis.map(d => d._id));
+    }
+  };
+
+  // ✅ NOUVEAU: Suppression en masse
+  const handleBulkDelete = async () => {
+    if (selectedDevis.length === 0) return;
+    
+    const confirmDelete = window.confirm(
+      `❗ Supprimer ${selectedDevis.length} devis sélectionné(s) ?`
+    );
+    if (!confirmDelete) return;
+
+    setLoading(true);
+    try {
+      await Promise.all(
+        selectedDevis.map(id => 
+          apiRequest(API_ENDPOINTS.DEVIS.DELETE(id), { method: "DELETE" })
+        )
+      );
+
+      setSelectedDevis([]);
+      await fetchAllDevis();
+      alert(`✅ ${selectedDevis.length} devis supprimé(s)`);
+      
+      // ✅ NOUVEAU: Ajuster la page après suppression en masse
+      const newFilteredLength = filteredDevis.length - selectedDevis.length;
+      const newTotalPages = Math.ceil(newFilteredLength / ITEMS_PER_PAGE);
+      if (currentPage > newTotalPages && newTotalPages > 0) {
+        setCurrentPage(newTotalPages);
+      }
+    } catch (err) {
+      console.error("Erreur suppression en masse:", err);
+      alert(`❌ Erreur lors de la suppression: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ NOUVEAU: Fonctions de navigation de pagination
+  const goToPage = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  // ✅ NOUVEAU: Générer les numéros de pages à afficher
+  const getPageNumbers = () => {
+    const pages = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i);
+      }
+    } else {
+      const start = Math.max(1, currentPage - 2);
+      const end = Math.min(totalPages, start + maxVisiblePages - 1);
+      
+      for (let i = start; i <= end; i++) {
+        pages.push(i);
+      }
+    }
+    
+    return pages;
   };
 
   // ✅ NOUVELLE FONCTION: Associer un devis orphelin à un client
@@ -137,7 +301,6 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
       return;
     }
 
-    // Créer une liste des clients pour la sélection
     const clientOptions = clients.map(c => `${c.name} (${c.email})`).join('\n');
     const selectedClientName = prompt(
       `Sélectionnez un client pour ce devis :\n\n${clientOptions}\n\nEntrez le nom exact du client :`
@@ -145,7 +308,6 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
 
     if (!selectedClientName) return;
 
-    // Trouver le client sélectionné
     const selectedClient = clients.find(c => 
       c.name.toLowerCase() === selectedClientName.toLowerCase() ||
       selectedClientName.toLowerCase().includes(c.name.toLowerCase())
@@ -164,7 +326,7 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
       });
 
       alert(`✅ Devis associé à ${selectedClient.name}`);
-      await fetchAllDevis(); // Recharger pour voir les changements
+      await fetchAllDevis();
     } catch (err) {
       console.error("Erreur association client:", err);
       alert(`❌ Erreur lors de l'association: ${err.message}`);
@@ -233,7 +395,6 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
       await addSectionToPDF(generateMetadataHTML(devis));
       await addSectionToPDF(generateTableHeaderHTML());
 
-      // Traiter chaque ligne individuellement
       for (let i = 0; i < devis.articles.length; i++) {
         const article = devis.articles[i];
         const price = parseFloat(article.unitPrice || "0");
@@ -455,185 +616,366 @@ const DevisListPage = ({ clients = [], onEditDevis }) => {
     </div>
   `;
 
-  // ✅ FILTRER LES DEVIS SELON LE CLIENT SÉLECTIONNÉ
-  const filteredGroupedDevis = selectedClientFilter 
-    ? Object.fromEntries(
-        Object.entries(groupedDevis).filter(([clientName]) => 
-          clientName.toLowerCase().includes(selectedClientFilter.toLowerCase())
-        )
-      )
-    : groupedDevis;
-
-  if (loading) {
+  if (loading && devisList.length === 0) {
     return (
       <div className="loading-state">
-        <div>⏳ Chargement des devis...</div>
+        <div className="loading-spinner">⏳</div>
+        <p>Chargement des devis...</p>
       </div>
     );
   }
 
   return (
-    <div className="devis-page">
-      <div className="devis-list-section">
-        <div className="devis-list-header">
-          <h2 className="devis-list-title">📄 Mes Devis - Triés par Client</h2>
-          
-          {/* ✅ FILTRE PAR CLIENT */}
-          <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
-            <input
-              type="text"
-              placeholder="🔍 Rechercher un client..."
-              value={selectedClientFilter}
-              onChange={(e) => setSelectedClientFilter(e.target.value)}
-              style={{
-                padding: '12px 16px',
-                borderRadius: '8px',
-                border: '1px solid #e2e8f0',
-                fontSize: '16px',
-                width: '300px',
-                maxWidth: '100%'
-              }}
-            />
+    <div className="prospects-page">
+      {/* ✅ NOUVEAU: En-tête avec titre et statistiques comme la page prospects */}
+      <div className="prospects-header">
+        <div className="header-content">
+          <h1 className="page-title">📄 Mes Devis</h1>
+          <div className="stats-summary">
+            <div className="stat-item">
+              <span className="stat-number">{allDevis.length}</span>
+              <span className="stat-label">Total</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{filteredDevis.length}</span>
+              <span className="stat-label">Affichés</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{selectedDevis.length}</span>
+              <span className="stat-label">Sélectionnés</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{validDevisCount}</span>
+              <span className="stat-label">✅ Valides</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{orphanDevisCount}</span>
+              <span className="stat-label">⚠️ Orphelins</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{totalRevenue.toFixed(0)} €</span>
+              <span className="stat-label">💰 CA Total</span>
+            </div>
           </div>
         </div>
-        
-        {error && (
-          <div className="error-state">{error}</div>
-        )}
+      </div>
 
-        {/* ✅ NOUVEAU: Affichage des devis orphelins avec bouton d'association */}
-        {orphanDevis.length > 0 && (
-          <div className="orphan-devis-section">
-            <div className="orphan-header">
-              <h3>⚠️ Devis sans client associé ({orphanDevis.length})</h3>
-              <p>Ces devis ne sont pas liés à un client valide. Vous pouvez les associer à un client existant ou les supprimer.</p>
+      {/* ✅ NOUVEAU: Barre de recherche et filtres comme la page prospects */}
+      <div className="filters-section">
+        <div className="search-bar">
+          <div className="search-input-wrapper">
+            <span className="search-icon">🔍</span>
+            <input
+              type="text"
+              placeholder="Rechercher par titre, client ou description..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="search-input"
+            />
+            {searchTerm && (
+              <button 
+                className="clear-search"
+                onClick={() => setSearchTerm('')}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        <div className="filters-row">
+          <div className="filter-group">
+            <label>Statut :</label>
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="filter-select"
+            >
+              <option value="all">Tous</option>
+              <option value="valid">✅ Valides</option>
+              <option value="orphan">⚠️ Orphelins</option>
+            </select>
+          </div>
+
+          <div className="filter-group">
+            <label>Trier par :</label>
+            <select 
+              value={sortBy} 
+              onChange={(e) => setSortBy(e.target.value)}
+              className="filter-select"
+            >
+              <option value="date">Plus récent</option>
+              <option value="title">Titre A-Z</option>
+              <option value="client">Client A-Z</option>
+              <option value="amount">Montant décroissant</option>
+            </select>
+          </div>
+
+          {selectedDevis.length > 0 && (
+            <div className="bulk-actions">
+              <button 
+                onClick={handleBulkDelete}
+                className="bulk-delete-btn"
+                disabled={loading}
+              >
+                🗑️ Supprimer ({selectedDevis.length})
+              </button>
             </div>
-            
-            <div className="devis-grid">
-              {orphanDevis.map((devisItem) => (
-                <div key={devisItem._id} className="devis-card orphan-card">
-                  <div className="devis-card-header">
-                    <h4 className="devis-card-title">{devisItem.title || "Devis sans titre"}</h4>
-                    <div className="devis-card-meta">
-                      <span>📅 {formatDate(devisItem.dateDevis)}</span>
-                      <span className="devis-card-amount">
-                        💰 {calculateTTC(devisItem).toFixed(2)} € TTC
-                      </span>
+          )}
+        </div>
+
+        {/* ✅ NOUVEAU: Informations de pagination */}
+        {filteredDevis.length > 0 && (
+          <div className="pagination-info">
+            <span>
+              Affichage de {startIndex + 1} à {Math.min(endIndex, filteredDevis.length)} sur {filteredDevis.length} devis
+              {totalPages > 1 && ` (Page ${currentPage} sur ${totalPages})`}
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* ✅ NOUVEAU: Actions en masse */}
+      {currentDevis.length > 0 && (
+        <div className="bulk-select-bar">
+          <label className="select-all-checkbox">
+            <input
+              type="checkbox"
+              checked={selectedDevis.length === currentDevis.length && currentDevis.length > 0}
+              onChange={handleSelectAll}
+            />
+            <span>Sélectionner tout sur cette page ({currentDevis.length})</span>
+          </label>
+        </div>
+      )}
+
+      {error && (
+        <div className="error-state">{error}</div>
+      )}
+
+      {loading ? (
+        <div className="loading-state">
+          <div className="loading-spinner">⏳</div>
+          <p>Chargement...</p>
+        </div>
+      ) : filteredDevis.length === 0 ? (
+        <div className="empty-state">
+          <div className="empty-icon">📄</div>
+          <h3>
+            {searchTerm || statusFilter !== 'all' 
+              ? "Aucun devis trouvé" 
+              : "Aucun devis créé"
+            }
+          </h3>
+          <p>
+            {searchTerm || statusFilter !== 'all'
+              ? "Essayez de modifier vos critères de recherche"
+              : "Commencez par créer votre premier devis !"
+            }
+          </p>
+          {onCreateDevis && (!searchTerm && statusFilter === 'all') && (
+            <button onClick={onCreateDevis} className="cta-button">
+              🆕 Créer un nouveau devis
+            </button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* ✅ NOUVEAU: Grille des cartes devis avec sélection */}
+          <div className="prospects-grid">
+            {currentDevis.map((devisItem) => {
+              const client = clients.find(c => c._id === (typeof devisItem.clientId === "object" ? devisItem.clientId?._id : devisItem.clientId));
+              const isOrphan = !!devisItem.orphanReason;
+              
+              return (
+                <div 
+                  key={devisItem._id} 
+                  className={`prospect-card ${selectedDevis.includes(devisItem._id) ? 'selected' : ''} ${isOrphan ? 'orphan-card' : ''}`}
+                >
+                  {/* ✅ NOUVEAU: Checkbox de sélection */}
+                  <div className="card-select">
+                    <input
+                      type="checkbox"
+                      checked={selectedDevis.includes(devisItem._id)}
+                      onChange={() => handleSelectDevis(devisItem._id)}
+                    />
+                  </div>
+
+                  {/* Avatar et indicateur */}
+                  <div className="card-header">
+                    <div className="prospect-avatar">
+                      {devisItem.title ? devisItem.title.charAt(0).toUpperCase() : "D"}
                     </div>
-                    <div className="orphan-reason">
-                      🚨 {devisItem.orphanReason}
+                    <div 
+                      className="status-indicator"
+                      style={{ backgroundColor: isOrphan ? '#f56565' : '#48bb78' }}
+                      title={isOrphan ? 'Devis orphelin' : 'Devis valide'}
+                    >
+                      {isOrphan ? '⚠️' : '✅'}
                     </div>
                   </div>
-                  <div className="devis-card-actions">
+
+                  {/* Informations principales */}
+                  <div className="card-content">
+                    <h3 className="prospect-name">{devisItem.title || "Devis sans titre"}</h3>
+                    
+                    <div className="contact-info">
+                      <div className="contact-item">
+                        <span className="contact-icon">👤</span>
+                        <span className="contact-text">{client?.name || "Client inconnu"}</span>
+                      </div>
+                      <div className="contact-item">
+                        <span className="contact-icon">📅</span>
+                        <span className="contact-text">{formatDate(devisItem.dateDevis)}</span>
+                      </div>
+                      <div className="contact-item">
+                        <span className="contact-icon">💰</span>
+                        <span className="contact-text">{calculateTTC(devisItem).toFixed(2)} € TTC</span>
+                      </div>
+                    </div>
+
+                    {isOrphan && (
+                      <div className="notes-preview">
+                        <span className="notes-icon">⚠️</span>
+                        <span className="notes-text">{devisItem.orphanReason}</span>
+                      </div>
+                    )}
+
+                    {/* Statut en texte */}
+                    <div className="status-text">
+                      <span 
+                        className="status-badge"
+                        style={{ 
+                          backgroundColor: isOrphan ? '#f56565' : '#48bb78',
+                          color: 'white'
+                        }}
+                      >
+                        {isOrphan ? '⚠️ Orphelin' : '✅ Valide'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="card-actions">
+                    {isOrphan && (
+                      <button 
+                        onClick={() => handleAssignClient(devisItem._id)}
+                        className="action-btn primary-action"
+                        title="Associer à un client"
+                      >
+                        🔗
+                      </button>
+                    )}
+                    
                     <button 
-                      className="card-btn card-btn-edit"
-                      onClick={() => handleAssignClient(devisItem._id)}
-                      title="Associer à un client"
-                    >
-                      🔗 Associer
-                    </button>
-                    <button 
-                      className="card-btn card-btn-edit"
                       onClick={() => onEditDevis && onEditDevis(devisItem)}
+                      className="action-btn edit-action"
                       title="Modifier le devis"
                     >
-                      ✏️ Modifier
+                      ✏️
                     </button>
+                    
                     <button 
-                      className="card-btn card-btn-pdf"
                       onClick={() => handleDownloadPDF(devisItem)}
+                      className="action-btn primary-action"
+                      title="Télécharger PDF"
                       disabled={loading}
-                      title="Télécharger en PDF"
                     >
-                      {loading ? "⏳" : "📄"} PDF
+                      📄
                     </button>
+                    
                     <button 
-                      className="card-btn card-btn-delete"
                       onClick={() => handleDelete(devisItem._id)}
+                      className="action-btn delete-action"
                       title="Supprimer"
                     >
                       🗑️
                     </button>
                   </div>
+
+                  {/* Métadonnées */}
+                  <div className="card-footer">
+                    <span className="join-date">
+                      Créé le {new Date(devisItem.date || Date.now()).toLocaleDateString('fr-FR')}
+                    </span>
+                  </div>
                 </div>
-              ))}
+              );
+            })}
+          </div>
+
+          {/* ✅ NOUVEAU: Contrôles de pagination */}
+          {totalPages > 1 && (
+            <div className="pagination-controls">
+              <div className="pagination-wrapper">
+                {/* Bouton Précédent */}
+                <button 
+                  onClick={goToPreviousPage}
+                  disabled={currentPage === 1}
+                  className="pagination-btn pagination-prev"
+                  title="Page précédente"
+                >
+                  ← Précédent
+                </button>
+
+                {/* Numéros de pages */}
+                <div className="pagination-numbers">
+                  {currentPage > 3 && totalPages > 5 && (
+                    <>
+                      <button 
+                        onClick={() => goToPage(1)}
+                        className="pagination-number"
+                      >
+                        1
+                      </button>
+                      {currentPage > 4 && <span className="pagination-ellipsis">...</span>}
+                    </>
+                  )}
+
+                  {getPageNumbers().map(pageNum => (
+                    <button
+                      key={pageNum}
+                      onClick={() => goToPage(pageNum)}
+                      className={`pagination-number ${currentPage === pageNum ? 'active' : ''}`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+
+                  {currentPage < totalPages - 2 && totalPages > 5 && (
+                    <>
+                      {currentPage < totalPages - 3 && <span className="pagination-ellipsis">...</span>}
+                      <button 
+                        onClick={() => goToPage(totalPages)}
+                        className="pagination-number"
+                      >
+                        {totalPages}
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Bouton Suivant */}
+                <button 
+                  onClick={goToNextPage}
+                  disabled={currentPage === totalPages}
+                  className="pagination-btn pagination-next"
+                  title="Page suivante"
+                >
+                  Suivant →
+                </button>
+              </div>
+
+              {/* Informations de pagination détaillées */}
+              <div className="pagination-details">
+                <span>
+                  Page {currentPage} sur {totalPages} • {filteredDevis.length} devis au total
+                </span>
+              </div>
             </div>
-          </div>
-        )}
-
-        {Object.keys(filteredGroupedDevis).length === 0 && orphanDevis.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-icon">📄</div>
-            <p className="empty-message">
-              {selectedClientFilter 
-                ? `Aucun devis trouvé pour "${selectedClientFilter}"`
-                : "Aucun devis créé pour le moment"
-              }
-            </p>
-          </div>
-        ) : (
-          <div className="clients-devis-groups">
-            {Object.entries(filteredGroupedDevis)
-              .sort(([a], [b]) => a.localeCompare(b)) // ✅ TRI ALPHABÉTIQUE
-              .map(([clientName, { client, devis }]) => (
-                <div key={client._id} className="client-devis-group">
-                  {/* ✅ EN-TÊTE CLIENT */}
-                  <div className="client-group-header">
-                    <div className="client-avatar">
-                      {clientName.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="client-group-info">
-                      <h3>{clientName}</h3>
-                      <p>📧 {client.email} • 📞 {client.phone}</p>
-                      <p className="devis-count">{devis.length} devis</p>
-                    </div>
-                  </div>
-
-                  {/* ✅ LISTE DES DEVIS DU CLIENT */}
-                  <div className="devis-grid">
-                    {devis
-                      .sort((a, b) => new Date(b.dateDevis) - new Date(a.dateDevis)) // ✅ TRI PAR DATE
-                      .map((devisItem) => (
-                        <div key={devisItem._id} className="devis-card">
-                          <div className="devis-card-header">
-                            <h4 className="devis-card-title">{devisItem.title}</h4>
-                            <div className="devis-card-meta">
-                              <span>📅 {formatDate(devisItem.dateDevis)}</span>
-                              <span className="devis-card-amount">
-                                💰 {calculateTTC(devisItem).toFixed(2)} € TTC
-                              </span>
-                            </div>
-                          </div>
-                          <div className="devis-card-actions">
-                            <button 
-                              className="card-btn card-btn-edit"
-                              onClick={() => onEditDevis && onEditDevis(devisItem)}
-                            >
-                              ✏️ Modifier
-                            </button>
-                            <button 
-                              className="card-btn card-btn-pdf"
-                              onClick={() => handleDownloadPDF(devisItem)}
-                              disabled={loading}
-                            >
-                              {loading ? "⏳" : "📄"} PDF
-                            </button>
-                            <button 
-                              className="card-btn card-btn-delete"
-                              onClick={() => handleDelete(devisItem._id)}
-                              title="Supprimer"
-                            >
-                              🗑️
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                  </div>
-                </div>
-              ))}
-          </div>
-        )}
-      </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
