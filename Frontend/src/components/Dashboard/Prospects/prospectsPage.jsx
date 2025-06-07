@@ -25,7 +25,8 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       const matchesStatus = statusFilter === 'all' || 
                            (statusFilter === 'active' && client.status === 'active') ||
                            (statusFilter === 'inactive' && client.status === 'inactive') ||
-                           (statusFilter === 'nouveau' && client.status === 'nouveau');
+                           (statusFilter === 'nouveau' && client.status === 'nouveau') ||
+                           (statusFilter === 'en_attente' && client.status === 'en_attente'); // ✅ NOUVEAU
       
       return matchesSearch && matchesStatus;
     })
@@ -88,11 +89,16 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
+  // ✅ FONCTION MISE À JOUR: Changement de statut avec nouveau statut
   const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
+    // ✅ CYCLE: nouveau -> en_attente -> active -> inactive -> nouveau
     switch (currentStatus) {
       case 'nouveau':
+        newStatus = 'en_attente';
+        break;
+      case 'en_attente':
         newStatus = 'active';
         break;
       case 'active':
@@ -102,7 +108,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
         newStatus = 'nouveau';
         break;
       default:
-        newStatus = 'active';
+        newStatus = 'en_attente';
     }
     
     setLoading(true);
@@ -216,12 +222,14 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     return pages;
   };
 
+  // ✅ FONCTIONS MISES À JOUR: Gestion des statuts avec nouveau statut
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
       case 'pending': return '#ed8936';
       case 'nouveau': return '#4299e1';
+      case 'en_attente': return '#9f7aea'; // ✅ NOUVEAU: Violet pour "en attente"
       default: return '#4299e1';
     }
   };
@@ -230,8 +238,9 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     switch (status) {
       case 'active': return 'Actif';
       case 'inactive': return 'Inactif';
-      case 'pending': return 'En attente';
+      case 'pending': return 'En cours';
       case 'nouveau': return 'Nouveau';
+      case 'en_attente': return 'En attente'; // ✅ NOUVEAU
       default: return 'Nouveau';
     }
   };
@@ -242,13 +251,15 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
       case 'inactive': return '🔴';
       case 'pending': return '🟡';
       case 'nouveau': return '🔵';
+      case 'en_attente': return '🟣'; // ✅ NOUVEAU: Violet pour "en attente"
       default: return '🔵';
     }
   };
 
   const getNextStatusLabel = (status) => {
     switch (status) {
-      case 'nouveau': return 'Cliquer pour passer en Actif';
+      case 'nouveau': return 'Cliquer pour passer en Attente';
+      case 'en_attente': return 'Cliquer pour passer en Actif'; // ✅ NOUVEAU
       case 'active': return 'Cliquer pour passer en Inactif';
       case 'inactive': return 'Cliquer pour remettre en Nouveau';
       default: return 'Cliquer pour changer le statut';
@@ -277,6 +288,10 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
             <div className="stat-item">
               <span className="stat-number">{clients.filter(c => c.status === 'nouveau').length}</span>
               <span className="stat-label">🔵 Nouveaux</span>
+            </div>
+            <div className="stat-item">
+              <span className="stat-number">{clients.filter(c => c.status === 'en_attente').length}</span>
+              <span className="stat-label">🟣 En attente</span>
             </div>
             <div className="stat-item">
               <span className="stat-number">{clients.filter(c => c.status === 'active').length}</span>
@@ -323,6 +338,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
             >
               <option value="all">Tous</option>
               <option value="nouveau">🔵 Nouveaux</option>
+              <option value="en_attente">🟣 En attente</option>
               <option value="active">🟢 Actifs</option>
               <option value="inactive">🔴 Inactifs</option>
             </select>

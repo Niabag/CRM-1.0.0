@@ -42,7 +42,8 @@ const companies = [
 
 const domains = ['gmail.com', 'hotmail.fr', 'yahoo.fr', 'outlook.com', 'free.fr', 'orange.fr', 'sfr.fr', 'laposte.net', 'wanadoo.fr'];
 
-const statuses = ['nouveau', 'active', 'inactive', 'pending'];
+// ✅ MISE À JOUR: Ajout du statut "en_attente"
+const statuses = ['nouveau', 'active', 'inactive', 'pending', 'en_attente'];
 
 const sampleNotes = [
   'Intéressé par un site e-commerce',
@@ -173,7 +174,7 @@ const generate100Clients = async () => {
         phone: generatePhoneNumber(),
         company: Math.random() > 0.3 ? companies[Math.floor(Math.random() * companies.length)] : '', // 70% ont une entreprise
         notes: Math.random() > 0.4 ? sampleNotes[Math.floor(Math.random() * sampleNotes.length)] : '', // 60% ont des notes
-        status: statuses[Math.floor(Math.random() * statuses.length)],
+        status: statuses[Math.floor(Math.random() * statuses.length)], // ✅ INCLUT MAINTENANT "en_attente"
         userId: userId,
         createdAt: generateRandomDate(),
         updatedAt: generateRandomDate()
@@ -199,7 +200,10 @@ const generate100Clients = async () => {
     
     console.log('📈 Répartition par statut:');
     Object.entries(statusStats).forEach(([status, count]) => {
-      const emoji = status === 'nouveau' ? '🔵' : status === 'active' ? '🟢' : status === 'inactive' ? '🔴' : '🟡';
+      const emoji = status === 'nouveau' ? '🔵' : 
+                   status === 'en_attente' ? '🟣' : // ✅ NOUVEAU
+                   status === 'active' ? '🟢' : 
+                   status === 'inactive' ? '🔴' : '🟡';
       console.log(`   ${emoji} ${status}: ${count} clients`);
     });
     

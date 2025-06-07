@@ -49,15 +49,18 @@ const ProspectEditPage = () => {
     }));
   };
 
-  // ✅ FONCTION PRINCIPALE: Changer le statut en cliquant sur l'indicateur (SANS POPUP)
+  // ✅ FONCTION PRINCIPALE: Changer le statut en cliquant sur l'indicateur (AVEC NOUVEAU STATUT)
   const handleStatusClick = async () => {
     if (!prospect) return;
     
     let newStatus;
     
-    // ✅ CYCLE: nouveau -> actif -> inactif -> nouveau
+    // ✅ CYCLE: nouveau -> en_attente -> active -> inactive -> nouveau
     switch (prospect.status) {
       case 'nouveau':
+        newStatus = 'en_attente';
+        break;
+      case 'en_attente':
         newStatus = 'active';
         break;
       case 'active':
@@ -67,7 +70,7 @@ const ProspectEditPage = () => {
         newStatus = 'nouveau';
         break;
       default:
-        newStatus = 'active';
+        newStatus = 'en_attente';
     }
     
     setLoading(true);
@@ -142,13 +145,14 @@ const ProspectEditPage = () => {
     }
   };
 
-  // ✅ FONCTIONS POUR LE STATUT
+  // ✅ FONCTIONS POUR LE STATUT (AVEC NOUVEAU STATUT)
   const getStatusColor = (status) => {
     switch (status) {
       case 'active': return '#48bb78';
       case 'inactive': return '#f56565';
       case 'pending': return '#ed8936';
       case 'nouveau': return '#4299e1';
+      case 'en_attente': return '#9f7aea'; // ✅ NOUVEAU: Violet pour "en attente"
       default: return '#4299e1';
     }
   };
@@ -159,6 +163,7 @@ const ProspectEditPage = () => {
       case 'inactive': return 'Inactif';
       case 'pending': return 'En attente';
       case 'nouveau': return 'Nouveau';
+      case 'en_attente': return 'En attente'; // ✅ NOUVEAU
       default: return 'Nouveau';
     }
   };
@@ -169,13 +174,15 @@ const ProspectEditPage = () => {
       case 'inactive': return '🔴';
       case 'pending': return '🟡';
       case 'nouveau': return '🔵';
+      case 'en_attente': return '🟣'; // ✅ NOUVEAU: Violet pour "en attente"
       default: return '🔵';
     }
   };
 
   const getNextStatusLabel = (status) => {
     switch (status) {
-      case 'nouveau': return 'Passer en Actif';
+      case 'nouveau': return 'Passer en Attente';
+      case 'en_attente': return 'Passer en Actif'; // ✅ NOUVEAU
       case 'active': return 'Passer en Inactif';
       case 'inactive': return 'Remettre en Nouveau';
       default: return 'Changer le statut';
@@ -337,9 +344,10 @@ const ProspectEditPage = () => {
                 onChange={(e) => handleInputChange('status', e.target.value)}
               >
                 <option value="nouveau">🔵 Nouveau</option>
+                <option value="en_attente">🟣 En attente</option>
                 <option value="active">🟢 Actif</option>
                 <option value="inactive">🔴 Inactif</option>
-                <option value="pending">🟡 En attente</option>
+                <option value="pending">🟡 En cours</option>
               </select>
             </div>
 
