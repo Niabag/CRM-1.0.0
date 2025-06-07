@@ -1,0 +1,7 @@
+# Fichier .gitignore
+.env
+
+node_modules
+.vercel
+
+.vercel
