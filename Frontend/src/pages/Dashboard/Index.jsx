@@ -42,7 +42,12 @@ const Dashboard = () => {
       const decodedToken = decodeToken(token);
       if (decodedToken && decodedToken.userId) {
         setUserId(decodedToken.userId);
+        console.log("✅ userId récupéré:", decodedToken.userId); // ✅ DEBUG
+      } else {
+        console.error("❌ Impossible de décoder userId du token");
       }
+    } else {
+      console.error("❌ Aucun token trouvé");
     }
     
     fetchUserData();
@@ -52,6 +57,7 @@ const Dashboard = () => {
     try {
       const userData = await apiRequest(API_ENDPOINTS.AUTH.ME);
       setUser(userData);
+      console.log("✅ Données utilisateur chargées:", userData);
     } catch (error) {
       console.error("Erreur lors du chargement des données utilisateur:", error);
     }
@@ -194,8 +200,13 @@ const Dashboard = () => {
 
         {activeTab === "settings" && <Settings />}
 
-        {/* Nouvelle page de carte de visite */}
-        {activeTab === "carte" && <BusinessCard />}
+        {/* ✅ CORRECTION: Passer userId et user en props */}
+        {activeTab === "carte" && (
+          <BusinessCard 
+            userId={userId} 
+            user={user}
+          />
+        )}
       </div>
     </div>
   );
