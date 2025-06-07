@@ -49,7 +49,7 @@ const ProspectEditPage = () => {
     }));
   };
 
-  // ✅ FONCTION PRINCIPALE: Changer le statut en cliquant sur l'indicateur
+  // ✅ FONCTION PRINCIPALE: Changer le statut en cliquant sur l'indicateur (SANS POPUP)
   const handleStatusClick = async () => {
     if (!prospect) return;
     
@@ -80,8 +80,8 @@ const ProspectEditPage = () => {
       // Mettre à jour l'état local
       setProspect(prev => ({ ...prev, status: newStatus }));
       
-      const statusText = getStatusLabel(newStatus);
-      alert(`✅ Statut changé vers "${statusText}" avec succès`);
+      // ✅ SUPPRESSION DU POPUP - Changement silencieux
+      console.log(`✅ Statut changé: ${prospect.status} → ${newStatus}`);
     } catch (err) {
       console.error("Erreur changement statut:", err);
       alert(`❌ Erreur lors du changement de statut: ${err.message}`);
@@ -240,7 +240,7 @@ const ProspectEditPage = () => {
               <p className="prospect-subtitle">Modification du prospect</p>
             </div>
 
-            {/* ✅ INDICATEUR DE STATUT CLIQUABLE */}
+            {/* ✅ INDICATEUR DE STATUT CLIQUABLE (SANS POPUP) */}
             <div 
               className="status-indicator-large clickable"
               style={{ backgroundColor: getStatusColor(prospect.status) }}

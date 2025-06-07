@@ -61,7 +61,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
     }
   };
 
-  // ✅ FONCTION: Changer le statut en cliquant sur l'indicateur
+  // ✅ FONCTION: Changer le statut en cliquant sur l'indicateur (SANS POPUP)
   const handleStatusClick = async (clientId, currentStatus) => {
     let newStatus;
     
@@ -89,8 +89,8 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
 
       onRefresh && onRefresh();
       
-      const statusText = getStatusLabel(newStatus);
-      alert(`✅ Prospect passé en "${statusText}" avec succès`);
+      // ✅ SUPPRESSION DU POPUP - Changement silencieux
+      console.log(`✅ Statut changé: ${currentStatus} → ${newStatus}`);
     } catch (err) {
       console.error("Erreur changement statut:", err);
       alert(`❌ Erreur lors du changement de statut: ${err.message}`);
@@ -354,7 +354,7 @@ const ProspectsPage = ({ clients = [], onRefresh, onViewClientDevis }) => {
                   <div className="prospect-avatar">
                     {prospect.name ? prospect.name.charAt(0).toUpperCase() : "?"}
                   </div>
-                  {/* ✅ INDICATEUR DE STATUT CLIQUABLE */}
+                  {/* ✅ INDICATEUR DE STATUT CLIQUABLE (SANS POPUP) */}
                   <div 
                     className="status-indicator clickable"
                     style={{ backgroundColor: getStatusColor(prospect.status) }}
