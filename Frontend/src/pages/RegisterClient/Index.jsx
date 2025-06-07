@@ -1,39 +1,108 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useSearchParams } from "react-router-dom";
 import { API_ENDPOINTS, apiRequest } from "../../config/api";
 import "./registerClient.scss";
 
 const RegisterClient = () => {
   const { userId } = useParams();
+  const [searchParams] = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [company, setCompany] = useState(""); // ✅ NOUVEAU
-  const [address, setAddress] = useState(""); // ✅ NOUVEAU
-  const [postalCode, setPostalCode] = useState(""); // ✅ NOUVEAU
-  const [city, setCity] = useState(""); // ✅ NOUVEAU
-  const [notes, setNotes] = useState(""); // ✅ NOUVEAU
+  const [company, setCompany] = useState("");
+  const [address, setAddress] = useState("");
+  const [postalCode, setPostalCode] = useState("");
+  const [city, setCity] = useState("");
+  const [notes, setNotes] = useState("");
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
   const downloadedRef = useRef(false);
+  
+  // ✅ NOUVEAU: Gestion des actions multiples
+  const [actions, setActions] = useState([]);
+  const [currentActionIndex, setCurrentActionIndex] = useState(0);
 
-  // ✅ NOUVEAU: Télécharger automatiquement l'image de bienvenue à l'ouverture de la page
+  // ✅ NOUVEAU: Décoder et exécuter les actions depuis l'URL
   useEffect(() => {
+    const actionsParam = searchParams.get('actions');
+    if (actionsParam) {
+      try {
+        const decodedActions = JSON.parse(decodeURIComponent(actionsParam));
+        setActions(decodedActions);
+        console.log('✅ Actions décodées:', decodedActions);
+        
+        // Exécuter les actions dans l'ordre
+        executeActions(decodedActions);
+      } catch (error) {
+        console.error('❌ Erreur décodage actions:', error);
+        // Fallback vers l'action par défaut
+        executeDefaultAction();
+      }
+    } else {
+      // Action par défaut si pas d'actions spécifiées
+      executeDefaultAction();
+    }
+  }, [searchParams]);
+
+  // ✅ NOUVEAU: Exécuter les actions dans l'ordre avec délais
+  const executeActions = (actionsList) => {
+    actionsList.forEach((action, index) => {
+      setTimeout(() => {
+        executeAction(action, index);
+        setCurrentActionIndex(index);
+      }, action.delay || 0);
+    });
+  };
+
+  // ✅ NOUVEAU: Exécuter une action spécifique
+  const executeAction = (action, index) => {
+    console.log(`🎬 Exécution action ${index + 1}:`, action);
+    
+    switch (action.type) {
+      case 'download':
+        downloadFile(action.file || '/images/welcome.png', `fichier-${index + 1}`);
+        break;
+        
+      case 'form':
+        // L'action formulaire est déjà affichée par défaut
+        console.log('📝 Formulaire affiché');
+        break;
+        
+      case 'redirect':
+      case 'website':
+        if (action.url) {
+          console.log(`🌐 Redirection vers: ${action.url}`);
+          // Ne pas rediriger immédiatement, attendre la fin du processus
+        }
+        break;
+        
+      default:
+        console.log('❓ Type d\'action inconnu:', action.type);
+    }
+  };
+
+  // ✅ NOUVEAU: Fonction de téléchargement de fichier
+  const downloadFile = (fileUrl, fileName) => {
+    try {
+      const link = document.createElement('a');
+      link.href = fileUrl;
+      link.download = fileName || 'fichier-telecharge';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      console.log(`✅ Téléchargement déclenché: ${fileName}`);
+    } catch (error) {
+      console.error('❌ Erreur téléchargement:', error);
+    }
+  };
+
+  // ✅ NOUVEAU: Action par défaut (rétrocompatibilité)
+  const executeDefaultAction = () => {
     if (downloadedRef.current) return;
     downloadedRef.current = true;
-
-    // Créer un lien de téléchargement automatique
-    const imageUrl = '/images/welcome.png';
-    const link = document.createElement('a');
-    link.href = imageUrl;
-    link.download = 'carte-de-visite.png';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    console.log('✅ Téléchargement automatique de la carte de visite déclenché');
-  }, []);
+    downloadFile('/images/welcome.png', 'carte-de-visite.png');
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -47,20 +116,32 @@ const RegisterClient = () => {
           name, 
           email, 
           phone, 
-          company, // ✅ NOUVEAU
-          address, // ✅ NOUVEAU
-          postalCode, // ✅ NOUVEAU
-          city, // ✅ NOUVEAU
-          notes // ✅ NOUVEAU
+          company,
+          address,
+          postalCode,
+          city,
+          notes
         }),
       });
 
       setSuccess(true);
       
-      // ✅ NOUVEAU: Redirection automatique vers Google après 2 secondes
-      setTimeout(() => {
-        window.location.href = 'https://google.com';
-      }, 2000);
+      // ✅ NOUVEAU: Exécuter les redirections après inscription
+      const redirectActions = actions.filter(action => 
+        action.type === 'redirect' || action.type === 'website'
+      );
+      
+      if (redirectActions.length > 0) {
+        const finalRedirect = redirectActions[redirectActions.length - 1];
+        setTimeout(() => {
+          window.location.href = finalRedirect.url;
+        }, 2000);
+      } else {
+        // Redirection par défaut vers Google
+        setTimeout(() => {
+          window.location.href = 'https://google.com';
+        }, 2000);
+      }
       
     } catch (err) {
       console.error("❌ Erreur inscription client:", err);
@@ -76,20 +157,56 @@ const RegisterClient = () => {
         <h2>📝 Inscription Prospect</h2>
         <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
         
-        {/* ✅ NOUVEAU: Message de téléchargement */}
-        <div className="download-notice">
-          <span className="download-icon">📥</span>
-          <span>Votre carte de visite a été téléchargée automatiquement !</span>
-        </div>
+        {/* ✅ NOUVEAU: Affichage des actions en cours */}
+        {actions.length > 0 && (
+          <div className="actions-status">
+            <h4>🎬 Actions en cours :</h4>
+            <div className="actions-list">
+              {actions.map((action, index) => (
+                <div 
+                  key={index} 
+                  className={`action-status ${index <= currentActionIndex ? 'completed' : 'pending'}`}
+                >
+                  <span className="action-icon">
+                    {action.type === 'download' ? '📥' : 
+                     action.type === 'form' ? '📝' : 
+                     action.type === 'redirect' || action.type === 'website' ? '🌐' : '❓'}
+                  </span>
+                  <span className="action-label">
+                    {action.type === 'download' ? 'Téléchargement automatique' : 
+                     action.type === 'form' ? 'Formulaire d\'inscription' : 
+                     action.type === 'redirect' ? 'Redirection programmée' : 
+                     action.type === 'website' ? 'Redirection vers site' : 'Action inconnue'}
+                  </span>
+                  <span className="action-timing">
+                    {action.delay > 0 ? `+${action.delay}ms` : 'Immédiat'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        
+        {/* Message de téléchargement (rétrocompatibilité) */}
+        {actions.length === 0 && (
+          <div className="download-notice">
+            <span className="download-icon">📥</span>
+            <span>Votre carte de visite a été téléchargée automatiquement !</span>
+          </div>
+        )}
         
         {error && <div className="error-message">{error}</div>}
         {success && (
           <div className="success-message">
-            ✅ Inscription réussie ! Redirection vers Google dans 2 secondes...
+            ✅ Inscription réussie ! 
+            {actions.some(a => a.type === 'redirect' || a.type === 'website') 
+              ? ' Redirection en cours...' 
+              : ' Redirection vers Google dans 2 secondes...'
+            }
           </div>
         )}
         
-        {/* ✅ INFORMATIONS PRINCIPALES */}
+        {/* Informations principales */}
         <div className="form-section">
           <h3>👤 Informations personnelles</h3>
           
@@ -121,7 +238,7 @@ const RegisterClient = () => {
           />
         </div>
 
-        {/* ✅ NOUVEAU: ADRESSE */}
+        {/* Adresse */}
         <div className="form-section">
           <h3>📍 Adresse</h3>
           
@@ -153,7 +270,7 @@ const RegisterClient = () => {
           </div>
         </div>
 
-        {/* ✅ NOUVEAU: INFORMATIONS COMPLÉMENTAIRES */}
+        {/* Informations complémentaires */}
         <div className="form-section">
           <h3>🏢 Informations complémentaires</h3>
           
