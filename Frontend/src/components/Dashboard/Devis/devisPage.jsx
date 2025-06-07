@@ -196,7 +196,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ FONCTION PDF AMÉLIORÉE - Utilise le rendu existant du devis
+  // ✅ FONCTION PDF CORRIGÉE - Toutes les colonnes visibles
   const handleDownloadPDF = async (devis) => {
     try {
       // Importer dynamiquement les modules nécessaires
@@ -211,10 +211,10 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         position: absolute;
         top: 0;
         left: 0;
-        width: 1200px;
+        width: 1400px;
         background: white;
         z-index: 9999;
-        padding: 20px;
+        padding: 30px;
         box-sizing: border-box;
       `;
 
@@ -228,152 +228,155 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       // Obtenir les informations du client
       const clientInfo = clients.find(c => c._id === pdfDevis.clientId) || {};
 
-      // Créer le HTML du devis en utilisant la même structure que DevisPreview
+      // ✅ CORRECTION: Tableau avec toutes les colonnes bien définies
+      const tableHTML = `
+        <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+          <thead>
+            <tr style="background: #2d3748; color: white;">
+              <th style="border: 1px solid #ccc; padding: 12px; text-align: left; width: 35%;">Description</th>
+              <th style="border: 1px solid #ccc; padding: 12px; text-align: center; width: 10%;">Unité</th>
+              <th style="border: 1px solid #ccc; padding: 12px; text-align: center; width: 10%;">Qté</th>
+              <th style="border: 1px solid #ccc; padding: 12px; text-align: center; width: 15%;">Prix unitaire HT</th>
+              <th style="border: 1px solid #ccc; padding: 12px; text-align: center; width: 10%;">TVA</th>
+              <th style="border: 1px solid #ccc; padding: 12px; text-align: center; width: 20%;">Total HT</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pdfDevis.articles.map((article, index) => {
+              const price = parseFloat(article.unitPrice || "0");
+              const qty = parseFloat(article.quantity || "0");
+              const total = isNaN(price) || isNaN(qty) ? 0 : price * qty;
+              
+              return `
+                <tr style="background: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
+                  <td style="border: 1px solid #ccc; padding: 12px; text-align: left;">${article.description || ""}</td>
+                  <td style="border: 1px solid #ccc; padding: 12px; text-align: center;">${article.unit || ""}</td>
+                  <td style="border: 1px solid #ccc; padding: 12px; text-align: center;">${qty}</td>
+                  <td style="border: 1px solid #ccc; padding: 12px; text-align: center;">${price.toFixed(2)} €</td>
+                  <td style="border: 1px solid #ccc; padding: 12px; text-align: center;">${article.tvaRate || "20"}%</td>
+                  <td style="border: 1px solid #ccc; padding: 12px; text-align: center; font-weight: bold; color: #48bb78;">${total.toFixed(2)} €</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      `;
+
+      // Calculer les totaux
+      const totalHT = pdfDevis.articles.reduce((sum, item) => {
+        const price = parseFloat(item.unitPrice || 0);
+        const qty = parseFloat(item.quantity || 0);
+        return sum + (price * qty);
+      }, 0);
+
+      const totalTVA = pdfDevis.articles.reduce((sum, item) => {
+        const price = parseFloat(item.unitPrice || 0);
+        const qty = parseFloat(item.quantity || 0);
+        const tva = parseFloat(item.tvaRate || 0);
+        const ht = price * qty;
+        return sum + (ht * tva / 100);
+      }, 0);
+
+      const totalTTC = totalHT + totalTVA;
+
+      // Créer le HTML du devis complet
       tempContainer.innerHTML = `
-        <div class="devis-preview pdf-mode" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: white; color: #000; padding: 3rem; border: 2px solid #e2e8f0; border-radius: 12px; min-height: 800px;">
+        <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: white; color: #000; padding: 40px; line-height: 1.4;">
           
           <!-- En-tête du document -->
-          <div class="document-header" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3rem; padding-bottom: 2rem; border-bottom: 3px solid #e2e8f0;">
-            <div class="logo-section" style="flex: 1;">
-              ${pdfDevis.logoUrl ? `<img src="${pdfDevis.logoUrl}" alt="Logo entreprise" style="max-width: 200px; max-height: 100px; object-fit: contain; border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);" />` : ''}
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 3px solid #e2e8f0;">
+            <div style="flex: 1;">
+              ${pdfDevis.logoUrl ? `<img src="${pdfDevis.logoUrl}" alt="Logo entreprise" style="max-width: 200px; max-height: 100px; object-fit: contain;" />` : ''}
             </div>
-            <div class="document-title" style="flex: 1; text-align: right;">
-              <h1 style="font-size: 3rem; font-weight: 700; margin: 0; color: #2d3748; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1); letter-spacing: 2px;">DEVIS</h1>
+            <div style="flex: 1; text-align: right;">
+              <h1 style="font-size: 48px; font-weight: 700; margin: 0; color: #2d3748; letter-spacing: 2px;">DEVIS</h1>
             </div>
           </div>
 
           <!-- Informations des parties -->
-          <div class="parties-info" style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; margin-bottom: 3rem;">
-            <div class="entreprise-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
-              <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Émetteur</h3>
-              <div class="info-group" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${pdfDevis.entrepriseName || ""}</div>
-                <div>${pdfDevis.entrepriseAddress || ""}</div>
-                <div>${pdfDevis.entrepriseCity || ""}</div>
-                <div>${pdfDevis.entreprisePhone || ""}</div>
-                <div>${pdfDevis.entrepriseEmail || ""}</div>
-              </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 40px;">
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+              <h3 style="margin: 0 0 15px 0; color: #2d3748; font-size: 16px; font-weight: 600; text-transform: uppercase;">Émetteur</h3>
+              <div style="font-weight: 600; font-size: 16px; color: #2d3748; margin-bottom: 8px;">${pdfDevis.entrepriseName || ""}</div>
+              <div style="margin-bottom: 5px;">${pdfDevis.entrepriseAddress || ""}</div>
+              <div style="margin-bottom: 5px;">${pdfDevis.entrepriseCity || ""}</div>
+              <div style="margin-bottom: 5px;">${pdfDevis.entreprisePhone || ""}</div>
+              <div>${pdfDevis.entrepriseEmail || ""}</div>
             </div>
 
-            <div class="client-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
-              <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Destinataire</h3>
-              <div class="info-group" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${pdfDevis.clientName || clientInfo.name || ""}</div>
-                <div>${pdfDevis.clientEmail || clientInfo.email || ""}</div>
-                <div>${pdfDevis.clientPhone || clientInfo.phone || ""}</div>
-                <div>${pdfDevis.clientAddress || ""}</div>
-              </div>
+            <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; border-left: 4px solid #667eea;">
+              <h3 style="margin: 0 0 15px 0; color: #2d3748; font-size: 16px; font-weight: 600; text-transform: uppercase;">Destinataire</h3>
+              <div style="font-weight: 600; font-size: 16px; color: #2d3748; margin-bottom: 8px;">${pdfDevis.clientName || clientInfo.name || ""}</div>
+              <div style="margin-bottom: 5px;">${pdfDevis.clientEmail || clientInfo.email || ""}</div>
+              <div style="margin-bottom: 5px;">${pdfDevis.clientPhone || clientInfo.phone || ""}</div>
+              <div>${pdfDevis.clientAddress || ""}</div>
             </div>
           </div>
 
           <!-- Métadonnées du devis -->
-          <div class="devis-metadata" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1.5rem; border-radius: 12px; margin-bottom: 3rem;">
-            <div class="metadata-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-              <div class="metadata-item" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date du devis :</label>
-                <span>${formatDate(pdfDevis.dateDevis)}</span>
+          <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; margin-bottom: 30px;">
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px;">
+              <div>
+                <div style="font-weight: 600; font-size: 12px; opacity: 0.9; margin-bottom: 5px;">Date du devis :</div>
+                <div style="font-weight: 600;">${formatDate(pdfDevis.dateDevis)}</div>
               </div>
-              <div class="metadata-item" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Numéro de devis :</label>
-                <span style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${pdfDevis._id || pdfDevis.devisNumber || "À définir"}</span>
+              <div>
+                <div style="font-weight: 600; font-size: 12px; opacity: 0.9; margin-bottom: 5px;">Numéro de devis :</div>
+                <div style="background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 4px; font-weight: 600;">${pdfDevis._id || pdfDevis.devisNumber || "À définir"}</div>
               </div>
-              <div class="metadata-item" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Date de validité :</label>
-                <span>${formatDate(pdfDevis.dateValidite)}</span>
+              <div>
+                <div style="font-weight: 600; font-size: 12px; opacity: 0.9; margin-bottom: 5px;">Date de validité :</div>
+                <div style="font-weight: 600;">${formatDate(pdfDevis.dateValidite)}</div>
               </div>
-              <div class="metadata-item" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <label style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Client ID :</label>
-                <span style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${pdfDevis.clientId || "N/A"}</span>
+              <div>
+                <div style="font-weight: 600; font-size: 12px; opacity: 0.9; margin-bottom: 5px;">Client ID :</div>
+                <div style="background: rgba(255, 255, 255, 0.2); padding: 5px 10px; border-radius: 4px; font-weight: 600;">${pdfDevis.clientId || "N/A"}</div>
               </div>
             </div>
           </div>
 
           <!-- Section prestations -->
-          <div class="prestations-section" style="margin-bottom: 3rem;">
-            <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.3rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; border-bottom: 2px solid #e2e8f0; padding-bottom: 0.5rem;">Détail des prestations</h3>
-            <table class="prestations-table" style="width: 100%; border-collapse: collapse; border-radius: 12px; overflow: hidden; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);">
-              <thead>
-                <tr style="background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%); color: white;">
-                  <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Description</th>
-                  <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Unité</th>
-                  <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Qté</th>
-                  <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Prix unitaire HT</th>
-                  <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">TVA</th>
-                  <th style="padding: 1rem 0.75rem; text-align: center; font-weight: 600; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Total HT</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${pdfDevis.articles.map((article, index) => {
-                  const price = parseFloat(article.unitPrice || "0");
-                  const qty = parseFloat(article.quantity || "0");
-                  const total = isNaN(price) || isNaN(qty) ? 0 : price * qty;
-                  
-                  return `
-                    <tr style="background: ${index % 2 === 0 ? '#f8f9fa' : 'white'};">
-                      <td style="padding: 1rem 0.75rem; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: middle; max-width: 300px;">${article.description || ""}</td>
-                      <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; vertical-align: middle;">${article.unit || ""}</td>
-                      <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; vertical-align: middle;">${article.quantity || ""}</td>
-                      <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; vertical-align: middle;">${article.unitPrice || ""} €</td>
-                      <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; vertical-align: middle;">${article.tvaRate || "20"}%</td>
-                      <td style="padding: 1rem 0.75rem; text-align: center; border-bottom: 1px solid #e2e8f0; vertical-align: middle; font-weight: 600; color: #48bb78;">${total.toFixed(2)} €</td>
-                    </tr>
-                  `;
-                }).join('')}
-              </tbody>
-            </table>
+          <div style="margin-bottom: 40px;">
+            <h3 style="margin: 0 0 20px 0; color: #2d3748; font-size: 18px; font-weight: 600; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">Détail des prestations</h3>
+            ${tableHTML}
           </div>
 
           <!-- Récapitulatif des totaux -->
-          <div class="totaux-section" style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 3rem;">
-            <div class="totaux-detail">
-              <h4 style="margin: 0 0 1rem 0; color: #2d3748; font-weight: 600;">Récapitulatif TVA</h4>
-              <!-- Calcul TVA ici si nécessaire -->
-            </div>
-
-            <div class="totaux-finaux" style="display: flex; flex-direction: column; gap: 0.75rem; align-self: end;">
-              <div class="total-line" style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8f9fa; border-radius: 6px; font-weight: 500;">
-                <span>Total HT :</span>
-                <span>${pdfDevis.articles.reduce((sum, item) => {
-                  const price = parseFloat(item.unitPrice || 0);
-                  const qty = parseFloat(item.quantity || 0);
-                  return sum + (price * qty);
-                }, 0).toFixed(2)} €</span>
+          <div style="display: flex; justify-content: flex-end; margin-bottom: 40px;">
+            <div style="width: 300px;">
+              <div style="display: flex; justify-content: space-between; padding: 10px 15px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">
+                <span style="font-weight: 500;">Total HT :</span>
+                <span style="font-weight: 600;">${totalHT.toFixed(2)} €</span>
               </div>
-              <div class="total-line" style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: #f8f9fa; border-radius: 6px; font-weight: 500;">
-                <span>Total TVA :</span>
-                <span>${pdfDevis.articles.reduce((sum, item) => {
-                  const price = parseFloat(item.unitPrice || 0);
-                  const qty = parseFloat(item.quantity || 0);
-                  const tva = parseFloat(item.tvaRate || 0);
-                  const ht = price * qty;
-                  return sum + (ht * tva / 100);
-                }, 0).toFixed(2)} €</span>
+              <div style="display: flex; justify-content: space-between; padding: 10px 15px; background: #f8f9fa; border-radius: 4px; margin-bottom: 5px;">
+                <span style="font-weight: 500;">Total TVA :</span>
+                <span style="font-weight: 600;">${totalTVA.toFixed(2)} €</span>
               </div>
-              <div class="final-total" style="display: flex; justify-content: space-between; padding: 0.75rem 1rem; background: linear-gradient(135deg, #48bb78 0%, #38a169 100%); color: white; font-weight: 700; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3); border-radius: 6px;">
+              <div style="display: flex; justify-content: space-between; padding: 15px; background: #48bb78; color: white; font-weight: 700; font-size: 16px; border-radius: 4px;">
                 <span>Total TTC :</span>
-                <span>${calculateTTC(pdfDevis).toFixed(2)} €</span>
+                <span>${totalTTC.toFixed(2)} €</span>
               </div>
             </div>
           </div>
 
           <!-- Conditions et signature -->
-          <div class="conditions-section" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
-            <div class="conditions-text" style="margin-bottom: 2rem;">
-              <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;"><strong>Conditions :</strong></p>
-              <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Devis valable jusqu'au ${pdfDevis.dateValidite ? formatDate(pdfDevis.dateValidite) : "date à définir"}</p>
-              <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• Règlement à 30 jours fin de mois</p>
-              <p style="margin: 0.5rem 0; color: #4a5568; line-height: 1.6;">• TVA non applicable, art. 293 B du CGI (si applicable)</p>
+          <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; border-left: 4px solid #667eea;">
+            <div style="margin-bottom: 30px;">
+              <p style="margin: 10px 0; color: #4a5568; line-height: 1.6;"><strong>Conditions :</strong></p>
+              <p style="margin: 5px 0; color: #4a5568; line-height: 1.6;">• Devis valable jusqu'au ${pdfDevis.dateValidite ? formatDate(pdfDevis.dateValidite) : "date à définir"}</p>
+              <p style="margin: 5px 0; color: #4a5568; line-height: 1.6;">• Règlement à 30 jours fin de mois</p>
+              <p style="margin: 5px 0; color: #4a5568; line-height: 1.6;">• TVA non applicable, art. 293 B du CGI (si applicable)</p>
             </div>
             
-            <div class="signature-area" style="text-align: center;">
-              <p class="signature-instruction" style="font-style: italic; color: #718096; margin-bottom: 2rem;">
+            <div style="text-align: center;">
+              <p style="font-style: italic; color: #718096; margin-bottom: 30px;">
                 <em>Bon pour accord - Date et signature du client :</em>
               </p>
-              <div class="signature-box" style="display: flex; justify-content: space-around; gap: 2rem;">
-                <div class="signature-line" style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
+              <div style="display: flex; justify-content: space-around; gap: 40px;">
+                <div style="flex: 1; padding: 20px; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
                   <span>Date : _______________</span>
                 </div>
-                <div class="signature-line" style="flex: 1; padding: 1rem; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
+                <div style="flex: 1; padding: 20px; border-bottom: 2px solid #2d3748; color: #4a5568; font-weight: 500;">
                   <span>Signature :</span>
                 </div>
               </div>
@@ -393,7 +396,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         useCORS: true,
         allowTaint: false,
         backgroundColor: '#ffffff',
-        width: 1200,
+        width: 1400,
         height: tempContainer.scrollHeight,
         logging: false,
         removeContainer: false,
