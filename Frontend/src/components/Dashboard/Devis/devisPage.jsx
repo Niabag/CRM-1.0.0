@@ -301,36 +301,36 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       pdf.text(devis.entrepriseEmail || 'Email', margin + 8, yPosition);
 
       // Destinataire (droite) - Design EXACT du CSS
-      const rightColumnX = margin + (contentWidth / 2) + 5;
+      const clientColumnX = margin + (contentWidth / 2) + 5;
       yPosition = 65;
       
       pdf.setFillColor(...backgroundLight);
-      pdf.roundedRect(rightColumnX, yPosition, (contentWidth / 2) - 5, 55, 3, 3, 'F');
+      pdf.roundedRect(clientColumnX, yPosition, (contentWidth / 2) - 5, 55, 3, 3, 'F');
       
       // Bordure gauche colorée comme dans le CSS
       pdf.setFillColor(...primaryGradientStart);
-      pdf.rect(rightColumnX, yPosition, 2, 55, 'F');
+      pdf.rect(clientColumnX, yPosition, 2, 55, 'F');
       
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textDark);
-      pdf.text('Destinataire', rightColumnX + 8, yPosition + 10);
+      pdf.text('Destinataire', clientColumnX + 8, yPosition + 10);
       
       yPosition += 18;
       pdf.setFontSize(11);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...textDark);
-      pdf.text(clientInfo.name || devis.clientName || 'Nom du client', rightColumnX + 8, yPosition);
+      pdf.text(clientInfo.name || devis.clientName || 'Nom du client', clientColumnX + 8, yPosition);
       
       yPosition += 6;
       pdf.setFontSize(9);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...textGray);
-      pdf.text(clientInfo.email || devis.clientEmail || 'Email du client', rightColumnX + 8, yPosition);
+      pdf.text(clientInfo.email || devis.clientEmail || 'Email du client', clientColumnX + 8, yPosition);
       yPosition += 5;
-      pdf.text(clientInfo.phone || devis.clientPhone || 'Téléphone du client', rightColumnX + 8, yPosition);
+      pdf.text(clientInfo.phone || devis.clientPhone || 'Téléphone du client', clientColumnX + 8, yPosition);
       yPosition += 5;
-      pdf.text(devis.clientAddress || 'Adresse du client', rightColumnX + 8, yPosition);
+      pdf.text(devis.clientAddress || 'Adresse du client', clientColumnX + 8, yPosition);
 
       // ✅ MÉTADONNÉES DU DEVIS - EXACTEMENT comme dans le CSS
       yPosition = 135;
@@ -440,7 +440,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       // Layout en 2 colonnes EXACTEMENT comme dans le CSS
       const leftColumnWidth = contentWidth * 0.6;
       const rightColumnWidth = contentWidth * 0.4;
-      const rightColumnX = margin + leftColumnWidth + 10;
+      const totalsColumnX = margin + leftColumnWidth + 10;
       
       // Récapitulatif TVA (gauche) - EXACTEMENT comme dans le CSS
       pdf.setFontSize(12);
@@ -501,23 +501,23 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       pdf.setFillColor(255, 255, 255);
       pdf.setDrawColor(...primaryGradientStart);
       pdf.setLineWidth(1);
-      pdf.roundedRect(rightColumnX, totalBoxY, rightColumnWidth, 30, 3, 3, 'FD');
+      pdf.roundedRect(totalsColumnX, totalBoxY, rightColumnWidth, 30, 3, 3, 'FD');
       
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
       pdf.setTextColor(...textDark);
-      pdf.text(`Total HT :`, rightColumnX + 5, totalBoxY + 8);
-      pdf.text(`${totalHT.toFixed(2)} €`, rightColumnX + rightColumnWidth - 5, totalBoxY + 8, { align: 'right' });
+      pdf.text(`Total HT :`, totalsColumnX + 5, totalBoxY + 8);
+      pdf.text(`${totalHT.toFixed(2)} €`, totalsColumnX + rightColumnWidth - 5, totalBoxY + 8, { align: 'right' });
       
-      pdf.text(`Total TVA :`, rightColumnX + 5, totalBoxY + 15);
-      pdf.text(`${totalTVA.toFixed(2)} €`, rightColumnX + rightColumnWidth - 5, totalBoxY + 15, { align: 'right' });
+      pdf.text(`Total TVA :`, totalsColumnX + 5, totalBoxY + 15);
+      pdf.text(`${totalTVA.toFixed(2)} €`, totalsColumnX + rightColumnWidth - 5, totalBoxY + 15, { align: 'right' });
       
       // Total TTC en gras et coloré EXACTEMENT comme dans le CSS
       pdf.setFontSize(12);
       pdf.setFont('helvetica', 'bold');
       pdf.setTextColor(...successGreen);
-      pdf.text(`Total TTC :`, rightColumnX + 5, totalBoxY + 24);
-      pdf.text(`${totalTTC.toFixed(2)} €`, rightColumnX + rightColumnWidth - 5, totalBoxY + 24, { align: 'right' });
+      pdf.text(`Total TTC :`, totalsColumnX + 5, totalBoxY + 24);
+      pdf.text(`${totalTTC.toFixed(2)} €`, totalsColumnX + rightColumnWidth - 5, totalBoxY + 24, { align: 'right' });
 
       // ✅ CONDITIONS ET SIGNATURE - EXACTEMENT comme dans le CSS
       yPosition += 25;
