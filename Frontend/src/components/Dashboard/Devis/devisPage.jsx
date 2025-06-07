@@ -317,12 +317,15 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
           >
             💾 {loading ? "Enregistrement..." : "Enregistrer le devis"}
           </button>
-          <button
-            className="btn-new"
-            onClick={handleReset}
-          >
-            🆕 Nouveau devis
-          </button>
+          {/* ✅ SUPPRIMÉ: Le bouton "Nouveau devis" n'apparaît plus dans la vue client spécifique */}
+          {!selectedClient && (
+            <button
+              className="btn-new"
+              onClick={handleReset}
+            >
+              🆕 Nouveau devis
+            </button>
+          )}
         </div>
 
         {currentDevis && (
