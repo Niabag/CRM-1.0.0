@@ -23,7 +23,7 @@ const BusinessCard = ({ userId, user }) => {
   const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generatedCardUrl, setGeneratedCardUrl] = useState(null);
-  const [savedCardData, setSavedCardData] = useState(null); // ✅ NOUVEAU
+  const [savedCardData, setSavedCardData] = useState(null);
   
   const [stats, setStats] = useState({
     scansToday: 0,
@@ -40,9 +40,16 @@ const BusinessCard = ({ userId, user }) => {
     if (userId) {
       generateQRCode();
       fetchStats();
-      loadSavedBusinessCard(); // ✅ NOUVEAU
+      loadSavedBusinessCard();
     }
-  }, [userId, cardConfig.actions]);
+  }, [userId]);
+
+  // ✅ EFFET SÉPARÉ: Régénérer le QR code quand les actions changent
+  useEffect(() => {
+    if (userId && cardConfig.actions) {
+      generateQRCode();
+    }
+  }, [cardConfig.actions, userId]);
 
   // ✅ NOUVELLE FONCTION: Charger la carte de visite sauvegardée
   const loadSavedBusinessCard = async () => {
@@ -69,19 +76,18 @@ const BusinessCard = ({ userId, user }) => {
   const generateQRCode = () => {
     if (!userId) {
       console.error("❌ userId manquant pour générer le QR code");
-      alert("❌ Impossible de générer le QR code : utilisateur non identifié");
       return;
     }
     
     try {
-      const actionsData = encodeURIComponent(JSON.stringify(cardConfig.actions.filter(a => a.active)));
+      const activeActions = cardConfig.actions.filter(a => a.active);
+      const actionsData = encodeURIComponent(JSON.stringify(activeActions));
       const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
       
       setQrValue(targetUrl);
       console.log("✅ QR code généré:", targetUrl);
     } catch (error) {
       console.error("❌ Erreur lors de la génération du QR code:", error);
-      alert("❌ Erreur lors de la génération du QR code");
     }
   };
 
@@ -134,15 +140,40 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Sauvegarder en base de données
+  // ✅ FONCTION CORRIGÉE: Sauvegarder en base de données avec sérialisation propre
   const saveBusinessCardToDB = async (cardImage = null, config = null) => {
     try {
       setLoading(true);
       
+      // ✅ SÉRIALISATION PROPRE des données
+      const configToSave = config || cardConfig;
+      
+      // ✅ S'assurer que les actions sont bien un tableau d'objets
+      const cleanedConfig = {
+        ...configToSave,
+        actions: Array.isArray(configToSave.actions) 
+          ? configToSave.actions.map(action => ({
+              id: Number(action.id) || Date.now(),
+              type: String(action.type || 'download'),
+              file: String(action.file || ''),
+              url: String(action.url || ''),
+              delay: Number(action.delay || 0),
+              active: Boolean(action.active !== undefined ? action.active : true)
+            }))
+          : []
+      };
+      
       const dataToSave = {
         cardImage: cardImage || cardConfig.cardImage,
-        cardConfig: config || cardConfig
+        cardConfig: cleanedConfig
       };
+      
+      console.log("💾 Données à sauvegarder:", {
+        hasCardImage: !!dataToSave.cardImage,
+        configKeys: Object.keys(dataToSave.cardConfig),
+        actionsCount: dataToSave.cardConfig.actions.length,
+        actionsTypes: dataToSave.cardConfig.actions.map(a => a.type)
+      });
       
       const response = await apiRequest(API_ENDPOINTS.BUSINESS_CARDS.BASE, {
         method: 'POST',
@@ -153,28 +184,61 @@ const BusinessCard = ({ userId, user }) => {
       console.log('✅ Carte de visite sauvegardée en BDD');
       
       // Afficher un message de succès discret
-      const successMsg = document.createElement('div');
-      successMsg.textContent = '✅ Carte sauvegardée';
-      successMsg.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        background: #48bb78;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 8px;
-        z-index: 9999;
-        font-weight: 500;
-      `;
-      document.body.appendChild(successMsg);
-      setTimeout(() => document.body.removeChild(successMsg), 3000);
+      showSuccessMessage('✅ Carte sauvegardée');
       
     } catch (error) {
       console.error('❌ Erreur sauvegarde carte de visite:', error);
-      alert('❌ Erreur lors de la sauvegarde de la carte de visite');
+      showErrorMessage('❌ Erreur lors de la sauvegarde');
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ NOUVELLES FONCTIONS: Messages de feedback
+  const showSuccessMessage = (message) => {
+    const successMsg = document.createElement('div');
+    successMsg.textContent = message;
+    successMsg.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #48bb78;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      z-index: 9999;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+    `;
+    document.body.appendChild(successMsg);
+    setTimeout(() => {
+      if (document.body.contains(successMsg)) {
+        document.body.removeChild(successMsg);
+      }
+    }, 3000);
+  };
+
+  const showErrorMessage = (message) => {
+    const errorMsg = document.createElement('div');
+    errorMsg.textContent = message;
+    errorMsg.style.cssText = `
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #f56565;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      z-index: 9999;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(245, 101, 101, 0.3);
+    `;
+    document.body.appendChild(errorMsg);
+    setTimeout(() => {
+      if (document.body.contains(errorMsg)) {
+        document.body.removeChild(errorMsg);
+      }
+    }, 3000);
   };
 
   const handleDownloadImageUpload = (e) => {
@@ -199,13 +263,13 @@ const BusinessCard = ({ userId, user }) => {
     
     setCardConfig(newConfig);
     
-    // Sauvegarder automatiquement la configuration
+    // Sauvegarder automatiquement la configuration si une carte existe
     if (savedCardData) {
       await saveBusinessCardToDB(null, newConfig);
     }
   };
 
-  const addAction = () => {
+  const addAction = async () => {
     const newAction = {
       id: Date.now(),
       type: 'download',
@@ -224,7 +288,7 @@ const BusinessCard = ({ userId, user }) => {
     
     // Sauvegarder automatiquement
     if (savedCardData) {
-      saveBusinessCardToDB(null, newConfig);
+      await saveBusinessCardToDB(null, newConfig);
     }
   };
 
@@ -374,9 +438,9 @@ const BusinessCard = ({ userId, user }) => {
   const copyQRLink = () => {
     if (qrValue) {
       navigator.clipboard.writeText(qrValue);
-      alert('✅ Lien copié dans le presse-papier !');
+      showSuccessMessage('✅ Lien copié !');
     } else {
-      alert('❌ Aucun QR code généré');
+      showErrorMessage('❌ Aucun QR code généré');
     }
   };
 
@@ -384,7 +448,7 @@ const BusinessCard = ({ userId, user }) => {
     if (qrValue) {
       window.open(qrValue, '_blank');
     } else {
-      alert('❌ Aucun QR code généré');
+      showErrorMessage('❌ Aucun QR code généré');
     }
   };
 

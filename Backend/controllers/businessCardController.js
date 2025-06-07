@@ -7,12 +7,17 @@ exports.saveBusinessCard = async (req, res) => {
     const userId = req.userId;
 
     console.log("💾 Sauvegarde carte de visite pour userId:", userId);
+    console.log("📦 Données reçues:", { 
+      hasCardImage: !!cardImage, 
+      cardConfig: typeof cardConfig,
+      cardConfigKeys: cardConfig ? Object.keys(cardConfig) : []
+    });
 
     if (!cardImage) {
       return res.status(400).json({ message: "Image de la carte requise" });
     }
 
-    // ✅ VALIDATION ET NETTOYAGE des actions
+    // ✅ VALIDATION ET NETTOYAGE des actions avec parsing JSON si nécessaire
     let cleanedConfig = {
       showQR: true,
       qrPosition: 'bottom-right',
@@ -28,22 +33,46 @@ exports.saveBusinessCard = async (req, res) => {
         actions: []
       };
 
+      // ✅ GESTION ROBUSTE des actions (string ou array)
+      let actionsData = cardConfig.actions;
+      
+      // Si les actions sont une chaîne, essayer de les parser
+      if (typeof actionsData === 'string') {
+        try {
+          actionsData = JSON.parse(actionsData);
+          console.log("🔧 Actions parsées depuis string:", actionsData);
+        } catch (parseError) {
+          console.error("❌ Erreur parsing actions:", parseError);
+          actionsData = [];
+        }
+      }
+
       // ✅ NETTOYAGE des actions pour éviter les erreurs de validation
-      if (cardConfig.actions && Array.isArray(cardConfig.actions)) {
-        cleanedConfig.actions = cardConfig.actions
+      if (actionsData && Array.isArray(actionsData)) {
+        cleanedConfig.actions = actionsData
           .filter(action => action && typeof action === 'object')
-          .map(action => ({
-            id: Number(action.id) || Date.now(),
-            type: action.type || 'download',
-            file: action.file || '',
-            url: action.url || '',
-            delay: Number(action.delay) || 0,
-            active: Boolean(action.active !== undefined ? action.active : true)
-          }));
+          .map(action => {
+            // ✅ CONVERSION SÉCURISÉE des types
+            const cleanAction = {
+              id: Number(action.id) || Date.now() + Math.random(),
+              type: String(action.type || 'download'),
+              file: String(action.file || ''),
+              url: String(action.url || ''),
+              delay: Number(action.delay) || 0,
+              active: Boolean(action.active !== undefined ? action.active : true)
+            };
+            
+            // ✅ VALIDATION du type
+            if (!['download', 'form', 'redirect', 'website'].includes(cleanAction.type)) {
+              cleanAction.type = 'download';
+            }
+            
+            return cleanAction;
+          });
       }
     }
 
-    console.log("🧹 Configuration nettoyée:", cleanedConfig);
+    console.log("🧹 Configuration nettoyée:", JSON.stringify(cleanedConfig, null, 2));
 
     // Vérifier si une carte existe déjà pour cet utilisateur
     let businessCard = await BusinessCard.findOne({ userId });
@@ -113,6 +142,7 @@ exports.saveBusinessCard = async (req, res) => {
 
   } catch (error) {
     console.error("❌ Erreur sauvegarde carte de visite:", error);
+    console.error("❌ Stack trace:", error.stack);
     res.status(500).json({ 
       message: "Erreur lors de la sauvegarde de la carte de visite", 
       error: error.message 
@@ -186,22 +216,36 @@ exports.updateCardConfig = async (req, res) => {
 
     // ✅ NETTOYAGE de la configuration
     const cleanedConfig = {
-      ...businessCard.cardConfig,
+      ...businessCard.cardConfig.toObject(),
       ...cardConfig
     };
 
-    // ✅ NETTOYAGE des actions si présentes
-    if (cardConfig.actions && Array.isArray(cardConfig.actions)) {
-      cleanedConfig.actions = cardConfig.actions
-        .filter(action => action && typeof action === 'object')
-        .map(action => ({
-          id: Number(action.id) || Date.now(),
-          type: action.type || 'download',
-          file: action.file || '',
-          url: action.url || '',
-          delay: Number(action.delay) || 0,
-          active: Boolean(action.active !== undefined ? action.active : true)
-        }));
+    // ✅ GESTION ROBUSTE des actions si présentes
+    if (cardConfig.actions) {
+      let actionsData = cardConfig.actions;
+      
+      // Si les actions sont une chaîne, essayer de les parser
+      if (typeof actionsData === 'string') {
+        try {
+          actionsData = JSON.parse(actionsData);
+        } catch (parseError) {
+          console.error("❌ Erreur parsing actions:", parseError);
+          actionsData = [];
+        }
+      }
+
+      if (Array.isArray(actionsData)) {
+        cleanedConfig.actions = actionsData
+          .filter(action => action && typeof action === 'object')
+          .map(action => ({
+            id: Number(action.id) || Date.now() + Math.random(),
+            type: String(action.type || 'download'),
+            file: String(action.file || ''),
+            url: String(action.url || ''),
+            delay: Number(action.delay) || 0,
+            active: Boolean(action.active !== undefined ? action.active : true)
+          }));
+      }
     }
 
     businessCard.cardConfig = cleanedConfig;
