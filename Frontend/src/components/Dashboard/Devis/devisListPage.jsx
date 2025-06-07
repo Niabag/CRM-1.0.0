@@ -26,13 +26,13 @@ const calculateTTC = (devis) => {
   }, 0);
 };
 
-const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de onCreateDevis
+const DevisListPage = ({ clients = [], onEditDevis }) => {
   const [devisList, setDevisList] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [selectedClientFilter, setSelectedClientFilter] = useState("");
   const [groupedDevis, setGroupedDevis] = useState({});
-  const [orphanDevis, setOrphanDevis] = useState([]); // ✅ NOUVEAU: Devis orphelins
+  const [orphanDevis, setOrphanDevis] = useState([]);
 
   useEffect(() => {
     fetchAllDevis();
@@ -62,7 +62,7 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
             // Client supprimé mais devis encore présent
             orphanDevisList.push({
               ...devis,
-              orphanReason: 'Client supprimé'
+              orphanReason: `Client supprimé (ID: ${clientId})`
             });
           }
         } else {
@@ -92,7 +92,7 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
       }, {});
       
       setGroupedDevis(grouped);
-      setOrphanDevis(orphanDevisList); // ✅ NOUVEAU: Stocker les devis orphelins
+      setOrphanDevis(orphanDevisList);
       
       console.log("📋 Devis groupés par client:", grouped);
       console.log("🔍 Devis valides:", validDevis.length);
@@ -125,6 +125,49 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
     } catch (err) {
       console.error("Erreur suppression:", err);
       alert(`❌ Erreur lors de la suppression: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ NOUVELLE FONCTION: Associer un devis orphelin à un client
+  const handleAssignClient = async (devisId) => {
+    if (clients.length === 0) {
+      alert("❌ Aucun client disponible. Créez d'abord des clients.");
+      return;
+    }
+
+    // Créer une liste des clients pour la sélection
+    const clientOptions = clients.map(c => `${c.name} (${c.email})`).join('\n');
+    const selectedClientName = prompt(
+      `Sélectionnez un client pour ce devis :\n\n${clientOptions}\n\nEntrez le nom exact du client :`
+    );
+
+    if (!selectedClientName) return;
+
+    // Trouver le client sélectionné
+    const selectedClient = clients.find(c => 
+      c.name.toLowerCase() === selectedClientName.toLowerCase() ||
+      selectedClientName.toLowerCase().includes(c.name.toLowerCase())
+    );
+
+    if (!selectedClient) {
+      alert("❌ Client non trouvé. Vérifiez l'orthographe.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      await apiRequest(API_ENDPOINTS.DEVIS.UPDATE(devisId), {
+        method: "PUT",
+        body: JSON.stringify({ clientId: selectedClient._id }),
+      });
+
+      alert(`✅ Devis associé à ${selectedClient.name}`);
+      await fetchAllDevis(); // Recharger pour voir les changements
+    } catch (err) {
+      console.error("Erreur association client:", err);
+      alert(`❌ Erreur lors de l'association: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -264,10 +307,10 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
         <div style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); padding: 2rem; border-radius: 12px; border-left: 4px solid #667eea;">
           <h3 style="margin: 0 0 1.5rem 0; color: #2d3748; font-size: 1.2rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">DESTINATAIRE</h3>
           <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-            <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Nom du client'}</div>
-            <div>${clientInfo.email || devis.clientEmail || 'Email du client'}</div>
-            <div>${clientInfo.phone || devis.clientPhone || 'Téléphone du client'}</div>
-            <div>${devis.clientAddress || 'Adresse du client'}</div>
+            <div style="font-weight: 600; font-size: 1.1rem; color: #2d3748;">${clientInfo.name || devis.clientName || 'Client orphelin'}</div>
+            <div>${clientInfo.email || devis.clientEmail || 'Email non défini'}</div>
+            <div>${clientInfo.phone || devis.clientPhone || 'Téléphone non défini'}</div>
+            <div>${devis.clientAddress || 'Adresse non définie'}</div>
           </div>
         </div>
       </div>
@@ -293,7 +336,7 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
           </div>
           <div>
             <div style="font-weight: 600; font-size: 0.9rem; opacity: 0.9;">Client :</div>
-            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${clientInfo.name || devis.clientName || 'Client non défini'}</div>
+            <div style="background: rgba(255, 255, 255, 0.2); padding: 0.5rem; border-radius: 6px; font-weight: 600;">${clientInfo.name || devis.clientName || 'Client orphelin'}</div>
           </div>
         </div>
       </div>
@@ -458,12 +501,12 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
           <div className="error-state">{error}</div>
         )}
 
-        {/* ✅ NOUVEAU: Affichage des devis orphelins */}
+        {/* ✅ NOUVEAU: Affichage des devis orphelins avec bouton d'association */}
         {orphanDevis.length > 0 && (
           <div className="orphan-devis-section">
             <div className="orphan-header">
               <h3>⚠️ Devis sans client associé ({orphanDevis.length})</h3>
-              <p>Ces devis ne sont pas liés à un client valide et doivent être corrigés ou supprimés.</p>
+              <p>Ces devis ne sont pas liés à un client valide. Vous pouvez les associer à un client existant ou les supprimer.</p>
             </div>
             
             <div className="devis-grid">
@@ -484,14 +527,23 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
                   <div className="devis-card-actions">
                     <button 
                       className="card-btn card-btn-edit"
-                      onClick={() => onEditDevis && onEditDevis(devisItem)}
+                      onClick={() => handleAssignClient(devisItem._id)}
+                      title="Associer à un client"
                     >
-                      ✏️ Corriger
+                      🔗 Associer
+                    </button>
+                    <button 
+                      className="card-btn card-btn-edit"
+                      onClick={() => onEditDevis && onEditDevis(devisItem)}
+                      title="Modifier le devis"
+                    >
+                      ✏️ Modifier
                     </button>
                     <button 
                       className="card-btn card-btn-pdf"
                       onClick={() => handleDownloadPDF(devisItem)}
                       disabled={loading}
+                      title="Télécharger en PDF"
                     >
                       {loading ? "⏳" : "📄"} PDF
                     </button>
@@ -518,7 +570,6 @@ const DevisListPage = ({ clients = [], onEditDevis }) => { // ✅ SUPPRESSION de
                 : "Aucun devis créé pour le moment"
               }
             </p>
-            {/* ✅ SUPPRESSION DU BOUTON "Créer un nouveau devis" */}
           </div>
         ) : (
           <div className="clients-devis-groups">
