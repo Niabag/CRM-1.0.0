@@ -54,7 +54,6 @@ exports.createDevis = async (req, res) => {
   }
 };
 
-// ✅ NOUVEAU: Récupérer les devis d'un utilisateur spécifique
 exports.getUserDevis = async (req, res) => {
   try {
     const devisList = await Devis.find({ userId: req.userId })
@@ -66,7 +65,6 @@ exports.getUserDevis = async (req, res) => {
   }
 };
 
-// ✅ NOUVEAU: Récupérer les devis d'un client spécifique
 exports.getClientDevis = async (req, res) => {
   try {
     const { clientId } = req.params;

@@ -2,7 +2,7 @@ const express = require("express");
 const {
   createDevis,
   getUserDevis,
-  getClientDevis, // ✅ NOUVEAU
+  getClientDevis,
   updateDevis,
   deleteDevis
 } = require("../controllers/devisController");
@@ -16,7 +16,7 @@ router.post("/", authMiddleware, createDevis);
 // 📌 Voir tous les devis d'un utilisateur (GET)
 router.get("/", authMiddleware, getUserDevis);
 
-// 📌 ✅ NOUVEAU: Voir les devis d'un client spécifique (GET)
+// 📌 Voir les devis d'un client spécifique (GET)
 router.get("/client/:clientId", authMiddleware, getClientDevis);
 
 // 📌 Modifier un devis existant (PUT)
