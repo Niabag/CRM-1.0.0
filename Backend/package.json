@@ -8,6 +8,7 @@
     "dev": "nodemon server.js",
     "seed": "node scripts/seedData.js",
     "seed:dev": "NODE_ENV=development node scripts/seedData.js",
+    "generate-clients": "node scripts/generate100Clients.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "echo 'No build step needed'"
   },
