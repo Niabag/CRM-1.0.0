@@ -10,6 +10,7 @@ const corsOptions = require("./config/cors");
 const userRoutes = require("./routes/userRoutes");
 const clientRoutes = require("./routes/clientRoutes");
 const devisRoutes = require("./routes/devisRoutes");
+const businessCardRoutes = require("./routes/businessCardRoutes"); // ✅ NOUVEAU
 
 const app = express();
 
@@ -17,8 +18,8 @@ const app = express();
 connectDB();
 
 // ✅ Middleware pour parser JSON avec limite augmentée
-app.use(express.json({ limit: "5mb" }));
-app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.use(express.json({ limit: "10mb" })); // ✅ AUGMENTÉ pour les images
+app.use(express.urlencoded({ extended: true, limit: "10mb" })); // ✅ AUGMENTÉ
 
 // ✅ Configuration CORS
 app.use(cors(corsOptions));
@@ -28,6 +29,7 @@ app.options("*", cors(corsOptions)); // Gestion des requêtes preflight
 app.use("/api/users", userRoutes);
 app.use("/api/clients", clientRoutes);
 app.use("/api/devis", devisRoutes);
+app.use("/api/business-cards", businessCardRoutes); // ✅ NOUVEAU
 
 // ✅ Route de vérification du serveur
 app.get("/", (req, res) => {

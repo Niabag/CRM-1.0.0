@@ -16,7 +16,7 @@
 
 .stats-overview {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr); /* ✅ MODIFIÉ: 5 colonnes pour le nouvel indicateur */
   gap: 1.5rem;
 }
 
@@ -76,6 +76,15 @@
   background: #e2e8f0;
   color: #4a5568;
   font-weight: 500;
+}
+
+/* ✅ NOUVEAU: Style pour l'indicateur de sauvegarde */
+.save-status {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: #48bb78;
+  font-weight: 500;
+  font-style: italic;
 }
 
 .recent-activity {
@@ -531,9 +540,16 @@
 }
 
 .btn-preview:hover,
-.btn-download:hover {
+.btn-download:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-download:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Aperçu des actions */
@@ -824,7 +840,7 @@
   }
   
   .stats-overview {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(3, 1fr); /* ✅ MODIFIÉ: 3 colonnes sur tablette */
   }
   
   .card-main-content {
@@ -846,7 +862,7 @@
   }
   
   .stats-overview {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr); /* ✅ MODIFIÉ: 2 colonnes sur mobile */
   }
   
   .qr-display {
@@ -895,6 +911,10 @@
     text-align: center;
     gap: 0.5rem;
   }
+
+  .stats-overview {
+    grid-template-columns: 1fr; /* ✅ MODIFIÉ: 1 colonne sur très petit écran */
+  }
 }
 
 /* Animations */
@@ -926,6 +946,10 @@
 
 .stat-card:nth-child(4) {
   animation-delay: 0.3s;
+}
+
+.stat-card:nth-child(5) { /* ✅ NOUVEAU: Animation pour le 5ème indicateur */
+  animation-delay: 0.4s;
 }
 
 .config-section:nth-child(2) {

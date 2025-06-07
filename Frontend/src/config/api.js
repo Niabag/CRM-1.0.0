@@ -30,8 +30,14 @@ export const API_ENDPOINTS = {
     BASE: `${API_CONFIG.BASE_URL}/devis`,
     BY_CLIENT: (clientId) => `${API_CONFIG.BASE_URL}/devis/client/${clientId}`,
     UPDATE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
-    UPDATE_STATUS: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}/status`, // ✅ NOUVEAU
+    UPDATE_STATUS: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}/status`,
     DELETE: (devisId) => `${API_CONFIG.BASE_URL}/devis/${devisId}`,
+  },
+
+  // ✅ NOUVEAU: Cartes de visite
+  BUSINESS_CARDS: {
+    BASE: `${API_CONFIG.BASE_URL}/business-cards`,
+    CONFIG: `${API_CONFIG.BASE_URL}/business-cards/config`,
   },
 };
 

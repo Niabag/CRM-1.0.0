@@ -23,6 +23,7 @@ const BusinessCard = ({ userId, user }) => {
   const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(false);
   const [generatedCardUrl, setGeneratedCardUrl] = useState(null);
+  const [savedCardData, setSavedCardData] = useState(null); // ✅ NOUVEAU
   
   const [stats, setStats] = useState({
     scansToday: 0,
@@ -34,13 +35,35 @@ const BusinessCard = ({ userId, user }) => {
     recentScans: []
   });
 
-  // ✅ CORRECTION: Générer le QR code automatiquement
+  // ✅ CORRECTION: Générer le QR code automatiquement et charger la carte sauvegardée
   useEffect(() => {
     if (userId) {
       generateQRCode();
       fetchStats();
+      loadSavedBusinessCard(); // ✅ NOUVEAU
     }
   }, [userId, cardConfig.actions]);
+
+  // ✅ NOUVELLE FONCTION: Charger la carte de visite sauvegardée
+  const loadSavedBusinessCard = async () => {
+    try {
+      const savedCard = await apiRequest(API_ENDPOINTS.BUSINESS_CARDS.BASE);
+      setSavedCardData(savedCard);
+      
+      // Appliquer la configuration sauvegardée
+      if (savedCard.cardConfig) {
+        setCardConfig(prev => ({
+          ...prev,
+          ...savedCard.cardConfig,
+          cardImage: savedCard.cardImage || prev.cardImage
+        }));
+      }
+      
+      console.log('✅ Carte de visite chargée depuis la BDD');
+    } catch (error) {
+      console.log('ℹ️ Aucune carte de visite sauvegardée trouvée');
+    }
+  };
 
   // ✅ FONCTION CORRIGÉE: Générer le QR code
   const generateQRCode = () => {
@@ -90,17 +113,67 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  const handleCardImageUpload = (e) => {
+  // ✅ FONCTION MODIFIÉE: Sauvegarder l'image en BDD
+  const handleCardImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onloadend = async () => {
+        const imageData = reader.result;
+        
+        // Mettre à jour l'état local
         setCardConfig(prev => ({
           ...prev,
-          cardImage: reader.result
+          cardImage: imageData
         }));
+        
+        // Sauvegarder en BDD
+        await saveBusinessCardToDB(imageData);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // ✅ NOUVELLE FONCTION: Sauvegarder en base de données
+  const saveBusinessCardToDB = async (cardImage = null, config = null) => {
+    try {
+      setLoading(true);
+      
+      const dataToSave = {
+        cardImage: cardImage || cardConfig.cardImage,
+        cardConfig: config || cardConfig
+      };
+      
+      const response = await apiRequest(API_ENDPOINTS.BUSINESS_CARDS.BASE, {
+        method: 'POST',
+        body: JSON.stringify(dataToSave)
+      });
+      
+      setSavedCardData(response.businessCard);
+      console.log('✅ Carte de visite sauvegardée en BDD');
+      
+      // Afficher un message de succès discret
+      const successMsg = document.createElement('div');
+      successMsg.textContent = '✅ Carte sauvegardée';
+      successMsg.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: #48bb78;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 8px;
+        z-index: 9999;
+        font-weight: 500;
+      `;
+      document.body.appendChild(successMsg);
+      setTimeout(() => document.body.removeChild(successMsg), 3000);
+      
+    } catch (error) {
+      console.error('❌ Erreur sauvegarde carte de visite:', error);
+      alert('❌ Erreur lors de la sauvegarde de la carte de visite');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -118,11 +191,18 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  const handleConfigChange = (field, value) => {
-    setCardConfig(prev => ({
-      ...prev,
+  const handleConfigChange = async (field, value) => {
+    const newConfig = {
+      ...cardConfig,
       [field]: value
-    }));
+    };
+    
+    setCardConfig(newConfig);
+    
+    // Sauvegarder automatiquement la configuration
+    if (savedCardData) {
+      await saveBusinessCardToDB(null, newConfig);
+    }
   };
 
   const addAction = () => {
@@ -135,31 +215,52 @@ const BusinessCard = ({ userId, user }) => {
       active: true
     };
     
-    setCardConfig(prev => ({
-      ...prev,
-      actions: [...prev.actions, newAction]
-    }));
+    const newConfig = {
+      ...cardConfig,
+      actions: [...cardConfig.actions, newAction]
+    };
+    
+    setCardConfig(newConfig);
+    
+    // Sauvegarder automatiquement
+    if (savedCardData) {
+      saveBusinessCardToDB(null, newConfig);
+    }
   };
 
-  const updateAction = (actionId, field, value) => {
-    setCardConfig(prev => ({
-      ...prev,
-      actions: prev.actions.map(action => 
+  const updateAction = async (actionId, field, value) => {
+    const newConfig = {
+      ...cardConfig,
+      actions: cardConfig.actions.map(action => 
         action.id === actionId 
           ? { ...action, [field]: value }
           : action
       )
-    }));
+    };
+    
+    setCardConfig(newConfig);
+    
+    // Sauvegarder automatiquement
+    if (savedCardData) {
+      await saveBusinessCardToDB(null, newConfig);
+    }
   };
 
-  const removeAction = (actionId) => {
-    setCardConfig(prev => ({
-      ...prev,
-      actions: prev.actions.filter(action => action.id !== actionId)
-    }));
+  const removeAction = async (actionId) => {
+    const newConfig = {
+      ...cardConfig,
+      actions: cardConfig.actions.filter(action => action.id !== actionId)
+    };
+    
+    setCardConfig(newConfig);
+    
+    // Sauvegarder automatiquement
+    if (savedCardData) {
+      await saveBusinessCardToDB(null, newConfig);
+    }
   };
 
-  const moveAction = (actionId, direction) => {
+  const moveAction = async (actionId, direction) => {
     const currentIndex = cardConfig.actions.findIndex(a => a.id === actionId);
     if (
       (direction === 'up' && currentIndex === 0) ||
@@ -171,10 +272,17 @@ const BusinessCard = ({ userId, user }) => {
     
     [newActions[currentIndex], newActions[targetIndex]] = [newActions[targetIndex], newActions[currentIndex]];
     
-    setCardConfig(prev => ({
-      ...prev,
+    const newConfig = {
+      ...cardConfig,
       actions: newActions
-    }));
+    };
+    
+    setCardConfig(newConfig);
+    
+    // Sauvegarder automatiquement
+    if (savedCardData) {
+      await saveBusinessCardToDB(null, newConfig);
+    }
   };
 
   // ✅ NOUVELLE FONCTION: Générer la carte de visite avec QR code
@@ -237,6 +345,10 @@ const BusinessCard = ({ userId, user }) => {
     // Convertir en URL
     const dataUrl = canvas.toDataURL('image/png');
     setGeneratedCardUrl(dataUrl);
+    
+    // ✅ NOUVEAU: Sauvegarder automatiquement la carte générée
+    await saveBusinessCardToDB(dataUrl);
+    
     return dataUrl;
   };
 
@@ -250,11 +362,10 @@ const BusinessCard = ({ userId, user }) => {
   };
 
   // ✅ FONCTION MODIFIÉE: Utiliser la carte générée pour les téléchargements
-  const handleUseGeneratedCard = (actionId, useCard) => {
+  const handleUseGeneratedCard = async (actionId, useCard) => {
     if (useCard) {
-      generateBusinessCard().then(cardUrl => {
-        updateAction(actionId, 'file', cardUrl);
-      });
+      const cardUrl = await generateBusinessCard();
+      updateAction(actionId, 'file', cardUrl);
     } else {
       updateAction(actionId, 'file', '/images/welcome.png');
     }
@@ -327,6 +438,21 @@ const BusinessCard = ({ userId, user }) => {
               <span className="stat-trend">{stats.topHours[0]?.scans || 0} scans</span>
             </div>
           </div>
+
+          {/* ✅ NOUVEAU: Indicateur de sauvegarde */}
+          <div className="stat-card">
+            <div className="stat-icon">{savedCardData ? '💾' : '⚠️'}</div>
+            <div className="stat-content">
+              <h3>{savedCardData ? 'Sauvegardée' : 'Non sauvée'}</h3>
+              <p>Carte en BDD</p>
+              <span className="stat-trend">
+                {savedCardData 
+                  ? `Modifiée le ${new Date(savedCardData.updatedAt).toLocaleDateString('fr-FR')}`
+                  : 'Ajoutez une image'
+                }
+              </span>
+            </div>
+          </div>
         </div>
         
         <div className="recent-activity">
@@ -364,11 +490,15 @@ const BusinessCard = ({ userId, user }) => {
                   accept="image/*"
                   onChange={handleCardImageUpload}
                   id="card-image-upload"
+                  disabled={loading}
                 />
                 <label htmlFor="card-image-upload" className="upload-btn">
-                  📷 Choisir une image
+                  {loading ? '⏳ Sauvegarde...' : '📷 Choisir une image'}
                 </label>
               </div>
+              {savedCardData && (
+                <p className="save-status">✅ Image sauvegardée en base de données</p>
+              )}
             </div>
 
             <div className="form-group">
@@ -559,8 +689,8 @@ const BusinessCard = ({ userId, user }) => {
                 {previewMode ? '📝 Mode édition' : '👁️ Mode aperçu'}
               </button>
               
-              <button onClick={downloadBusinessCard} className="btn-download">
-                💾 Télécharger la carte
+              <button onClick={downloadBusinessCard} className="btn-download" disabled={loading}>
+                {loading ? '⏳ Génération...' : '💾 Télécharger la carte'}
               </button>
             </div>
             
