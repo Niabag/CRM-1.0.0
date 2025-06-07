@@ -335,11 +335,6 @@
   animation: slideInRight 0.3s ease;
 }
 
-/* Smooth scrolling pour les liens d'ancrage */
-html {
-  scroll-behavior: smooth;
-}
-
 /* Focus states pour l'accessibilité */
 .nav-link:focus,
 .brand-link:focus,

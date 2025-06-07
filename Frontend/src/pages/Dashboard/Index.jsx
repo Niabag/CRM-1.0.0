@@ -8,10 +8,11 @@ import Settings from "../../components/Dashboard/Settings/settings";
 import Notifications from "../../components/Dashboard/Notifications/notifications";
 import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard";
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from "../../config/api";
+import { useNavigate } from "react-router-dom";
 import "./dashboard.scss";
-import "./QRCodeGenerator.scss";
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState([]);
   const [isOpen, setIsOpen] = useState(true);
   const [activeTab, setActiveTab] = useState("dashboard");
@@ -42,7 +43,6 @@ const Dashboard = () => {
       const decodedToken = decodeToken(token);
       if (decodedToken && decodedToken.userId) {
         setUserId(decodedToken.userId);
-        console.log("✅ userId récupéré:", decodedToken.userId); // ✅ DEBUG
       } else {
         console.error("❌ Impossible de décoder userId du token");
       }
@@ -57,21 +57,17 @@ const Dashboard = () => {
     try {
       const userData = await apiRequest(API_ENDPOINTS.AUTH.ME);
       setUser(userData);
-      console.log("✅ Données utilisateur chargées:", userData);
     } catch (error) {
       console.error("Erreur lors du chargement des données utilisateur:", error);
     }
   };
 
-  // Fonction centralisée pour recharger les clients
   const fetchClients = async () => {
     setLoading(true);
     setError(null);
     try {
-      console.log("🔄 Rechargement des clients...");
       const data = await apiRequest(API_ENDPOINTS.CLIENTS.BASE);
       setClients(Array.isArray(data) ? data : []);
-      console.log("✅ Clients rechargés:", data.length);
     } catch (err) {
       console.error("Erreur lors de la récupération des clients:", err);
       setError("Erreur lors de la récupération des clients.");
@@ -110,6 +106,12 @@ const Dashboard = () => {
     setActiveTab("devis-creation");
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    navigate("/");
+  };
+
   const menuItems = [
     { id: "dashboard", icon: "📊", label: "Tableau de bord" },
     { id: "clients", icon: "👤", label: "Prospects" },
@@ -120,30 +122,62 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="page-container">
-      <div className="app">
-        <div className={`sidebar ${isOpen ? "open" : "closed"}`}>
-          <button className="toggle-btn" onClick={toggleSidebar}>
+    <div className="dashboard-layout">
+      {/* Header avec navigation */}
+      <header className="dashboard-header">
+        <div className="header-left">
+          <button className="sidebar-toggle" onClick={toggleSidebar}>
             {isOpen ? "◀" : "▶"}
           </button>
-          
-          {isOpen && (
-            <div className="user-info">
-              <div className="user-avatar">
-                {user.name ? user.name.charAt(0).toUpperCase() : "U"}
-              </div>
-              <div className="user-details">
-                <p className="user-name">{user.name || "Utilisateur"}</p>
-                <p className="user-email">{user.email || ""}</p>
-              </div>
+          <div className="brand">
+            <span className="brand-icon">💼</span>
+            <span className="brand-text">CRM Pro</span>
+          </div>
+        </div>
+        
+        <div className="header-center">
+          <h1 className="page-title">
+            {activeTab === "dashboard" && "📊 Tableau de bord"}
+            {activeTab === "clients" && "👤 Mes Prospects"}
+            {activeTab === "devis" && "📄 Mes Devis"}
+            {activeTab === "devis-creation" && "📝 Création de Devis"}
+            {activeTab === "notifications" && "🔔 Notifications"}
+            {activeTab === "carte" && "💼 Carte de Visite"}
+            {activeTab === "settings" && "⚙️ Paramètres"}
+          </h1>
+        </div>
+        
+        <div className="header-right">
+          <button 
+            onClick={() => navigate("/")} 
+            className="home-btn"
+            title="Retour à l'accueil"
+          >
+            🏠 Accueil
+          </button>
+          <div className="user-profile">
+            <div className="user-avatar">
+              {user.name ? user.name.charAt(0).toUpperCase() : "U"}
             </div>
-          )}
-          
-          <div className="menu">
+            <div className="user-info">
+              <span className="user-name">{user.name || "Utilisateur"}</span>
+              <span className="user-email">{user.email || ""}</span>
+            </div>
+            <button onClick={handleLogout} className="logout-btn" title="Déconnexion">
+              🚪
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div className="dashboard-body">
+        {/* Sidebar */}
+        <aside className={`sidebar ${isOpen ? "open" : "closed"}`}>
+          <nav className="sidebar-nav">
             {menuItems.map((item) => (
-              <div
+              <button
                 key={item.id}
-                className={`menu-item ${activeTab === item.id || activeTab === "devis-creation" && item.id === "devis" ? "active" : ""}`}
+                className={`nav-item ${activeTab === item.id || (activeTab === "devis-creation" && item.id === "devis") ? "active" : ""}`}
                 onClick={() => {
                   setActiveTab(item.id);
                   if (item.id !== "devis" && item.id !== "devis-creation") {
@@ -151,62 +185,60 @@ const Dashboard = () => {
                     setEditingDevis(null);
                   }
                 }}
+                title={item.label}
               >
-                <span className="menu-icon">{item.icon}</span>
-                {isOpen && <span className="menu-label">{item.label}</span>}
-              </div>
+                <span className="nav-icon">{item.icon}</span>
+                {isOpen && <span className="nav-label">{item.label}</span>}
+              </button>
             ))}
-          </div>
-        </div>
-      </div>
+          </nav>
+        </aside>
 
-      <div className="dashboard-container">
-        {activeTab === "dashboard" && <Analytics />}
+        {/* Main Content */}
+        <main className="main-content">
+          {activeTab === "dashboard" && <Analytics />}
 
-        {/* Page prospects moderne avec refresh */}
-        {activeTab === "clients" && (
-          <ProspectsPage 
-            clients={clients}
-            onRefresh={fetchClients}
-            onViewClientDevis={handleViewClientDevis}
-          />
-        )}
+          {activeTab === "clients" && (
+            <ProspectsPage 
+              clients={clients}
+              onRefresh={fetchClients}
+              onViewClientDevis={handleViewClientDevis}
+            />
+          )}
 
-        {activeTab === "devis" && (
-          <DevisListPage 
-            clients={clients}
-            onEditDevis={handleEditDevisFromList}
-            onCreateDevis={handleCreateNewDevis}
-          />
-        )}
+          {activeTab === "devis" && (
+            <DevisListPage 
+              clients={clients}
+              onEditDevis={handleEditDevisFromList}
+              onCreateDevis={handleCreateNewDevis}
+            />
+          )}
 
-        {activeTab === "devis-creation" && (
-          <Devis 
-            clients={clients}
-            initialDevisFromClient={editingDevis}
-            selectedClientId={selectedClientForDevis?._id}
-            onBack={selectedClientForDevis ? () => {
-              setSelectedClientForDevis(null);
-              setEditingDevis(null);
-              setActiveTab("clients");
-            } : editingDevis ? () => {
-              setEditingDevis(null);
-              setActiveTab("devis");
-            } : null}
-          />
-        )}
+          {activeTab === "devis-creation" && (
+            <Devis 
+              clients={clients}
+              initialDevisFromClient={editingDevis}
+              selectedClientId={selectedClientForDevis?._id}
+              onBack={selectedClientForDevis ? () => {
+                setSelectedClientForDevis(null);
+                setEditingDevis(null);
+                setActiveTab("clients");
+              } : editingDevis ? () => {
+                setEditingDevis(null);
+                setActiveTab("devis");
+              } : null}
+            />
+          )}
 
-        {activeTab === "notifications" && <Notifications />}
-
-        {activeTab === "settings" && <Settings />}
-
-        {/* ✅ CORRECTION: Passer userId et user en props */}
-        {activeTab === "carte" && (
-          <BusinessCard 
-            userId={userId} 
-            user={user}
-          />
-        )}
+          {activeTab === "notifications" && <Notifications />}
+          {activeTab === "settings" && <Settings />}
+          {activeTab === "carte" && (
+            <BusinessCard 
+              userId={userId} 
+              user={user}
+            />
+          )}
+        </main>
       </div>
     </div>
   );

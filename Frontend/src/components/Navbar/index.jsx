@@ -41,7 +41,7 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
-  // Ne pas afficher la navbar sur certaines pages
+  // Masquer la navbar sur la page dashboard (elle a sa propre navigation)
   if (location.pathname === "/dashboard") {
     return null;
   }
@@ -70,7 +70,7 @@ const Navbar = () => {
         <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
           {!token ? (
             <>
-              <Link to="/\" className="nav-link\" onClick={closeMenu}>
+              <Link to="/" className="nav-link" onClick={closeMenu}>
                 🏠 Accueil
               </Link>
               <Link to="/register-user" className="nav-link" onClick={closeMenu}>
