@@ -625,6 +625,38 @@
   border-radius: 12px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   border: 2px solid #e2e8f0;
+  min-height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ✅ NOUVEAU: Placeholder pour QR code */
+.qr-placeholder {
+  text-align: center;
+  color: #718096;
+  padding: 2rem;
+}
+
+.qr-placeholder p {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+}
+
+.btn-generate-qr {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-generate-qr:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
 }
 
 .qr-info {
@@ -742,6 +774,14 @@
 .btn-refresh:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.btn-copy:disabled,
+.btn-test:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* États vides */

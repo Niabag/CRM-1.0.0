@@ -34,12 +34,27 @@ const BusinessCard = ({ userId, user }) => {
     recentScans: []
   });
 
+  // ✅ CORRECTION: Générer le QR code automatiquement
   useEffect(() => {
     if (userId) {
       generateQRCode();
       fetchStats();
     }
   }, [userId, cardConfig.actions]);
+
+  // ✅ NOUVELLE FONCTION: Générer le QR code
+  const generateQRCode = () => {
+    if (!userId) {
+      console.error("❌ userId manquant pour générer le QR code");
+      return;
+    }
+    
+    const actionsData = encodeURIComponent(JSON.stringify(cardConfig.actions.filter(a => a.active)));
+    const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
+    
+    setQrValue(targetUrl);
+    console.log("✅ QR code généré:", targetUrl);
+  };
 
   const fetchStats = async () => {
     try {
@@ -67,15 +82,6 @@ const BusinessCard = ({ userId, user }) => {
     } catch (error) {
       console.error('Erreur lors du chargement des statistiques:', error);
     }
-  };
-
-  const generateQRCode = () => {
-    if (!userId) return;
-    
-    const actionsData = encodeURIComponent(JSON.stringify(cardConfig.actions.filter(a => a.active)));
-    const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
-    
-    setQrValue(targetUrl);
   };
 
   const handleCardImageUpload = (e) => {
@@ -249,12 +255,20 @@ const BusinessCard = ({ userId, user }) => {
   };
 
   const copyQRLink = () => {
-    navigator.clipboard.writeText(qrValue);
-    alert('✅ Lien copié dans le presse-papier !');
+    if (qrValue) {
+      navigator.clipboard.writeText(qrValue);
+      alert('✅ Lien copié dans le presse-papier !');
+    } else {
+      alert('❌ Aucun QR code généré');
+    }
   };
 
   const testQRCode = () => {
-    window.open(qrValue, '_blank');
+    if (qrValue) {
+      window.open(qrValue, '_blank');
+    } else {
+      alert('❌ Aucun QR code généré');
+    }
   };
 
   const getActionTypeLabel = (type) => {
@@ -573,13 +587,20 @@ const BusinessCard = ({ userId, user }) => {
             
             <div className="qr-display">
               <div className="qr-code-wrapper">
-                {qrValue && (
+                {qrValue ? (
                   <QRCode 
                     value={qrValue} 
                     size={200}
                     bgColor="white"
                     fgColor="black"
                   />
+                ) : (
+                  <div className="qr-placeholder">
+                    <p>⏳ Génération du QR code...</p>
+                    <button onClick={generateQRCode} className="btn-generate-qr">
+                      🔄 Générer le QR code
+                    </button>
+                  </div>
                 )}
               </div>
               
@@ -600,20 +621,22 @@ const BusinessCard = ({ userId, user }) => {
                     ))}
                   </div>
                   
-                  <div className="qr-link">
-                    <strong>Lien :</strong>
-                    <a href={qrValue} target="_blank" rel="noopener noreferrer">
-                      {qrValue}
-                    </a>
-                  </div>
+                  {qrValue && (
+                    <div className="qr-link">
+                      <strong>Lien :</strong>
+                      <a href={qrValue} target="_blank" rel="noopener noreferrer">
+                        {qrValue}
+                      </a>
+                    </div>
+                  )}
                 </div>
                 
                 <div className="qr-actions">
-                  <button onClick={copyQRLink} className="btn-copy">
+                  <button onClick={copyQRLink} className="btn-copy" disabled={!qrValue}>
                     📋 Copier le lien
                   </button>
                   
-                  <button onClick={testQRCode} className="btn-test">
+                  <button onClick={testQRCode} className="btn-test" disabled={!qrValue}>
                     🧪 Tester le QR code
                   </button>
                   
