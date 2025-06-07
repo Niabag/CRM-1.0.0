@@ -7,7 +7,11 @@ const BusinessCard = () => {
   const [user, setUser] = useState({});
   const [userId, setUserId] = useState(null);
   const [qrValue, setQrValue] = useState("");
+<<<<<<< HEAD
   const [error, setError] = useState(null);
+=======
+  const [previewMode, setPreviewMode] = useState(false);
+>>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
   const [loading, setLoading] = useState(false);
   const [showCardPreview, setShowCardPreview] = useState(false);
   const cardRef = useRef(null);
@@ -93,6 +97,7 @@ const BusinessCard = () => {
     }
   };
 
+<<<<<<< HEAD
   const copyToClipboard = async () => {
     try {
       await navigator.clipboard.writeText(qrValue);
@@ -100,14 +105,92 @@ const BusinessCard = () => {
     } catch (err) {
       console.error('Erreur lors de la copie:', err);
       alert('❌ Erreur lors de la copie du lien');
+=======
+  const copyQRLink = () => {
+    navigator.clipboard.writeText(qrValue);
+    alert('✅ Lien copié dans le presse-papier !');
+  };
+
+  const testQRCode = () => {
+    window.open(qrValue, '_blank');
+  };
+
+  const getActionTypeLabel = (type) => {
+    switch (type) {
+      case 'download': return '📥 Téléchargement';
+      case 'form': return '📝 Formulaire';
+      case 'redirect': return '🌐 Redirection';
+      case 'website': return '🌐 Site web';
+      default: return type;
+>>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
     }
   };
 
   return (
     <div className="business-card-container">
+<<<<<<< HEAD
       <div className="card-header">
         <h2>💼 Carte de visite digitale</h2>
         <p className="card-subtitle">Créez et téléchargez votre carte de visite avec QR code intégré</p>
+=======
+      {/* ✅ NOUVEAU: Statistiques en haut de page */}
+      <div className="stats-header">
+        <div className="stats-overview">
+          <div className="stat-card highlight">
+            <div className="stat-icon">📊</div>
+            <div className="stat-content">
+              <h3>{stats.totalScans}</h3>
+              <p>Scans totaux</p>
+              <span className="stat-trend">+{stats.scansToday} aujourd'hui</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">📅</div>
+            <div className="stat-content">
+              <h3>{stats.scansThisMonth}</h3>
+              <p>Ce mois</p>
+              <span className="stat-trend">+{Math.round((stats.scansThisMonth / 30) * 100) / 100}/jour</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">🎯</div>
+            <div className="stat-content">
+              <h3>{stats.conversions}</h3>
+              <p>Conversions</p>
+              <span className="stat-trend">{stats.conversionRate}% taux</span>
+            </div>
+          </div>
+          
+          <div className="stat-card">
+            <div className="stat-icon">⏰</div>
+            <div className="stat-content">
+              <h3>{stats.topHours[0]?.hour || '--'}</h3>
+              <p>Heure de pic</p>
+              <span className="stat-trend">{stats.topHours[0]?.scans || 0} scans</span>
+            </div>
+          </div>
+        </div>
+        
+        <div className="recent-activity">
+          <h4>🕒 Activité récente</h4>
+          <div className="activity-list">
+            {stats.recentScans.map((scan, index) => (
+              <div key={index} className="activity-item">
+                <span className="activity-time">{scan.time}</span>
+                <span className="activity-location">{scan.location}</span>
+                <span className="activity-device">{scan.device}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+>>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
+      </div>
+
+      <div className="card-header">
+        <h2>💼 Carte de Visite Numérique</h2>
+        <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
       </div>
 
       <div className="card-content">
@@ -116,6 +199,7 @@ const BusinessCard = () => {
           <div className="user-avatar">
             {user.name ? user.name.charAt(0).toUpperCase() : "U"}
           </div>
+<<<<<<< HEAD
           <div className="user-details">
             <h3>{user.name || "Votre Nom"}</h3>
             <p>{user.email || "votre.email@exemple.com"}</p>
@@ -131,6 +215,166 @@ const BusinessCard = () => {
             
             <button onClick={generateQRCode} className="generate-btn">
               ✨ Créer ma carte de visite
+=======
+
+          {/* ✅ NOUVEAU: Section actions multiples */}
+          <div className="config-section">
+            <h3>🎯 Actions après scan</h3>
+            <p className="section-description">
+              Configurez plusieurs actions qui se déclencheront dans l'ordre après le scan du QR code
+            </p>
+            
+            <div className="actions-list">
+              {cardConfig.actions.map((action, index) => (
+                <div key={action.id} className={`action-item ${!action.active ? 'disabled' : ''}`}>
+                  <div className="action-header">
+                    <div className="action-order">#{index + 1}</div>
+                    <div className="action-controls">
+                      <button 
+                        onClick={() => moveAction(action.id, 'up')}
+                        disabled={index === 0}
+                        className="btn-move"
+                        title="Monter"
+                      >
+                        ↑
+                      </button>
+                      <button 
+                        onClick={() => moveAction(action.id, 'down')}
+                        disabled={index === cardConfig.actions.length - 1}
+                        className="btn-move"
+                        title="Descendre"
+                      >
+                        ↓
+                      </button>
+                      <button 
+                        onClick={() => removeAction(action.id)}
+                        className="btn-remove"
+                        title="Supprimer"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="action-config">
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label>Type d'action :</label>
+                        <select
+                          value={action.type}
+                          onChange={(e) => updateAction(action.id, 'type', e.target.value)}
+                        >
+                          <option value="download">📥 Téléchargement</option>
+                          <option value="form">📝 Formulaire</option>
+                          <option value="redirect">🌐 Redirection</option>
+                          <option value="website">🌐 Site web</option>
+                        </select>
+                      </div>
+                      
+                      <div className="form-group">
+                        <label>Délai (ms) :</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="500"
+                          value={action.delay}
+                          onChange={(e) => updateAction(action.id, 'delay', parseInt(e.target.value))}
+                        />
+                      </div>
+                    </div>
+                    
+                    {(action.type === 'redirect' || action.type === 'website') && (
+                      <div className="form-group">
+                        <label>URL :</label>
+                        <input
+                          type="url"
+                          placeholder="https://monsite.com"
+                          value={action.url || ''}
+                          onChange={(e) => updateAction(action.id, 'url', e.target.value)}
+                        />
+                      </div>
+                    )}
+                    
+                    {action.type === 'download' && (
+                      <div className="form-group">
+                        <label>Fichier à télécharger :</label>
+                        <div className="file-upload">
+                          <input
+                            type="file"
+                            accept="image/*,application/pdf,.doc,.docx"
+                            onChange={(e) => {
+                              const file = e.target.files[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  updateAction(action.id, 'file', reader.result);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                            id={`download-file-${action.id}`}
+                          />
+                          <label htmlFor={`download-file-${action.id}`} className="upload-btn small">
+                            📎 Choisir
+                          </label>
+                        </div>
+                      </div>
+                    )}
+                    
+                    <div className="form-group">
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={action.active}
+                          onChange={(e) => updateAction(action.id, 'active', e.target.checked)}
+                        />
+                        Action active
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            
+            <button onClick={addAction} className="btn-add-action">
+              ➕ Ajouter une action
+            </button>
+          </div>
+        </div>
+
+        {/* Aperçu */}
+        <div className="card-preview">
+          <h3>👁️ Aperçu de la carte</h3>
+          
+          <div className="preview-container">
+            <div className="business-card-preview">
+              <img 
+                src={cardConfig.cardImage} 
+                alt="Carte de visite"
+                className="card-image"
+              />
+              
+              {cardConfig.showQR && qrValue && (
+                <div className={`qr-overlay ${cardConfig.qrPosition}`}>
+                  <QRCode 
+                    value={qrValue} 
+                    size={cardConfig.qrSize * 0.6} // Réduction pour l'aperçu
+                    bgColor="white"
+                    fgColor="black"
+                  />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="preview-actions">
+            <button onClick={() => setPreviewMode(!previewMode)} className="btn-preview">
+              {previewMode ? '📝 Mode édition' : '👁️ Mode aperçu'}
+            </button>
+            
+            <button onClick={downloadBusinessCard} className="btn-download">
+              💾 Télécharger la carte
+>>>>>>> parent of 73bac78 (Système de carte de visite amélioré avec statistiques et interface fixe)
             </button>
             
             {error && <div className="error-message">{error}</div>}
