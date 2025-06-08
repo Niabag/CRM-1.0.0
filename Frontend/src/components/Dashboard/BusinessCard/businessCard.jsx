@@ -60,7 +60,7 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ CORRECTION: Générer un QR code simple avec actions encodées dans l'URL
+  // ✅ CORRECTION: QR code simple et raccourci
   const generateQRCode = () => {
     if (!userId) {
       console.error("❌ userId manquant pour générer le QR code");
@@ -68,20 +68,8 @@ const BusinessCard = ({ userId, user }) => {
     }
     
     try {
-      // ✅ URL de base
-      let targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
-      
-      // ✅ NOUVEAU: Ajouter les actions comme paramètre URL si elles existent
-      if (cardConfig.actions && cardConfig.actions.length > 0) {
-        const actionsParam = encodeURIComponent(JSON.stringify(cardConfig.actions));
-        targetUrl += `?actions=${actionsParam}`;
-      }
-      
-      // ✅ VÉRIFICATION: Limiter la taille pour éviter l'erreur QR code
-      if (targetUrl.length > 500) {
-        console.warn("⚠️ URL trop longue pour QR code, utilisation de l'URL simple");
-        targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
-      }
+      // ✅ URL SIMPLE ET COURTE
+      const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
       
       setQrValue(targetUrl);
       console.log("✅ QR code généré:", targetUrl);
@@ -522,6 +510,7 @@ const BusinessCard = ({ userId, user }) => {
 
         {/* Colonne de droite - Aperçu */}
         <div className="card-preview-column">
+          {/* ✅ APERÇU DE LA CARTE RESTAURÉ */}
           <div className="card-preview">
             <h3>👁️ Aperçu de la carte</h3>
             
@@ -582,7 +571,7 @@ const BusinessCard = ({ userId, user }) => {
                     <div className="qr-link">
                       <strong>Lien :</strong>
                       <a href={qrValue} target="_blank" rel="noopener noreferrer">
-                        {qrValue.length > 50 ? qrValue.substring(0, 50) + '...' : qrValue}
+                        {qrValue.length > 40 ? qrValue.substring(0, 40) + '...' : qrValue}
                       </a>
                     </div>
                   )}
