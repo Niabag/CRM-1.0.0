@@ -23,6 +23,10 @@ const RegisterClient = () => {
   const [finalRedirectUrl, setFinalRedirectUrl] = useState('');
   const [businessCardActions, setBusinessCardActions] = useState([]);
   const [businessCardData, setBusinessCardData] = useState(null);
+  
+  // ✅ NOUVEAU: État pour contrôler l'affichage du formulaire
+  const [showForm, setShowForm] = useState(true);
+  const [actionsCompleted, setActionsCompleted] = useState(false);
 
   // ✅ NOUVEAU: Détecter si c'est une URL avec redirection et récupérer les actions
   useEffect(() => {
@@ -61,20 +65,29 @@ const RegisterClient = () => {
               hasImage: !!cardData.cardImage,
               config: cardData.cardConfig
             });
+            
+            // ✅ NOUVEAU: Vérifier si on doit masquer le formulaire
+            const activeActions = cardData.cardConfig.actions.filter(action => action.active);
+            const hasFormAction = activeActions.some(action => action.type === 'form');
+            
+            if (!hasFormAction && activeActions.length > 0) {
+              console.log('📝 Aucune action formulaire détectée, masquage du formulaire');
+              setShowForm(false);
+            }
           }
         } else {
           console.log('ℹ️ Impossible de récupérer les données de carte, utilisation des données par défaut');
           setBusinessCardData({
-            cardImage: null,
+            cardImage: '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg',
             cardConfig: {
               showQR: true,
-              qrPosition: 'bottom-right',
-              qrSize: 150,
+              qrPosition: 'top-right',
+              qrSize: 100,
               actions: [
                 {
                   id: 1,
                   type: 'download',
-                  file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
+                  file: 'carte-apercu',
                   url: '',
                   delay: 1000,
                   active: true
@@ -86,27 +99,30 @@ const RegisterClient = () => {
             {
               id: 1,
               type: 'download',
-              file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
+              file: 'carte-apercu',
               url: '',
               delay: 1000,
               active: true
             }
           ]);
+          
+          // ✅ NOUVEAU: Masquer le formulaire car seule l'action téléchargement est active
+          setShowForm(false);
         }
       } catch (error) {
         console.log('ℹ️ Erreur lors de la récupération des données de carte:', error);
         // Utiliser des données par défaut avec action de téléchargement
         setBusinessCardData({
-          cardImage: null,
+          cardImage: '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg',
           cardConfig: {
             showQR: true,
-            qrPosition: 'bottom-right',
-            qrSize: 150,
+            qrPosition: 'top-right',
+            qrSize: 100,
             actions: [
               {
                 id: 1,
                 type: 'download',
-                file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
+                file: 'carte-apercu',
                 url: '',
                 delay: 1000,
                 active: true
@@ -118,12 +134,15 @@ const RegisterClient = () => {
           {
             id: 1,
             type: 'download',
-            file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
+            file: 'carte-apercu',
             url: '',
             delay: 1000,
             active: true
           }
         ]);
+        
+        // ✅ NOUVEAU: Masquer le formulaire car seule l'action téléchargement est active
+        setShowForm(false);
       }
     };
 
@@ -161,11 +180,17 @@ const RegisterClient = () => {
             await executeDownloadAction(action);
             break;
           case 'form':
-            console.log('📝 Action formulaire - déjà affiché');
+            console.log('📝 Action formulaire - affichage du formulaire');
+            setShowForm(true);
             break;
           case 'redirect':
           case 'website':
             console.log(`🌐 Action de redirection vers: ${action.url}`);
+            if (action.url) {
+              setTimeout(() => {
+                window.location.href = action.url;
+              }, 1000);
+            }
             break;
           default:
             console.log(`❓ Type d'action non reconnu: ${action.type}`);
@@ -173,6 +198,17 @@ const RegisterClient = () => {
       } catch (error) {
         console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, error);
       }
+    }
+    
+    setActionsCompleted(true);
+    
+    // ✅ NOUVEAU: Si aucune action formulaire et redirection finale, rediriger après les actions
+    const hasFormAction = activeActions.some(action => action.type === 'form');
+    if (!hasFormAction && finalRedirectUrl) {
+      setTimeout(() => {
+        console.log('🌐 Redirection automatique vers:', finalRedirectUrl);
+        window.location.href = finalRedirectUrl;
+      }, 3000);
     }
   };
 
@@ -280,8 +316,8 @@ const RegisterClient = () => {
   // ✅ FONCTION: Ajouter le QR code sur la carte
   const addQRCodeToCard = async (ctx, canvas, config) => {
     try {
-      const qrSize = config.qrSize || 150;
-      const position = config.qrPosition || 'bottom-right';
+      const qrSize = config.qrSize || 100;
+      const position = config.qrPosition || 'top-right';
       
       // Calculer la position du QR code
       let qrX, qrY;
@@ -306,7 +342,7 @@ const RegisterClient = () => {
           break;
         default:
           qrX = canvas.width - qrSize - margin;
-          qrY = canvas.height - qrSize - margin;
+          qrY = margin;
       }
       
       console.log(`📍 Position QR: ${position} (${qrX}, ${qrY}) taille: ${qrSize}px`);
@@ -504,143 +540,196 @@ const RegisterClient = () => {
     }
   };
 
+  // ✅ NOUVEAU: Affichage conditionnel basé sur les actions configurées
+  if (!showForm && actionsCompleted) {
+    return (
+      <div className="register-client-container">
+        <div className="actions-completed">
+          <div className="completion-message">
+            <h2>✅ Actions terminées</h2>
+            <p>Toutes les actions configurées ont été exécutées avec succès.</p>
+            
+            {finalRedirectUrl && (
+              <div className="redirect-info">
+                <p>🌐 Redirection vers <strong>{finalRedirectUrl}</strong> dans quelques secondes...</p>
+              </div>
+            )}
+            
+            <button 
+              onClick={handleManualDownload}
+              className="manual-download-btn"
+            >
+              📥 Télécharger à nouveau
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="register-client-container">
-      <form onSubmit={handleRegister} className="register-form">
-        <h2>📝 Inscription Prospect</h2>
-        <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
-        
-        {/* ✅ NOUVEAU: Bouton de téléchargement manuel */}
-        <div className="manual-download-section">
-          <button 
-            type="button"
-            onClick={handleManualDownload}
-            className="manual-download-btn"
-            disabled={loading || success}
-          >
-            📥 Télécharger la carte de visite
-          </button>
-          <p className="download-help">Cliquez pour télécharger votre carte de visite avec QR code</p>
-        </div>
-        
-        {finalRedirectUrl && (
-          <div className="redirect-notice">
-            <span className="redirect-icon">🌐</span>
-            <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
+      {showForm ? (
+        <form onSubmit={handleRegister} className="register-form">
+          <h2>📝 Inscription Prospect</h2>
+          <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
+          
+          {/* ✅ NOUVEAU: Bouton de téléchargement manuel */}
+          <div className="manual-download-section">
+            <button 
+              type="button"
+              onClick={handleManualDownload}
+              className="manual-download-btn"
+              disabled={loading || success}
+            >
+              📥 Télécharger la carte de visite
+            </button>
+            <p className="download-help">Cliquez pour télécharger votre carte de visite avec QR code</p>
           </div>
-        )}
-        
-        {businessCardData && businessCardData.cardImage && (
-          <div className="download-notice">
-            <span className="download-icon">📥</span>
-            <span>Carte de visite personnalisée détectée - téléchargement automatique activé</span>
-          </div>
-        )}
-        
-        {error && <div className="error-message">{error}</div>}
-        {success && (
-          <div className="success-message">
-            ✅ Inscription réussie ! 
-            {finalRedirectUrl 
-              ? ` Redirection vers ${finalRedirectUrl} dans 2 secondes...` 
-              : ' Redirection vers Google dans 2 secondes...'
-            }
-          </div>
-        )}
-        
-        {/* Informations principales */}
-        <div className="form-section">
-          <h3>👤 Informations personnelles</h3>
           
-          <input
-            type="text"
-            placeholder="Nom et prénom *"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            disabled={success}
-          />
+          {finalRedirectUrl && (
+            <div className="redirect-notice">
+              <span className="redirect-icon">🌐</span>
+              <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
+            </div>
+          )}
           
-          <input
-            type="email"
-            placeholder="Email *"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={success}
-          />
+          {businessCardData && businessCardData.cardImage && (
+            <div className="download-notice">
+              <span className="download-icon">📥</span>
+              <span>Carte de visite personnalisée détectée - téléchargement automatique activé</span>
+            </div>
+          )}
           
-          <input
-            type="tel"
-            placeholder="Téléphone *"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            required
-            disabled={success}
-          />
-        </div>
-
-        {/* Adresse */}
-        <div className="form-section">
-          <h3>📍 Adresse</h3>
+          {error && <div className="error-message">{error}</div>}
+          {success && (
+            <div className="success-message">
+              ✅ Inscription réussie ! 
+              {finalRedirectUrl 
+                ? ` Redirection vers ${finalRedirectUrl} dans 2 secondes...` 
+                : ' Redirection vers Google dans 2 secondes...'
+              }
+            </div>
+          )}
           
-          <input
-            type="text"
-            placeholder="Adresse (rue, numéro)"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            disabled={success}
-          />
-          
-          <div className="form-row">
-            <input
-              type="text"
-              placeholder="Code postal"
-              value={postalCode}
-              onChange={(e) => setPostalCode(e.target.value)}
-              disabled={success}
-              maxLength={5}
-            />
+          {/* Informations principales */}
+          <div className="form-section">
+            <h3>👤 Informations personnelles</h3>
             
             <input
               type="text"
-              placeholder="Ville"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
+              placeholder="Nom et prénom *"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              disabled={success}
+            />
+            
+            <input
+              type="email"
+              placeholder="Email *"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={success}
+            />
+            
+            <input
+              type="tel"
+              placeholder="Téléphone *"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
               disabled={success}
             />
           </div>
-        </div>
 
-        {/* Informations complémentaires */}
-        <div className="form-section">
-          <h3>🏢 Informations complémentaires</h3>
+          {/* Adresse */}
+          <div className="form-section">
+            <h3>📍 Adresse</h3>
+            
+            <input
+              type="text"
+              placeholder="Adresse (rue, numéro)"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              disabled={success}
+            />
+            
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder="Code postal"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                disabled={success}
+                maxLength={5}
+              />
+              
+              <input
+                type="text"
+                placeholder="Ville"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                disabled={success}
+              />
+            </div>
+          </div>
+
+          {/* Informations complémentaires */}
+          <div className="form-section">
+            <h3>🏢 Informations complémentaires</h3>
+            
+            <input
+              type="text"
+              placeholder="Entreprise / Organisation"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              disabled={success}
+            />
+            
+            <textarea
+              placeholder="Votre projet, besoins, commentaires..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={success}
+              rows={3}
+            />
+          </div>
           
-          <input
-            type="text"
-            placeholder="Entreprise / Organisation"
-            value={company}
-            onChange={(e) => setCompany(e.target.value)}
-            disabled={success}
-          />
+          <button type="submit" disabled={loading || success} className="submit-btn">
+            {loading ? "Inscription en cours..." : success ? "Inscription réussie !" : "✅ S'inscrire"}
+          </button>
           
-          <textarea
-            placeholder="Votre projet, besoins, commentaires..."
-            value={notes}
-            onChange={(e) => setNotes(e.target.value)}
-            disabled={success}
-            rows={3}
-          />
+          <p className="form-footer">
+            * Champs obligatoires • Vos données sont sécurisées
+          </p>
+        </form>
+      ) : (
+        <div className="download-only-container">
+          <div className="download-message">
+            <h2>📥 Téléchargement de votre carte de visite</h2>
+            <p>Le téléchargement de votre carte de visite a été lancé automatiquement.</p>
+            
+            <div className="manual-download-section">
+              <button 
+                onClick={handleManualDownload}
+                className="manual-download-btn"
+              >
+                📥 Télécharger à nouveau
+              </button>
+              <p className="download-help">Cliquez pour relancer le téléchargement</p>
+            </div>
+            
+            {finalRedirectUrl && (
+              <div className="redirect-notice">
+                <span className="redirect-icon">🌐</span>
+                <span>Redirection vers <strong>{finalRedirectUrl}</strong> dans quelques secondes...</span>
+              </div>
+            )}
+          </div>
         </div>
-        
-        <button type="submit" disabled={loading || success} className="submit-btn">
-          {loading ? "Inscription en cours..." : success ? "Inscription réussie !" : "✅ S'inscrire"}
-        </button>
-        
-        <p className="form-footer">
-          * Champs obligatoires • Vos données sont sécurisées
-        </p>
-      </form>
+      )}
     </div>
   );
 };

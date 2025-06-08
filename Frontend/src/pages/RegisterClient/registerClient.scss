@@ -32,6 +32,73 @@
   font-size: 1rem;
 }
 
+/* ✅ NOUVEAU: Container pour téléchargement uniquement */
+.download-only-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.download-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.download-message p {
+  color: #718096;
+  margin: 0 0 30px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* ✅ NOUVEAU: Container pour actions terminées */
+.actions-completed {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.completion-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.completion-message p {
+  color: #718096;
+  margin: 0 0 30px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.redirect-info {
+  background: linear-gradient(135deg, #bee3f8 0%, #90cdf4 100%);
+  color: #2b6cb0;
+  padding: 1rem;
+  border-radius: 12px;
+  margin: 20px 0;
+  border: 1px solid #63b3ed;
+  font-weight: 500;
+}
+
+.redirect-info p {
+  margin: 0;
+  color: #2b6cb0;
+}
+
 /* ✅ NOUVEAU: Section de téléchargement manuel */
 .manual-download-section {
   background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
@@ -246,11 +313,15 @@
     padding: 15px;
   }
   
-  .register-form {
+  .register-form,
+  .download-only-container,
+  .actions-completed {
     padding: 30px 20px;
   }
   
-  .register-form h2 {
+  .register-form h2,
+  .download-message h2,
+  .completion-message h2 {
     font-size: 1.5rem;
   }
   
@@ -281,11 +352,15 @@
 }
 
 @media (max-width: 480px) {
-  .register-form {
+  .register-form,
+  .download-only-container,
+  .actions-completed {
     padding: 25px 15px;
   }
   
-  .register-form h2 {
+  .register-form h2,
+  .download-message h2,
+  .completion-message h2 {
     font-size: 1.3rem;
   }
   
@@ -311,7 +386,9 @@
   }
 }
 
-.register-form {
+.register-form,
+.download-only-container,
+.actions-completed {
   animation: fadeInUp 0.6s ease-out;
 }
 
