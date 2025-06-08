@@ -435,6 +435,20 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
+  // ✅ NOUVEAU: Obtenir le nom d'affichage du fichier
+  const getFileDisplayName = (filePath) => {
+    if (!filePath) return '';
+    
+    // Si c'est le fichier par défaut de carte de visite, afficher "Carte de visite"
+    if (filePath === '/images/carte-de-visite.png') {
+      return 'Carte de visite';
+    }
+    
+    // Sinon, extraire le nom du fichier
+    const fileName = filePath.split('/').pop();
+    return fileName || filePath;
+  };
+
   return (
     <div className="business-card-container">
       {/* Statistiques en haut */}
@@ -566,7 +580,7 @@ const BusinessCard = ({ userId, user }) => {
                         {action.delay > 0 && <span className="action-delay">+{action.delay}ms</span>}
                       </div>
                       <div className="action-details">
-                        {action.type === 'download' && action.file}
+                        {action.type === 'download' && getFileDisplayName(action.file)}
                         {(action.type === 'redirect' || action.type === 'website') && action.url}
                         {action.type === 'form' && 'Formulaire d\'inscription'}
                       </div>
@@ -756,12 +770,14 @@ const BusinessCard = ({ userId, user }) => {
               {newAction.type === 'download' && (
                 <div className="form-group">
                   <label>Fichier à télécharger :</label>
-                  <input
-                    type="text"
-                    value={newAction.file}
-                    onChange={(e) => setNewAction(prev => ({ ...prev, file: e.target.value }))}
-                    placeholder="/images/carte-de-visite.png"
-                  />
+                  <div className="file-display-container">
+                    <div className="file-display-field">
+                      {getFileDisplayName(newAction.file)}
+                    </div>
+                    <small className="file-help-text">
+                      Le fichier "Carte de visite" sera généré automatiquement avec votre design et QR code
+                    </small>
+                  </div>
                 </div>
               )}
 
