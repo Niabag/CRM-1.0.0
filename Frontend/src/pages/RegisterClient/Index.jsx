@@ -17,50 +17,244 @@ const RegisterClient = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
   const [loading, setLoading] = useState(false);
-  const downloadedRef = useRef(false);
+  const actionsExecutedRef = useRef(false);
   
   // ✅ NOUVEAU: Gestion de la redirection finale
   const [finalRedirectUrl, setFinalRedirectUrl] = useState('');
+  const [businessCardActions, setBusinessCardActions] = useState([]);
 
-  // ✅ NOUVEAU: Détecter si c'est une URL avec redirection
+  // ✅ NOUVEAU: Détecter si c'est une URL avec redirection et récupérer les actions
   useEffect(() => {
-    // Extraire la destination de l'URL
-    // Format: /register-client/google.com ou /register-client/[userId]
-    const pathParts = window.location.pathname.split('/');
-    const lastPart = pathParts[pathParts.length - 1];
-    
-    // Si ce n'est pas un userId MongoDB (24 caractères hex), c'est une destination
-    if (lastPart && lastPart.length !== 24 && !lastPart.match(/^[0-9a-fA-F]{24}$/)) {
-      setFinalRedirectUrl(`https://${lastPart}`);
-      console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
+    const detectRedirectAndActions = async () => {
+      // Extraire la destination de l'URL
+      const pathParts = window.location.pathname.split('/');
+      const lastPart = pathParts[pathParts.length - 1];
       
-      // Déclencher le téléchargement automatique
-      if (!downloadedRef.current) {
-        downloadedRef.current = true;
-        downloadFile('/images/carte-de-visite.png', 'carte-de-visite.png');
+      // Si ce n'est pas un userId MongoDB (24 caractères hex), c'est une destination
+      if (lastPart && lastPart.length !== 24 && !lastPart.match(/^[0-9a-fA-F]{24}$/)) {
+        setFinalRedirectUrl(`https://${lastPart}`);
+        console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
+        
+        // ✅ NOUVEAU: Récupérer les actions de la carte de visite
+        try {
+          // Utiliser un userId par défaut ou le récupérer depuis l'API
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards`, {
+            headers: {
+              'Authorization': `Bearer ${localStorage.getItem('token') || 'default-token'}`
+            }
+          });
+          
+          if (response.ok) {
+            const cardData = await response.json();
+            if (cardData.cardConfig && cardData.cardConfig.actions) {
+              setBusinessCardActions(cardData.cardConfig.actions);
+              console.log('📋 Actions récupérées:', cardData.cardConfig.actions);
+            }
+          }
+        } catch (error) {
+          console.log('ℹ️ Impossible de récupérer les actions de la carte');
+        }
       }
-    } else {
-      // URL normale avec userId, téléchargement par défaut
-      if (!downloadedRef.current) {
-        downloadedRef.current = true;
-        downloadFile('/images/carte-de-visite.png', 'carte-de-visite.png');
-      }
-    }
+    };
+
+    detectRedirectAndActions();
   }, []);
 
-  // ✅ FONCTION: Téléchargement de fichier
-  const downloadFile = (fileUrl, fileName) => {
-    try {
-      const link = document.createElement('a');
-      link.href = fileUrl;
-      link.download = fileName || 'fichier-telecharge';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      console.log(`✅ Téléchargement déclenché: ${fileName}`);
-    } catch (error) {
-      console.error('❌ Erreur téléchargement:', error);
+  // ✅ NOUVEAU: Exécuter les actions après le chargement de la page
+  useEffect(() => {
+    if (businessCardActions.length > 0 && !actionsExecutedRef.current) {
+      actionsExecutedRef.current = true;
+      executeBusinessCardActions();
     }
+  }, [businessCardActions]);
+
+  // ✅ NOUVEAU: Exécuter les actions configurées dans la carte de visite
+  const executeBusinessCardActions = async () => {
+    const activeActions = businessCardActions
+      .filter(action => action.active)
+      .sort((a, b) => a.id - b.id); // Trier par ordre d'ID
+
+    console.log('🎬 Exécution des actions:', activeActions);
+
+    for (const action of activeActions) {
+      try {
+        // Attendre le délai configuré
+        if (action.delay > 0) {
+          console.log(`⏳ Attente de ${action.delay}ms pour l'action ${action.type}`);
+          await new Promise(resolve => setTimeout(resolve, action.delay));
+        }
+
+        switch (action.type) {
+          case 'download':
+            await executeDownloadAction(action);
+            break;
+          case 'form':
+            console.log('📝 Action formulaire - déjà affiché');
+            break;
+          case 'redirect':
+          case 'website':
+            console.log(`🌐 Action de redirection vers: ${action.url}`);
+            // La redirection se fera après l'inscription
+            break;
+          default:
+            console.log(`❓ Type d'action non reconnu: ${action.type}`);
+        }
+      } catch (error) {
+        console.error(`❌ Erreur lors de l'exécution de l'action ${action.type}:`, error);
+      }
+    }
+  };
+
+  // ✅ NOUVEAU: Exécuter l'action de téléchargement avec génération de carte
+  const executeDownloadAction = async (action) => {
+    try {
+      console.log('📥 Exécution de l\'action de téléchargement:', action);
+      
+      // Générer la carte de visite avec QR code
+      const cardImageData = await generateBusinessCardWithQR();
+      
+      if (cardImageData) {
+        // Télécharger l'image générée
+        const link = document.createElement('a');
+        link.href = cardImageData;
+        link.download = action.file || 'carte-de-visite-qr.png';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        console.log('✅ Carte de visite téléchargée avec succès');
+        
+        // Afficher un message de confirmation
+        showDownloadMessage();
+      }
+    } catch (error) {
+      console.error('❌ Erreur lors du téléchargement:', error);
+    }
+  };
+
+  // ✅ NOUVEAU: Générer la carte de visite avec QR code
+  const generateBusinessCardWithQR = async () => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Dimensions de carte de visite standard (85.6 x 53.98 mm à 300 DPI)
+      canvas.width = 1012;
+      canvas.height = 638;
+      
+      // Fond dégradé
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, '#667eea');
+      gradient.addColorStop(1, '#764ba2');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Titre principal
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 48px Arial';
+      ctx.textAlign = 'center';
+      ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
+      
+      // Informations de contact (exemple)
+      ctx.font = '32px Arial';
+      ctx.fillText('Votre Nom', canvas.width / 2, 140);
+      
+      ctx.font = '24px Arial';
+      ctx.fillText('votre.email@exemple.com', canvas.width / 2, 180);
+      ctx.fillText('06 12 34 56 78', canvas.width / 2, 210);
+      
+      // ✅ NOUVEAU: Générer le QR code
+      const qrSize = 150;
+      const qrX = canvas.width - qrSize - 40;
+      const qrY = canvas.height - qrSize - 40;
+      
+      // Fond blanc pour le QR code
+      ctx.fillStyle = 'white';
+      ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+      
+      // ✅ GÉNÉRER LE VRAI QR CODE
+      import('qrcode').then(QRCode => {
+        const qrUrl = window.location.href;
+        
+        QRCode.toDataURL(qrUrl, {
+          width: qrSize,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        }).then(qrDataUrl => {
+          const qrImage = new Image();
+          qrImage.onload = () => {
+            ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+            
+            // Texte d'instruction
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.font = '18px Arial';
+            ctx.textAlign = 'left';
+            ctx.fillText('📱 Scannez le QR code pour vous inscrire', 40, canvas.height - 80);
+            ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
+            
+            // Retourner l'image générée
+            resolve(canvas.toDataURL('image/png'));
+          };
+          qrImage.src = qrDataUrl;
+        }).catch(() => {
+          // Fallback si QRCode ne fonctionne pas
+          ctx.fillStyle = 'black';
+          ctx.fillRect(qrX, qrY, qrSize, qrSize);
+          ctx.fillStyle = 'white';
+          ctx.font = '14px Arial';
+          ctx.textAlign = 'center';
+          ctx.fillText('QR CODE', qrX + qrSize/2, qrY + qrSize/2);
+          
+          resolve(canvas.toDataURL('image/png'));
+        });
+      }).catch(() => {
+        // Fallback complet
+        ctx.fillStyle = 'black';
+        ctx.fillRect(qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = 'white';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('QR CODE', qrX + qrSize/2, qrY + qrSize/2);
+        
+        resolve(canvas.toDataURL('image/png'));
+      });
+    });
+  };
+
+  // ✅ NOUVEAU: Afficher le message de téléchargement
+  const showDownloadMessage = () => {
+    const messageDiv = document.createElement('div');
+    messageDiv.innerHTML = `
+      <div style="
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        padding: 1rem 1.5rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+        z-index: 9999;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      ">
+        <span style="font-size: 1.2rem;">📥</span>
+        <span>Carte de visite téléchargée !</span>
+      </div>
+    `;
+    
+    document.body.appendChild(messageDiv);
+    
+    setTimeout(() => {
+      if (document.body.contains(messageDiv)) {
+        document.body.removeChild(messageDiv);
+      }
+    }, 4000);
   };
 
   const handleRegister = async (e) => {
@@ -128,12 +322,6 @@ const RegisterClient = () => {
             <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
           </div>
         )}
-        
-        {/* Message de téléchargement */}
-        <div className="download-notice">
-          <span className="download-icon">📥</span>
-          <span>Votre carte de visite a été téléchargée automatiquement !</span>
-        </div>
         
         {error && <div className="error-message">{error}</div>}
         {success && (
