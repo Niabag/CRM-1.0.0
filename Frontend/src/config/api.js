@@ -49,7 +49,7 @@ export const FRONTEND_ROUTES = {
 };
 
 // Fonction utilitaire pour créer les headers d'authentification
-export const getAuthHeaders = () => {
+const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
   return {
     'Content-Type': 'application/json',
@@ -84,4 +84,3 @@ export const apiRequest = async (url, options = {}) => {
   }
 };
 
-export default API_CONFIG;
