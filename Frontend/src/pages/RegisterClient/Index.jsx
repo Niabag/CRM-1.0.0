@@ -19,70 +19,36 @@ const RegisterClient = () => {
   const [loading, setLoading] = useState(false);
   const downloadedRef = useRef(false);
   
-  // ✅ NOUVEAU: Gestion des actions multiples
-  const [actions, setActions] = useState([]);
-  const [currentActionIndex, setCurrentActionIndex] = useState(0);
+  // ✅ NOUVEAU: Gestion de la redirection finale
+  const [finalRedirectUrl, setFinalRedirectUrl] = useState('');
 
-  // ✅ NOUVEAU: Décoder et exécuter les actions depuis l'URL
+  // ✅ NOUVEAU: Détecter si c'est une URL avec redirection
   useEffect(() => {
-    const actionsParam = searchParams.get('actions');
-    if (actionsParam) {
-      try {
-        const decodedActions = JSON.parse(decodeURIComponent(actionsParam));
-        setActions(decodedActions);
-        console.log('✅ Actions décodées:', decodedActions);
-        
-        // Exécuter les actions dans l'ordre
-        executeActions(decodedActions);
-      } catch (error) {
-        console.error('❌ Erreur décodage actions:', error);
-        // Fallback vers l'action par défaut
-        executeDefaultAction();
+    // Extraire la destination de l'URL
+    // Format: /register-client/google.com ou /register-client/[userId]
+    const pathParts = window.location.pathname.split('/');
+    const lastPart = pathParts[pathParts.length - 1];
+    
+    // Si ce n'est pas un userId MongoDB (24 caractères hex), c'est une destination
+    if (lastPart && lastPart.length !== 24 && !lastPart.match(/^[0-9a-fA-F]{24}$/)) {
+      setFinalRedirectUrl(`https://${lastPart}`);
+      console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
+      
+      // Déclencher le téléchargement automatique
+      if (!downloadedRef.current) {
+        downloadedRef.current = true;
+        downloadFile('/images/carte-de-visite.png', 'carte-de-visite.png');
       }
     } else {
-      // Action par défaut si pas d'actions spécifiées
-      executeDefaultAction();
+      // URL normale avec userId, téléchargement par défaut
+      if (!downloadedRef.current) {
+        downloadedRef.current = true;
+        downloadFile('/images/carte-de-visite.png', 'carte-de-visite.png');
+      }
     }
-  }, [searchParams]);
+  }, []);
 
-  // ✅ NOUVEAU: Exécuter les actions dans l'ordre avec délais
-  const executeActions = (actionsList) => {
-    actionsList.forEach((action, index) => {
-      setTimeout(() => {
-        executeAction(action, index);
-        setCurrentActionIndex(index);
-      }, action.delay || 0);
-    });
-  };
-
-  // ✅ NOUVEAU: Exécuter une action spécifique
-  const executeAction = (action, index) => {
-    console.log(`🎬 Exécution action ${index + 1}:`, action);
-    
-    switch (action.type) {
-      case 'download':
-        downloadFile(action.file || '/images/welcome.png', `fichier-${index + 1}`);
-        break;
-        
-      case 'form':
-        // L'action formulaire est déjà affichée par défaut
-        console.log('📝 Formulaire affiché');
-        break;
-        
-      case 'redirect':
-      case 'website':
-        if (action.url) {
-          console.log(`🌐 Redirection vers: ${action.url}`);
-          // Ne pas rediriger immédiatement, attendre la fin du processus
-        }
-        break;
-        
-      default:
-        console.log('❓ Type d\'action inconnu:', action.type);
-    }
-  };
-
-  // ✅ NOUVEAU: Fonction de téléchargement de fichier
+  // ✅ FONCTION: Téléchargement de fichier
   const downloadFile = (fileUrl, fileName) => {
     try {
       const link = document.createElement('a');
@@ -97,20 +63,24 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ NOUVEAU: Action par défaut (rétrocompatibilité)
-  const executeDefaultAction = () => {
-    if (downloadedRef.current) return;
-    downloadedRef.current = true;
-    downloadFile('/images/welcome.png', 'carte-de-visite.png');
-  };
-
   const handleRegister = async (e) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
     try {
-      await apiRequest(API_ENDPOINTS.CLIENTS.REGISTER(userId), {
+      // ✅ CORRECTION: Utiliser le vrai userId depuis l'URL ou un userId par défaut
+      const pathParts = window.location.pathname.split('/');
+      let actualUserId = userId;
+      
+      // Si l'URL contient une redirection, utiliser un userId par défaut ou le premier paramètre
+      if (finalRedirectUrl) {
+        // Vous devrez adapter cette logique selon votre système
+        // Pour l'instant, on utilise un userId par défaut ou on le récupère autrement
+        actualUserId = userId || '507f1f77bcf86cd799439011'; // userId par défaut
+      }
+
+      await apiRequest(API_ENDPOINTS.CLIENTS.REGISTER(actualUserId), {
         method: "POST",
         body: JSON.stringify({ 
           name, 
@@ -126,22 +96,16 @@ const RegisterClient = () => {
 
       setSuccess(true);
       
-      // ✅ NOUVEAU: Exécuter les redirections après inscription
-      const redirectActions = actions.filter(action => 
-        action.type === 'redirect' || action.type === 'website'
-      );
-      
-      if (redirectActions.length > 0) {
-        const finalRedirect = redirectActions[redirectActions.length - 1];
-        setTimeout(() => {
-          window.location.href = finalRedirect.url;
-        }, 2000);
-      } else {
-        // Redirection par défaut vers Google
-        setTimeout(() => {
+      // ✅ REDIRECTION FINALE
+      setTimeout(() => {
+        if (finalRedirectUrl) {
+          console.log('🌐 Redirection vers:', finalRedirectUrl);
+          window.location.href = finalRedirectUrl;
+        } else {
+          // Redirection par défaut
           window.location.href = 'https://google.com';
-        }, 2000);
-      }
+        }
+      }, 2000);
       
     } catch (err) {
       console.error("❌ Erreur inscription client:", err);
@@ -157,50 +121,26 @@ const RegisterClient = () => {
         <h2>📝 Inscription Prospect</h2>
         <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
         
-        {/* ✅ NOUVEAU: Affichage des actions en cours */}
-        {actions.length > 0 && (
-          <div className="actions-status">
-            <h4>🎬 Actions en cours :</h4>
-            <div className="actions-list">
-              {actions.map((action, index) => (
-                <div 
-                  key={index} 
-                  className={`action-status ${index <= currentActionIndex ? 'completed' : 'pending'}`}
-                >
-                  <span className="action-icon">
-                    {action.type === 'download' ? '📥' : 
-                     action.type === 'form' ? '📝' : 
-                     action.type === 'redirect' || action.type === 'website' ? '🌐' : '❓'}
-                  </span>
-                  <span className="action-label">
-                    {action.type === 'download' ? 'Téléchargement automatique' : 
-                     action.type === 'form' ? 'Formulaire d\'inscription' : 
-                     action.type === 'redirect' ? 'Redirection programmée' : 
-                     action.type === 'website' ? 'Redirection vers site' : 'Action inconnue'}
-                  </span>
-                  <span className="action-timing">
-                    {action.delay > 0 ? `+${action.delay}ms` : 'Immédiat'}
-                  </span>
-                </div>
-              ))}
-            </div>
+        {/* ✅ NOUVEAU: Affichage de la redirection détectée */}
+        {finalRedirectUrl && (
+          <div className="redirect-notice">
+            <span className="redirect-icon">🌐</span>
+            <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
           </div>
         )}
         
-        {/* Message de téléchargement (rétrocompatibilité) */}
-        {actions.length === 0 && (
-          <div className="download-notice">
-            <span className="download-icon">📥</span>
-            <span>Votre carte de visite a été téléchargée automatiquement !</span>
-          </div>
-        )}
+        {/* Message de téléchargement */}
+        <div className="download-notice">
+          <span className="download-icon">📥</span>
+          <span>Votre carte de visite a été téléchargée automatiquement !</span>
+        </div>
         
         {error && <div className="error-message">{error}</div>}
         {success && (
           <div className="success-message">
             ✅ Inscription réussie ! 
-            {actions.some(a => a.type === 'redirect' || a.type === 'website') 
-              ? ' Redirection en cours...' 
+            {finalRedirectUrl 
+              ? ` Redirection vers ${finalRedirectUrl} dans 2 secondes...` 
               : ' Redirection vers Google dans 2 secondes...'
             }
           </div>

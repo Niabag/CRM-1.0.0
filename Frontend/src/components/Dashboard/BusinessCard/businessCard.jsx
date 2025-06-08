@@ -67,7 +67,7 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ GÉNÉRATION QR CODE AVEC ACTIONS
+  // ✅ GÉNÉRATION QR CODE AVEC REDIRECTION FINALE
   const generateQRCode = () => {
     if (!userId) {
       console.error("❌ userId manquant pour générer le QR code");
@@ -75,13 +75,19 @@ const BusinessCard = ({ userId, user }) => {
     }
     
     try {
-      let targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
+      // ✅ NOUVEAU: Trouver l'action de redirection finale
+      const redirectAction = cardConfig.actions.find(action => 
+        action.active && (action.type === 'redirect' || action.type === 'website')
+      );
       
-      // ✅ AJOUTER LES ACTIONS ACTIVES À L'URL
-      const activeActions = cardConfig.actions.filter(action => action.active);
-      if (activeActions.length > 0) {
-        const actionsParam = encodeURIComponent(JSON.stringify(activeActions));
-        targetUrl += `?actions=${actionsParam}`;
+      let targetUrl;
+      if (redirectAction && redirectAction.url) {
+        // ✅ NOUVEAU FORMAT: /register-client/[destination]
+        const destination = redirectAction.url.replace(/^https?:\/\//, ''); // Enlever http:// ou https://
+        targetUrl = `${window.location.origin}/register-client/${destination}`;
+      } else {
+        // URL par défaut
+        targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
       }
       
       setQrValue(targetUrl);
@@ -536,7 +542,7 @@ const BusinessCard = ({ userId, user }) => {
             )}
           </div>
 
-          {/* ✅ NOUVELLE SECTION: Gestion des actions */}
+          {/* ✅ SECTION: Gestion des actions */}
           <div className="config-section">
             <h3>🎬 Actions après scan</h3>
             <p className="section-description">
@@ -766,8 +772,9 @@ const BusinessCard = ({ userId, user }) => {
                     type="url"
                     value={newAction.url}
                     onChange={(e) => setNewAction(prev => ({ ...prev, url: e.target.value }))}
-                    placeholder="https://example.com"
+                    placeholder="https://google.com"
                   />
+                  <small>Le QR code redirigera vers: /register-client/[votre-url]</small>
                 </div>
               )}
 
