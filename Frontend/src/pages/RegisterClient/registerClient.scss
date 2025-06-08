@@ -32,7 +32,33 @@
   font-size: 1rem;
 }
 
-/* ✅ NOUVEAU: Container pour aucune action */
+/* ✅ NOUVEAU: Container pour chargement */
+.loading-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.loading-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.loading-message p {
+  color: #718096;
+  margin: 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Container pour aucune action */
 .no-actions-container {
   background: white;
   border-radius: 20px;
@@ -64,7 +90,7 @@
   border-radius: 20px;
   padding: 40px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  max-width: 600px;
   width: 100%;
   margin: 0 auto;
   text-align: center;
@@ -82,6 +108,44 @@
   margin: 0 0 30px 0;
   font-size: 1.1rem;
   line-height: 1.6;
+}
+
+/* ✅ NOUVEAU: Liste des actions */
+.actions-list {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 1.5rem;
+  margin-bottom: 25px;
+  text-align: left;
+}
+
+.actions-list h3 {
+  color: #2d3748;
+  margin: 0 0 15px 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  text-align: center;
+}
+
+.actions-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.actions-list li {
+  background: white;
+  padding: 0.75rem 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
+  font-weight: 500;
+  color: #2d3748;
+}
+
+.actions-list li:last-child {
+  margin-bottom: 0;
 }
 
 /* Container pour actions terminées */
@@ -322,14 +386,16 @@
   .register-form,
   .download-only-container,
   .actions-completed,
-  .no-actions-container {
+  .no-actions-container,
+  .loading-container {
     padding: 30px 20px;
   }
   
   .register-form h2,
   .download-message h2,
   .completion-message h2,
-  .no-actions-message h2 {
+  .no-actions-message h2,
+  .loading-message h2 {
     font-size: 1.5rem;
   }
   
@@ -363,14 +429,16 @@
   .register-form,
   .download-only-container,
   .actions-completed,
-  .no-actions-container {
+  .no-actions-container,
+  .loading-container {
     padding: 25px 15px;
   }
   
   .register-form h2,
   .download-message h2,
   .completion-message h2,
-  .no-actions-message h2 {
+  .no-actions-message h2,
+  .loading-message h2 {
     font-size: 1.3rem;
   }
   
@@ -399,7 +467,8 @@
 .register-form,
 .download-only-container,
 .actions-completed,
-.no-actions-container {
+.no-actions-container,
+.loading-container {
   animation: fadeInUp 0.6s ease-out;
 }
 

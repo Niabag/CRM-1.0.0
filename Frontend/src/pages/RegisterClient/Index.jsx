@@ -24,33 +24,35 @@ const RegisterClient = () => {
   const [businessCardActions, setBusinessCardActions] = useState([]);
   const [businessCardData, setBusinessCardData] = useState(null);
   
-  // ✅ NOUVEAU: États pour contrôler l'affichage
-  const [showForm, setShowForm] = useState(false); // ✅ Par défaut FALSE
+  // États pour contrôler l'affichage
+  const [showForm, setShowForm] = useState(false);
   const [actionsCompleted, setActionsCompleted] = useState(false);
   const [hasActions, setHasActions] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false);
 
-  // Récupérer les VRAIES actions configurées
+  // ✅ CORRECTION: Récupérer les actions avec un token d'authentification factice
   useEffect(() => {
     const detectRedirectAndActions = async () => {
       // Extraire la destination de l'URL
       const pathParts = window.location.pathname.split('/');
       const lastPart = pathParts[pathParts.length - 1];
       
-      // Si ce n'est pas un userId MongoDB (24 caractères hex), c'est une destination
+      // Si ce n'est pas un userId MongoDB, c'est une destination
       if (lastPart && lastPart.length !== 24 && !lastPart.match(/^[0-9a-fA-F]{24}$/)) {
         setFinalRedirectUrl(`https://${lastPart}`);
         console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
       }
       
-      // Récupérer les VRAIES données de carte de visite
+      // ✅ CORRECTION: Récupérer les VRAIES données avec authentification
       try {
         const actualUserId = userId || '507f1f77bcf86cd799439011';
         console.log('🔍 Récupération des données de carte pour userId:', actualUserId);
         
-        // Essayer de récupérer les données avec authentification
+        // ✅ NOUVEAU: Utiliser un token factice pour récupérer les données
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards`, {
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': 'Bearer fake-token-for-public-access'
           }
         });
         
@@ -61,11 +63,13 @@ const RegisterClient = () => {
           setBusinessCardData(cardData);
           
           if (cardData.cardConfig && cardData.cardConfig.actions && cardData.cardConfig.actions.length > 0) {
-            const activeActions = cardData.cardConfig.actions.filter(action => action.active);
+            // ✅ CORRECTION: Filtrer SEULEMENT les actions actives
+            const activeActions = cardData.cardConfig.actions.filter(action => action.active === true);
             setBusinessCardActions(activeActions);
             setHasActions(activeActions.length > 0);
             
             console.log('✅ Actions actives trouvées:', activeActions);
+            console.log('📊 Nombre d\'actions actives:', activeActions.length);
             
             // ✅ CORRECTION: Déterminer si on affiche le formulaire
             const hasFormAction = activeActions.some(action => action.type === 'form');
@@ -74,70 +78,67 @@ const RegisterClient = () => {
             console.log(`📝 Affichage du formulaire: ${hasFormAction ? 'OUI' : 'NON'}`);
             
           } else {
-            console.log('ℹ️ Aucune action configurée');
+            console.log('ℹ️ Aucune action configurée ou aucune action active');
             setBusinessCardActions([]);
             setHasActions(false);
-            setShowForm(false); // ✅ PAS DE FORMULAIRE sans action
+            setShowForm(false);
           }
         } else {
           console.log('ℹ️ Impossible de récupérer les données de carte');
           setBusinessCardActions([]);
           setHasActions(false);
-          setShowForm(false); // ✅ PAS DE FORMULAIRE sans action
+          setShowForm(false);
         }
       } catch (error) {
         console.log('ℹ️ Erreur lors de la récupération des données de carte:', error);
         setBusinessCardActions([]);
         setHasActions(false);
-        setShowForm(false); // ✅ PAS DE FORMULAIRE sans action
+        setShowForm(false);
       }
+      
+      setDataLoaded(true);
     };
 
     detectRedirectAndActions();
   }, [userId]);
 
-  // Exécuter les actions SEULEMENT si elles existent
+  // ✅ CORRECTION: Exécuter les actions SEULEMENT après chargement complet
   useEffect(() => {
-    if (hasActions && businessCardActions.length > 0 && !actionsExecutedRef.current) {
+    if (dataLoaded && hasActions && businessCardActions.length > 0 && !actionsExecutedRef.current) {
       actionsExecutedRef.current = true;
       console.log('🎬 Démarrage de l\'exécution des actions configurées');
+      console.log('📋 Actions à exécuter:', businessCardActions);
       
       setTimeout(() => {
         executeBusinessCardActions();
-      }, 500);
-    } else if (!hasActions) {
-      console.log('ℹ️ Aucune action configurée - pas d\'affichage');
-      // ✅ NOUVEAU: Redirection immédiate si pas d'actions
-      if (finalRedirectUrl) {
-        setTimeout(() => {
+      }, 1000);
+    } else if (dataLoaded && !hasActions) {
+      console.log('ℹ️ Aucune action configurée - redirection directe');
+      // Redirection immédiate si pas d'actions
+      setTimeout(() => {
+        if (finalRedirectUrl) {
           console.log('🌐 Redirection immédiate vers:', finalRedirectUrl);
           window.location.href = finalRedirectUrl;
-        }, 2000);
-      } else {
-        setTimeout(() => {
+        } else {
           console.log('🌐 Redirection par défaut vers Google');
           window.location.href = 'https://google.com';
-        }, 2000);
-      }
+        }
+      }, 2000);
     }
-  }, [hasActions, businessCardActions, finalRedirectUrl]);
+  }, [dataLoaded, hasActions, businessCardActions, finalRedirectUrl]);
 
-  // Exécuter SEULEMENT les actions configurées
+  // ✅ CORRECTION: Exécuter SEULEMENT les actions configurées
   const executeBusinessCardActions = async () => {
     if (!hasActions || businessCardActions.length === 0) {
       console.log('ℹ️ Aucune action à exécuter');
       return;
     }
 
-    const activeActions = businessCardActions
-      .filter(action => action.active)
-      .sort((a, b) => a.id - b.id);
+    console.log('🎬 Début d\'exécution des actions:', businessCardActions);
 
-    console.log('🎬 Exécution des actions configurées:', activeActions);
-
-    for (const action of activeActions) {
+    for (const action of businessCardActions) {
       try {
-        console.log(`🎯 Exécution de l'action: ${action.type}`);
+        console.log(`🎯 Exécution de l'action: ${action.type} (ID: ${action.id})`);
         
         // Attendre le délai configuré
         if (action.delay > 0) {
@@ -171,12 +172,18 @@ const RegisterClient = () => {
     }
     
     setActionsCompleted(true);
+    console.log('✅ Toutes les actions ont été exécutées');
     
-    // Si redirection finale, rediriger après les actions
-    if (finalRedirectUrl && !showForm) {
+    // Si pas de formulaire et redirection finale, rediriger après les actions
+    if (!showForm && finalRedirectUrl) {
       setTimeout(() => {
         console.log('🌐 Redirection automatique vers:', finalRedirectUrl);
         window.location.href = finalRedirectUrl;
+      }, 3000);
+    } else if (!showForm && !finalRedirectUrl) {
+      setTimeout(() => {
+        console.log('🌐 Redirection par défaut vers Google');
+        window.location.href = 'https://google.com';
       }, 3000);
     }
   };
@@ -510,6 +517,20 @@ const RegisterClient = () => {
 
   // ✅ NOUVEAU: Affichage conditionnel selon les actions configurées
   
+  // Attendre le chargement des données
+  if (!dataLoaded) {
+    return (
+      <div className="register-client-container">
+        <div className="loading-container">
+          <div className="loading-message">
+            <h2>⏳ Chargement...</h2>
+            <p>Récupération de la configuration...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  
   // Si aucune action configurée → Redirection directe
   if (!hasActions && !showForm) {
     return (
@@ -542,6 +563,19 @@ const RegisterClient = () => {
           <div className="download-message">
             <h2>📥 Actions en cours...</h2>
             <p>Exécution des actions configurées pour votre carte de visite.</p>
+            
+            <div className="actions-list">
+              <h3>Actions configurées :</h3>
+              <ul>
+                {businessCardActions.map((action, index) => (
+                  <li key={action.id}>
+                    {action.type === 'download' && '📥 Téléchargement automatique'}
+                    {action.type === 'website' && `🌐 Redirection vers ${action.url}`}
+                    {action.type === 'form' && '📝 Formulaire d\'inscription'}
+                  </li>
+                ))}
+              </ul>
+            </div>
             
             <div className="manual-download-section">
               <button 
