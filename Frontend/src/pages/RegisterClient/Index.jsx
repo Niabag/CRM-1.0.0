@@ -30,7 +30,7 @@ const RegisterClient = () => {
   const [hasActions, setHasActions] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false);
 
-  // ✅ CORRECTION: Récupérer les actions avec un token d'authentification factice
+  // ✅ CORRECTION MAJEURE: Récupérer les actions avec la nouvelle route publique
   useEffect(() => {
     const detectRedirectAndActions = async () => {
       // Extraire la destination de l'URL
@@ -43,16 +43,16 @@ const RegisterClient = () => {
         console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
       }
       
-      // ✅ CORRECTION: Récupérer les VRAIES données avec authentification
+      // ✅ CORRECTION: Utiliser la nouvelle route publique
       try {
         const actualUserId = userId || '507f1f77bcf86cd799439011';
         console.log('🔍 Récupération des données de carte pour userId:', actualUserId);
         
-        // ✅ NOUVEAU: Utiliser un token factice pour récupérer les données
-        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards`, {
+        // ✅ NOUVEAU: Utiliser la route publique spécifique
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards/public/${actualUserId}`, {
+          method: 'GET',
           headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer fake-token-for-public-access'
+            'Content-Type': 'application/json'
           }
         });
         
@@ -83,8 +83,13 @@ const RegisterClient = () => {
             setHasActions(false);
             setShowForm(false);
           }
+        } else if (response.status === 404) {
+          console.log('ℹ️ Aucune carte de visite configurée pour cet utilisateur');
+          setBusinessCardActions([]);
+          setHasActions(false);
+          setShowForm(false);
         } else {
-          console.log('ℹ️ Impossible de récupérer les données de carte');
+          console.log('⚠️ Erreur lors de la récupération:', response.status);
           setBusinessCardActions([]);
           setHasActions(false);
           setShowForm(false);
