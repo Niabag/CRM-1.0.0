@@ -16,7 +16,7 @@ const BusinessCard = ({ userId, user }) => {
   const [loading, setLoading] = useState(false);
   const [savedCardData, setSavedCardData] = useState(null);
   
-  // ✅ NOUVEAU: États pour la gestion des actions
+  // États pour la gestion des actions
   const [showActionsModal, setShowActionsModal] = useState(false);
   const [editingAction, setEditingAction] = useState(null);
   const [newAction, setNewAction] = useState({
@@ -67,7 +67,6 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ GÉNÉRATION QR CODE AVEC REDIRECTION FINALE
   const generateQRCode = () => {
     if (!userId) {
       console.error("❌ userId manquant pour générer le QR code");
@@ -75,18 +74,15 @@ const BusinessCard = ({ userId, user }) => {
     }
     
     try {
-      // ✅ NOUVEAU: Trouver l'action de redirection finale
       const redirectAction = cardConfig.actions.find(action => 
         action.active && (action.type === 'redirect' || action.type === 'website')
       );
       
       let targetUrl;
       if (redirectAction && redirectAction.url) {
-        // ✅ NOUVEAU FORMAT: /register-client/[destination]
-        const destination = redirectAction.url.replace(/^https?:\/\//, ''); // Enlever http:// ou https://
+        const destination = redirectAction.url.replace(/^https?:\/\//, '');
         targetUrl = `${window.location.origin}/register-client/${destination}`;
       } else {
-        // URL par défaut
         targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
       }
       
@@ -131,7 +127,6 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVEAU: Ajouter une action
   const handleAddAction = () => {
     const actionToAdd = {
       ...newAction,
@@ -146,7 +141,6 @@ const BusinessCard = ({ userId, user }) => {
     setCardConfig(updatedConfig);
     saveBusinessCardToDB(null, updatedConfig);
     
-    // Reset du formulaire
     setNewAction({
       type: 'download',
       file: '/images/carte-de-visite.png',
@@ -158,14 +152,12 @@ const BusinessCard = ({ userId, user }) => {
     setShowActionsModal(false);
   };
 
-  // ✅ NOUVEAU: Modifier une action
   const handleEditAction = (action) => {
     setEditingAction(action);
     setNewAction({ ...action });
     setShowActionsModal(true);
   };
 
-  // ✅ NOUVEAU: Sauvegarder les modifications d'une action
   const handleSaveEditAction = () => {
     const updatedActions = cardConfig.actions.map(action =>
       action.id === editingAction.id ? { ...newAction } : action
@@ -190,7 +182,6 @@ const BusinessCard = ({ userId, user }) => {
     setShowActionsModal(false);
   };
 
-  // ✅ NOUVEAU: Supprimer une action
   const handleDeleteAction = (actionId) => {
     const updatedActions = cardConfig.actions.filter(action => action.id !== actionId);
     const updatedConfig = {
@@ -202,7 +193,6 @@ const BusinessCard = ({ userId, user }) => {
     saveBusinessCardToDB(null, updatedConfig);
   };
 
-  // ✅ NOUVEAU: Changer l'ordre des actions
   const handleMoveAction = (actionId, direction) => {
     const actions = [...cardConfig.actions];
     const currentIndex = actions.findIndex(action => action.id === actionId);
@@ -222,7 +212,6 @@ const BusinessCard = ({ userId, user }) => {
     saveBusinessCardToDB(null, updatedConfig);
   };
 
-  // ✅ NOUVEAU: Activer/désactiver une action
   const handleToggleAction = (actionId) => {
     const updatedActions = cardConfig.actions.map(action =>
       action.id === actionId ? { ...action, active: !action.active } : action
@@ -334,66 +323,190 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  const generateBusinessCard = async () => {
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    
-    canvas.width = 800;
-    canvas.height = 500;
-    
+  // ✅ NOUVEAU: Fonction de téléchargement manuel de la carte
+  const downloadBusinessCard = async () => {
+    try {
+      setLoading(true);
+      console.log('📥 Génération de la carte de visite pour téléchargement...');
+      
+      const cardUrl = await generateBusinessCardWithQR();
+      
+      if (cardUrl) {
+        const link = document.createElement('a');
+        link.download = 'carte-de-visite-qr.png';
+        link.href = cardUrl;
+        link.click();
+        
+        showSuccessMessage('✅ Carte téléchargée !');
+      }
+    } catch (error) {
+      console.error('❌ Erreur téléchargement:', error);
+      showErrorMessage('❌ Erreur lors du téléchargement');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ NOUVEAU: Génération de carte de visite avec QR code
+  const generateBusinessCardWithQR = async () => {
+    return new Promise(async (resolve) => {
+      try {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Dimensions de carte de visite standard
+        canvas.width = 1012;
+        canvas.height = 638;
+        
+        // Si une image personnalisée existe
+        if (cardConfig.cardImage && cardConfig.cardImage !== '/images/default-business-card.png') {
+          try {
+            await new Promise((resolveImage, rejectImage) => {
+              const cardImage = new Image();
+              cardImage.onload = async () => {
+                // Dessiner l'image de carte de visite
+                ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
+                
+                // Ajouter le QR code si configuré
+                if (cardConfig.showQR && qrValue) {
+                  await addQRCodeToCanvas(ctx, canvas);
+                }
+                
+                resolveImage();
+              };
+              
+              cardImage.onerror = () => {
+                rejectImage();
+              };
+              
+              cardImage.src = cardConfig.cardImage;
+            });
+          } catch (imageError) {
+            // Fallback vers carte par défaut
+            await generateDefaultCard(ctx, canvas);
+          }
+        } else {
+          // Générer une carte par défaut
+          await generateDefaultCard(ctx, canvas);
+        }
+        
+        resolve(canvas.toDataURL('image/png'));
+        
+      } catch (error) {
+        console.error('❌ Erreur génération carte:', error);
+        resolve(null);
+      }
+    });
+  };
+
+  // ✅ FONCTION: Ajouter QR code au canvas
+  const addQRCodeToCanvas = async (ctx, canvas) => {
+    try {
+      const qrSize = cardConfig.qrSize || 150;
+      const position = cardConfig.qrPosition || 'bottom-right';
+      
+      // Calculer la position
+      let qrX, qrY;
+      const margin = 20;
+      
+      switch (position) {
+        case 'bottom-right':
+          qrX = canvas.width - qrSize - margin;
+          qrY = canvas.height - qrSize - margin;
+          break;
+        case 'bottom-left':
+          qrX = margin;
+          qrY = canvas.height - qrSize - margin;
+          break;
+        case 'top-right':
+          qrX = canvas.width - qrSize - margin;
+          qrY = margin;
+          break;
+        case 'top-left':
+          qrX = margin;
+          qrY = margin;
+          break;
+        default:
+          qrX = canvas.width - qrSize - margin;
+          qrY = canvas.height - qrSize - margin;
+      }
+      
+      // Générer le QR code
+      try {
+        const QRCode = await import('qrcode');
+        const qrDataUrl = await QRCode.default.toDataURL(qrValue, {
+          width: qrSize,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF'
+          }
+        });
+        
+        await new Promise((resolve) => {
+          const qrImage = new Image();
+          qrImage.onload = () => {
+            // Fond blanc pour le QR code
+            ctx.fillStyle = 'white';
+            ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
+            
+            // Dessiner le QR code
+            ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+            resolve();
+          };
+          qrImage.src = qrDataUrl;
+        });
+        
+      } catch (qrError) {
+        console.log('⚠️ Erreur QRCode, utilisation du fallback');
+        // QR code de fallback
+        ctx.fillStyle = 'white';
+        ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
+        ctx.fillStyle = 'black';
+        ctx.fillRect(qrX, qrY, qrSize, qrSize);
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 16px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('QR', qrX + qrSize/2, qrY + qrSize/2);
+      }
+    } catch (error) {
+      console.error('❌ Erreur ajout QR code:', error);
+    }
+  };
+
+  // ✅ FONCTION: Générer une carte par défaut
+  const generateDefaultCard = async (ctx, canvas) => {
+    // Fond dégradé
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#667eea');
     gradient.addColorStop(1, '#764ba2');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Titre principal
     ctx.fillStyle = 'white';
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
     
+    // Informations utilisateur
     ctx.font = '32px Arial';
     ctx.fillText(user?.name || 'Votre Nom', canvas.width / 2, 140);
     
     ctx.font = '24px Arial';
     ctx.fillText(user?.email || 'votre.email@exemple.com', canvas.width / 2, 180);
     
+    // Ajouter le QR code si configuré
     if (cardConfig.showQR && qrValue) {
-      const qrSize = 120;
-      const qrX = canvas.width - qrSize - 40;
-      const qrY = canvas.height - qrSize - 40;
-      
-      ctx.fillStyle = 'white';
-      ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-      
-      ctx.fillStyle = 'black';
-      ctx.fillRect(qrX, qrY, qrSize, qrSize);
-      
-      ctx.fillStyle = 'white';
-      ctx.font = '14px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('SCANNEZ-MOI', qrX + qrSize/2, qrY + qrSize/2);
+      await addQRCodeToCanvas(ctx, canvas);
     }
     
+    // Texte d'instruction
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '18px Arial';
     ctx.textAlign = 'left';
     ctx.fillText('📱 Scannez le QR code pour vous inscrire', 40, canvas.height - 80);
     ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
-    
-    const dataUrl = canvas.toDataURL('image/png');
-    await saveBusinessCardToDB(dataUrl);
-    
-    return dataUrl;
-  };
-
-  const downloadBusinessCard = async () => {
-    const cardUrl = await generateBusinessCard();
-    
-    const link = document.createElement('a');
-    link.download = 'carte-de-visite-numerique.png';
-    link.href = cardUrl;
-    link.click();
   };
 
   const copyQRLink = () => {
@@ -413,7 +526,6 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVEAU: Obtenir l'icône selon le type d'action
   const getActionIcon = (type) => {
     switch (type) {
       case 'download': return '📥';
@@ -424,7 +536,6 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVEAU: Obtenir le label selon le type d'action
   const getActionLabel = (type) => {
     switch (type) {
       case 'download': return 'Téléchargement';
@@ -435,16 +546,13 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVEAU: Obtenir le nom d'affichage du fichier
   const getFileDisplayName = (filePath) => {
     if (!filePath) return '';
     
-    // Si c'est le fichier par défaut de carte de visite, afficher "Carte de visite"
     if (filePath === '/images/carte-de-visite.png') {
       return 'Carte de visite';
     }
     
-    // Sinon, extraire le nom du fichier
     const fileName = filePath.split('/').pop();
     return fileName || filePath;
   };
@@ -556,7 +664,7 @@ const BusinessCard = ({ userId, user }) => {
             )}
           </div>
 
-          {/* ✅ SECTION: Gestion des actions */}
+          {/* Section: Gestion des actions */}
           <div className="config-section">
             <h3>🎬 Actions après scan</h3>
             <p className="section-description">
@@ -739,7 +847,7 @@ const BusinessCard = ({ userId, user }) => {
         </div>
       </div>
 
-      {/* ✅ MODAL DE GESTION DES ACTIONS */}
+      {/* Modal de gestion des actions */}
       {showActionsModal && (
         <div className="modal-overlay" onClick={() => setShowActionsModal(false)}>
           <div className="modal-content" onClick={(e) => e.stopPropagation()}>
