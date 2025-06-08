@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from '../../../config/api';
 import './businessCard.scss';
 
