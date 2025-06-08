@@ -74,7 +74,7 @@ const RegisterClient = () => {
                 {
                   id: 1,
                   type: 'download',
-                  file: '/images/carte-de-visite.png',
+                  file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
                   url: '',
                   delay: 1000,
                   active: true
@@ -86,7 +86,7 @@ const RegisterClient = () => {
             {
               id: 1,
               type: 'download',
-              file: '/images/carte-de-visite.png',
+              file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
               url: '',
               delay: 1000,
               active: true
@@ -106,7 +106,7 @@ const RegisterClient = () => {
               {
                 id: 1,
                 type: 'download',
-                file: '/images/carte-de-visite.png',
+                file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
                 url: '',
                 delay: 1000,
                 active: true
@@ -118,7 +118,7 @@ const RegisterClient = () => {
           {
             id: 1,
             type: 'download',
-            file: '/images/carte-de-visite.png',
+            file: 'carte-apercu', // ✅ NOUVEAU: Utilise l'aperçu
             url: '',
             delay: 1000,
             active: true
@@ -176,34 +176,48 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ FONCTION MODIFIÉE: Téléchargement de l'image de l'aperçu
+  // ✅ FONCTION CORRIGÉE: Téléchargement de l'image générée avec les vraies données
   const executeDownloadAction = async (action) => {
     try {
       console.log('📥 Génération de la carte de visite pour téléchargement...');
       
-      // Générer la carte de visite avec les vraies données
-      const cardImageData = await generateBusinessCardFromData();
-      
-      if (cardImageData) {
-        // Télécharger l'image générée
+      // ✅ NOUVEAU: Vérifier si c'est l'aperçu de la carte
+      if (action.file === 'carte-apercu') {
+        console.log('🖼️ Génération de la carte avec l\'image personnalisée et QR code...');
+        const cardImageData = await generateBusinessCardFromData();
+        
+        if (cardImageData) {
+          // Télécharger l'image générée
+          const link = document.createElement('a');
+          link.href = cardImageData;
+          link.download = 'carte-de-visite-qr.png';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          
+          console.log('✅ Carte de visite téléchargée avec succès');
+          showDownloadMessage();
+        } else {
+          console.error('❌ Impossible de générer la carte de visite');
+        }
+      } else {
+        // Téléchargement d'un fichier spécifique (ancien comportement)
+        console.log('📁 Téléchargement du fichier:', action.file);
         const link = document.createElement('a');
-        link.href = cardImageData;
-        link.download = 'carte-de-visite-qr.png';
+        link.href = action.file;
+        link.download = action.file.split('/').pop() || 'fichier';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
-        console.log('✅ Carte de visite téléchargée avec succès');
         showDownloadMessage();
-      } else {
-        console.error('❌ Impossible de générer la carte de visite');
       }
     } catch (error) {
       console.error('❌ Erreur lors du téléchargement:', error);
     }
   };
 
-  // ✅ FONCTION MODIFIÉE: Génération basée sur les données de la carte
+  // ✅ FONCTION CORRIGÉE: Génération basée sur les vraies données de la carte
   const generateBusinessCardFromData = async () => {
     return new Promise(async (resolve) => {
       try {
@@ -216,7 +230,7 @@ const RegisterClient = () => {
         
         console.log('🖼️ Démarrage de la génération de carte...');
         
-        // ✅ ÉTAPE 1: Utiliser l'image personnalisée si disponible
+        // ✅ ÉTAPE 1: Utiliser l'image personnalisée de la carte si disponible
         if (businessCardData && businessCardData.cardImage) {
           console.log('🖼️ Chargement de l\'image de carte personnalisée');
           
@@ -225,7 +239,7 @@ const RegisterClient = () => {
               const cardImage = new Image();
               cardImage.onload = async () => {
                 console.log('✅ Image de carte chargée');
-                // Dessiner l'image de carte de visite
+                // Dessiner l'image de carte de visite personnalisée
                 ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
                 
                 // ✅ ÉTAPE 2: Ajouter le QR code si configuré
@@ -407,7 +421,7 @@ const RegisterClient = () => {
   // ✅ NOUVEAU: Fonction de téléchargement manuel
   const handleManualDownload = async () => {
     console.log('📥 Téléchargement manuel demandé');
-    await executeDownloadAction({ type: 'download' });
+    await executeDownloadAction({ type: 'download', file: 'carte-apercu' });
   };
 
   // ✅ NOUVEAU: Afficher le message de téléchargement

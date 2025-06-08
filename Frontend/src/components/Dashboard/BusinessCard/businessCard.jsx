@@ -21,7 +21,7 @@ const BusinessCard = ({ userId, user }) => {
   const [editingAction, setEditingAction] = useState(null);
   const [newAction, setNewAction] = useState({
     type: 'download',
-    file: '/images/carte-de-visite.png',
+    file: 'carte-apercu', // ✅ NOUVEAU: Indique que c'est l'aperçu
     url: '',
     delay: 0,
     active: true
@@ -143,7 +143,7 @@ const BusinessCard = ({ userId, user }) => {
     
     setNewAction({
       type: 'download',
-      file: '/images/carte-de-visite.png',
+      file: 'carte-apercu', // ✅ NOUVEAU: Valeur par défaut
       url: '',
       delay: 0,
       active: true
@@ -174,7 +174,7 @@ const BusinessCard = ({ userId, user }) => {
     setEditingAction(null);
     setNewAction({
       type: 'download',
-      file: '/images/carte-de-visite.png',
+      file: 'carte-apercu', // ✅ NOUVEAU: Valeur par défaut
       url: '',
       delay: 0,
       active: true
@@ -329,7 +329,7 @@ const BusinessCard = ({ userId, user }) => {
       setLoading(true);
       console.log('📥 Génération de la carte de visite pour téléchargement...');
       
-      // Capturer l'aperçu de la carte directement depuis le DOM
+      // ✅ NOUVEAU: Capturer directement l'aperçu de la carte
       const cardUrl = await captureCardPreview();
       
       if (cardUrl) {
@@ -364,6 +364,8 @@ const BusinessCard = ({ userId, user }) => {
           return;
         }
 
+        console.log('📸 Capture de l\'aperçu de la carte...');
+
         // Capturer l'élément avec html2canvas
         const canvas = await html2canvas(previewElement, {
           scale: 2, // Haute qualité
@@ -371,7 +373,8 @@ const BusinessCard = ({ userId, user }) => {
           allowTaint: true,
           backgroundColor: '#ffffff',
           width: previewElement.offsetWidth,
-          height: previewElement.offsetHeight
+          height: previewElement.offsetHeight,
+          logging: false // Désactiver les logs
         });
 
         // Convertir en URL de données
@@ -587,8 +590,13 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
+  // ✅ FONCTION MODIFIÉE: Affichage du fichier pour l'action de téléchargement
   const getFileDisplayName = (filePath) => {
     if (!filePath) return '';
+    
+    if (filePath === 'carte-apercu') {
+      return 'Carte de visite (aperçu avec QR code)';
+    }
     
     if (filePath === '/images/carte-de-visite.png') {
       return 'Carte de visite (aperçu)';
@@ -924,7 +932,7 @@ const BusinessCard = ({ userId, user }) => {
                       {getFileDisplayName(newAction.file)}
                     </div>
                     <small className="file-help-text">
-                      La carte de visite sera générée automatiquement avec votre design et QR code depuis l'aperçu
+                      ✅ La carte de visite sera générée automatiquement avec votre design et QR code depuis l'aperçu
                     </small>
                   </div>
                 </div>
