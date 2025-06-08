@@ -22,6 +22,7 @@ const RegisterClient = () => {
   // ✅ NOUVEAU: Gestion de la redirection finale
   const [finalRedirectUrl, setFinalRedirectUrl] = useState('');
   const [businessCardActions, setBusinessCardActions] = useState([]);
+  const [businessCardData, setBusinessCardData] = useState(null); // ✅ NOUVEAU: Données de la carte
 
   // ✅ NOUVEAU: Détecter si c'est une URL avec redirection et récupérer les actions
   useEffect(() => {
@@ -35,24 +36,46 @@ const RegisterClient = () => {
         setFinalRedirectUrl(`https://${lastPart}`);
         console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
         
-        // ✅ NOUVEAU: Récupérer les actions de la carte de visite
+        // ✅ NOUVEAU: Récupérer les données complètes de la carte de visite
         try {
-          // Utiliser un userId par défaut ou le récupérer depuis l'API
-          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards`, {
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('token') || 'default-token'}`
-            }
-          });
+          // Essayer de récupérer les données de carte de visite sans authentification
+          const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards`);
           
           if (response.ok) {
             const cardData = await response.json();
+            setBusinessCardData(cardData);
+            
             if (cardData.cardConfig && cardData.cardConfig.actions) {
               setBusinessCardActions(cardData.cardConfig.actions);
               console.log('📋 Actions récupérées:', cardData.cardConfig.actions);
+              console.log('🖼️ Données de carte récupérées:', {
+                hasImage: !!cardData.cardImage,
+                config: cardData.cardConfig
+              });
             }
+          } else {
+            console.log('ℹ️ Impossible de récupérer les données de carte (pas d\'authentification)');
+            // Utiliser des données par défaut pour la démonstration
+            setBusinessCardData({
+              cardImage: null,
+              cardConfig: {
+                showQR: true,
+                qrPosition: 'bottom-right',
+                qrSize: 150
+              }
+            });
           }
         } catch (error) {
-          console.log('ℹ️ Impossible de récupérer les actions de la carte');
+          console.log('ℹ️ Erreur lors de la récupération des données de carte:', error);
+          // Utiliser des données par défaut
+          setBusinessCardData({
+            cardImage: null,
+            cardConfig: {
+              showQR: true,
+              qrPosition: 'bottom-right',
+              qrSize: 150
+            }
+          });
         }
       }
     };
@@ -105,12 +128,13 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ NOUVEAU: Exécuter l'action de téléchargement avec génération de carte
+  // ✅ NOUVEAU: Exécuter l'action de téléchargement avec la vraie carte de visite
   const executeDownloadAction = async (action) => {
     try {
       console.log('📥 Exécution de l\'action de téléchargement:', action);
+      console.log('🖼️ Données de carte disponibles:', businessCardData);
       
-      // Générer la carte de visite avec QR code
+      // Générer la carte de visite avec les vraies données
       const cardImageData = await generateBusinessCardWithQR();
       
       if (cardImageData) {
@@ -132,7 +156,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ NOUVEAU: Générer la carte de visite avec QR code
+  // ✅ NOUVEAU: Générer la carte de visite avec l'image réelle et le QR code
   const generateBusinessCardWithQR = async () => {
     return new Promise((resolve) => {
       const canvas = document.createElement('canvas');
@@ -142,85 +166,188 @@ const RegisterClient = () => {
       canvas.width = 1012;
       canvas.height = 638;
       
-      // Fond dégradé
-      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
-      gradient.addColorStop(0, '#667eea');
-      gradient.addColorStop(1, '#764ba2');
-      ctx.fillStyle = gradient;
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Titre principal
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 48px Arial';
-      ctx.textAlign = 'center';
-      ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
-      
-      // Informations de contact (exemple)
-      ctx.font = '32px Arial';
-      ctx.fillText('Votre Nom', canvas.width / 2, 140);
-      
-      ctx.font = '24px Arial';
-      ctx.fillText('votre.email@exemple.com', canvas.width / 2, 180);
-      ctx.fillText('06 12 34 56 78', canvas.width / 2, 210);
-      
-      // ✅ NOUVEAU: Générer le QR code
-      const qrSize = 150;
-      const qrX = canvas.width - qrSize - 40;
-      const qrY = canvas.height - qrSize - 40;
-      
-      // Fond blanc pour le QR code
-      ctx.fillStyle = 'white';
-      ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-      
-      // ✅ GÉNÉRER LE VRAI QR CODE
-      import('qrcode').then(QRCode => {
-        const qrUrl = window.location.href;
-        
-        QRCode.toDataURL(qrUrl, {
-          width: qrSize,
-          margin: 1,
-          color: {
-            dark: '#000000',
-            light: '#FFFFFF'
+      const generateQRAndCompose = async () => {
+        try {
+          // ✅ ÉTAPE 1: Charger l'image de carte de visite si disponible
+          if (businessCardData && businessCardData.cardImage) {
+            console.log('🖼️ Chargement de l\'image de carte personnalisée');
+            
+            const cardImage = new Image();
+            cardImage.onload = async () => {
+              // Dessiner l'image de carte de visite
+              ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
+              
+              // ✅ ÉTAPE 2: Ajouter le QR code si configuré
+              if (businessCardData.cardConfig && businessCardData.cardConfig.showQR) {
+                await addQRCodeToCard();
+              }
+              
+              resolve(canvas.toDataURL('image/png'));
+            };
+            
+            cardImage.onerror = () => {
+              console.log('❌ Erreur chargement image, utilisation du fallback');
+              generateFallbackCard();
+            };
+            
+            cardImage.src = businessCardData.cardImage;
+          } else {
+            console.log('📝 Aucune image personnalisée, génération d\'une carte par défaut');
+            generateFallbackCard();
           }
-        }).then(qrDataUrl => {
-          const qrImage = new Image();
-          qrImage.onload = () => {
-            ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
-            
-            // Texte d'instruction
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-            ctx.font = '18px Arial';
-            ctx.textAlign = 'left';
-            ctx.fillText('📱 Scannez le QR code pour vous inscrire', 40, canvas.height - 80);
-            ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
-            
-            // Retourner l'image générée
-            resolve(canvas.toDataURL('image/png'));
-          };
-          qrImage.src = qrDataUrl;
-        }).catch(() => {
-          // Fallback si QRCode ne fonctionne pas
-          ctx.fillStyle = 'black';
-          ctx.fillRect(qrX, qrY, qrSize, qrSize);
-          ctx.fillStyle = 'white';
-          ctx.font = '14px Arial';
-          ctx.textAlign = 'center';
-          ctx.fillText('QR CODE', qrX + qrSize/2, qrY + qrSize/2);
+        } catch (error) {
+          console.error('❌ Erreur lors de la génération:', error);
+          generateFallbackCard();
+        }
+      };
+
+      // ✅ FONCTION: Ajouter le QR code sur la carte
+      const addQRCodeToCard = async () => {
+        try {
+          const config = businessCardData.cardConfig;
+          const qrSize = config.qrSize || 150;
+          const position = config.qrPosition || 'bottom-right';
           
-          resolve(canvas.toDataURL('image/png'));
-        });
-      }).catch(() => {
-        // Fallback complet
-        ctx.fillStyle = 'black';
-        ctx.fillRect(qrX, qrY, qrSize, qrSize);
+          // Calculer la position du QR code
+          let qrX, qrY;
+          const margin = 20;
+          
+          switch (position) {
+            case 'bottom-right':
+              qrX = canvas.width - qrSize - margin;
+              qrY = canvas.height - qrSize - margin;
+              break;
+            case 'bottom-left':
+              qrX = margin;
+              qrY = canvas.height - qrSize - margin;
+              break;
+            case 'top-right':
+              qrX = canvas.width - qrSize - margin;
+              qrY = margin;
+              break;
+            case 'top-left':
+              qrX = margin;
+              qrY = margin;
+              break;
+            default:
+              qrX = canvas.width - qrSize - margin;
+              qrY = canvas.height - qrSize - margin;
+          }
+          
+          console.log(`📍 Position QR: ${position} (${qrX}, ${qrY}) taille: ${qrSize}px`);
+          
+          // Générer le QR code avec la vraie URL
+          const qrUrl = window.location.href;
+          
+          // Utiliser la bibliothèque QRCode si disponible
+          if (typeof window !== 'undefined') {
+            try {
+              const QRCode = await import('qrcode');
+              const qrDataUrl = await QRCode.default.toDataURL(qrUrl, {
+                width: qrSize,
+                margin: 1,
+                color: {
+                  dark: '#000000',
+                  light: '#FFFFFF'
+                }
+              });
+              
+              const qrImage = new Image();
+              qrImage.onload = () => {
+                // Fond blanc pour le QR code
+                ctx.fillStyle = 'white';
+                ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
+                
+                // Dessiner le QR code
+                ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
+                
+                console.log('✅ QR code ajouté à la carte');
+              };
+              qrImage.src = qrDataUrl;
+              
+            } catch (qrError) {
+              console.log('⚠️ Erreur QRCode, utilisation du fallback');
+              drawFallbackQR(qrX, qrY, qrSize);
+            }
+          } else {
+            drawFallbackQR(qrX, qrY, qrSize);
+          }
+        } catch (error) {
+          console.error('❌ Erreur ajout QR code:', error);
+        }
+      };
+
+      // ✅ FONCTION: Dessiner un QR code de fallback
+      const drawFallbackQR = (x, y, size) => {
+        // Fond blanc
         ctx.fillStyle = 'white';
-        ctx.font = '14px Arial';
+        ctx.fillRect(x - 5, y - 5, size + 10, size + 10);
+        
+        // QR code simplifié (motif de carrés)
+        ctx.fillStyle = 'black';
+        ctx.fillRect(x, y, size, size);
+        
+        // Motif de QR code basique
+        const cellSize = size / 21; // QR code 21x21
+        ctx.fillStyle = 'white';
+        
+        for (let i = 0; i < 21; i++) {
+          for (let j = 0; j < 21; j++) {
+            if ((i + j) % 3 === 0) {
+              ctx.fillRect(x + i * cellSize, y + j * cellSize, cellSize, cellSize);
+            }
+          }
+        }
+        
+        // Texte au centre
+        ctx.fillStyle = 'black';
+        ctx.font = 'bold 12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText('QR CODE', qrX + qrSize/2, qrY + qrSize/2);
+        ctx.fillText('QR', x + size/2, y + size/2);
+        
+        console.log('✅ QR code fallback ajouté');
+      };
+
+      // ✅ FONCTION: Générer une carte par défaut
+      const generateFallbackCard = async () => {
+        // Fond dégradé
+        const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+        gradient.addColorStop(0, '#667eea');
+        gradient.addColorStop(1, '#764ba2');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Titre principal
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 48px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
+        
+        // Informations de contact
+        ctx.font = '32px Arial';
+        ctx.fillText('Votre Nom', canvas.width / 2, 140);
+        
+        ctx.font = '24px Arial';
+        ctx.fillText('votre.email@exemple.com', canvas.width / 2, 180);
+        ctx.fillText('06 12 34 56 78', canvas.width / 2, 210);
+        
+        // Ajouter le QR code si configuré
+        if (businessCardData && businessCardData.cardConfig && businessCardData.cardConfig.showQR) {
+          await addQRCodeToCard();
+        }
+        
+        // Texte d'instruction
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = '18px Arial';
+        ctx.textAlign = 'left';
+        ctx.fillText('📱 Scannez le QR code pour vous inscrire', 40, canvas.height - 80);
+        ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
         
         resolve(canvas.toDataURL('image/png'));
-      });
+      };
+
+      // Démarrer la génération
+      generateQRAndCompose();
     });
   };
 
@@ -320,6 +447,14 @@ const RegisterClient = () => {
           <div className="redirect-notice">
             <span className="redirect-icon">🌐</span>
             <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
+          </div>
+        )}
+        
+        {/* ✅ NOUVEAU: Affichage si une carte de visite est détectée */}
+        {businessCardData && businessCardData.cardImage && (
+          <div className="download-notice">
+            <span className="download-icon">📥</span>
+            <span>Carte de visite personnalisée détectée - téléchargement automatique</span>
           </div>
         )}
         
