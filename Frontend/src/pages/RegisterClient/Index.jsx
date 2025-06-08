@@ -81,24 +81,24 @@ const RegisterClient = () => {
             console.log('ℹ️ Aucune action configurée ou aucune action active');
             setBusinessCardActions([]);
             setHasActions(false);
-            setShowForm(false);
+            setShowForm(true); // ✅ CORRECTION: Afficher le formulaire par défaut si aucune action
           }
         } else if (response.status === 404) {
           console.log('ℹ️ Aucune carte de visite configurée pour cet utilisateur');
           setBusinessCardActions([]);
           setHasActions(false);
-          setShowForm(false);
+          setShowForm(true); // ✅ CORRECTION: Afficher le formulaire par défaut
         } else {
           console.log('⚠️ Erreur lors de la récupération:', response.status);
           setBusinessCardActions([]);
           setHasActions(false);
-          setShowForm(false);
+          setShowForm(true); // ✅ CORRECTION: Afficher le formulaire par défaut
         }
       } catch (error) {
         console.log('ℹ️ Erreur lors de la récupération des données de carte:', error);
         setBusinessCardActions([]);
         setHasActions(false);
-        setShowForm(false);
+        setShowForm(true); // ✅ CORRECTION: Afficher le formulaire par défaut
       }
       
       setDataLoaded(true);
@@ -107,7 +107,7 @@ const RegisterClient = () => {
     detectRedirectAndActions();
   }, [userId]);
 
-  // ✅ CORRECTION: Exécuter les actions SEULEMENT après chargement complet
+  // ✅ CORRECTION: Exécuter les actions SEULEMENT après chargement complet ET si il y a des actions
   useEffect(() => {
     if (dataLoaded && hasActions && businessCardActions.length > 0 && !actionsExecutedRef.current) {
       actionsExecutedRef.current = true;
@@ -118,19 +118,11 @@ const RegisterClient = () => {
         executeBusinessCardActions();
       }, 1000);
     } else if (dataLoaded && !hasActions) {
-      console.log('ℹ️ Aucune action configurée - redirection directe');
-      // Redirection immédiate si pas d'actions
-      setTimeout(() => {
-        if (finalRedirectUrl) {
-          console.log('🌐 Redirection immédiate vers:', finalRedirectUrl);
-          window.location.href = finalRedirectUrl;
-        } else {
-          console.log('🌐 Redirection par défaut vers Google');
-          window.location.href = 'https://google.com';
-        }
-      }, 2000);
+      console.log('ℹ️ Aucune action configurée - affichage du formulaire uniquement');
+      // ✅ CORRECTION: Ne plus rediriger automatiquement, juste afficher le formulaire
+      setShowForm(true);
     }
-  }, [dataLoaded, hasActions, businessCardActions, finalRedirectUrl]);
+  }, [dataLoaded, hasActions, businessCardActions]);
 
   // ✅ CORRECTION: Exécuter SEULEMENT les actions configurées
   const executeBusinessCardActions = async () => {
@@ -179,17 +171,16 @@ const RegisterClient = () => {
     setActionsCompleted(true);
     console.log('✅ Toutes les actions ont été exécutées');
     
-    // Si pas de formulaire et redirection finale, rediriger après les actions
-    if (!showForm && finalRedirectUrl) {
+    // ✅ CORRECTION: Ne rediriger QUE si il n'y a pas d'action formulaire ET qu'il y a une URL de redirection
+    const hasFormAction = businessCardActions.some(action => action.type === 'form');
+    if (!hasFormAction && finalRedirectUrl) {
       setTimeout(() => {
         console.log('🌐 Redirection automatique vers:', finalRedirectUrl);
         window.location.href = finalRedirectUrl;
       }, 3000);
-    } else if (!showForm && !finalRedirectUrl) {
-      setTimeout(() => {
-        console.log('🌐 Redirection par défaut vers Google');
-        window.location.href = 'https://google.com';
-      }, 3000);
+    } else if (!hasFormAction && !finalRedirectUrl) {
+      // ✅ CORRECTION: Ne plus rediriger vers Google par défaut
+      console.log('ℹ️ Aucune redirection configurée - reste sur la page');
     }
   };
 
@@ -502,13 +493,14 @@ const RegisterClient = () => {
 
       setSuccess(true);
       
-      // Redirection finale
+      // ✅ CORRECTION: Redirection finale SEULEMENT après inscription réussie
       setTimeout(() => {
         if (finalRedirectUrl) {
           console.log('🌐 Redirection vers:', finalRedirectUrl);
           window.location.href = finalRedirectUrl;
         } else {
-          window.location.href = 'https://google.com';
+          console.log('✅ Inscription terminée - reste sur la page');
+          // Ne plus rediriger vers Google par défaut
         }
       }, 2000);
       
@@ -536,32 +528,146 @@ const RegisterClient = () => {
     );
   }
   
-  // Si aucune action configurée → Redirection directe
-  if (!hasActions && !showForm) {
+  // ✅ CORRECTION: Toujours afficher le formulaire si showForm est true
+  if (showForm) {
     return (
       <div className="register-client-container">
-        <div className="no-actions-container">
-          <div className="no-actions-message">
-            <h2>🌐 Redirection en cours...</h2>
-            <p>Aucune action configurée. Redirection automatique.</p>
+        <form onSubmit={handleRegister} className="register-form">
+          <h2>📝 Inscription Prospect</h2>
+          <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
+          
+          {/* Bouton de téléchargement manuel si données disponibles */}
+          {businessCardData && (
+            <div className="manual-download-section">
+              <button 
+                type="button"
+                onClick={handleManualDownload}
+                className="manual-download-btn"
+                disabled={loading || success}
+              >
+                📥 Télécharger la carte de visite
+              </button>
+              <p className="download-help">Cliquez pour télécharger votre carte de visite avec QR code</p>
+            </div>
+          )}
+          
+          {finalRedirectUrl && (
+            <div className="redirect-notice">
+              <span className="redirect-icon">🌐</span>
+              <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
+            </div>
+          )}
+          
+          {error && <div className="error-message">{error}</div>}
+          {success && (
+            <div className="success-message">
+              ✅ Inscription réussie ! 
+              {finalRedirectUrl 
+                ? ` Redirection vers ${finalRedirectUrl} dans 2 secondes...` 
+                : ' Merci pour votre inscription !'
+              }
+            </div>
+          )}
+          
+          {/* Informations principales */}
+          <div className="form-section">
+            <h3>👤 Informations personnelles</h3>
             
-            {finalRedirectUrl ? (
-              <div className="redirect-info">
-                <p>Redirection vers <strong>{finalRedirectUrl}</strong>...</p>
-              </div>
-            ) : (
-              <div className="redirect-info">
-                <p>Redirection vers <strong>Google</strong>...</p>
-              </div>
-            )}
+            <input
+              type="text"
+              placeholder="Nom et prénom *"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              disabled={success}
+            />
+            
+            <input
+              type="email"
+              placeholder="Email *"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              disabled={success}
+            />
+            
+            <input
+              type="tel"
+              placeholder="Téléphone *"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+              disabled={success}
+            />
           </div>
-        </div>
+
+          {/* Adresse */}
+          <div className="form-section">
+            <h3>📍 Adresse</h3>
+            
+            <input
+              type="text"
+              placeholder="Adresse (rue, numéro)"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              disabled={success}
+            />
+            
+            <div className="form-row">
+              <input
+                type="text"
+                placeholder="Code postal"
+                value={postalCode}
+                onChange={(e) => setPostalCode(e.target.value)}
+                disabled={success}
+                maxLength={5}
+              />
+              
+              <input
+                type="text"
+                placeholder="Ville"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                disabled={success}
+              />
+            </div>
+          </div>
+
+          {/* Informations complémentaires */}
+          <div className="form-section">
+            <h3>🏢 Informations complémentaires</h3>
+            
+            <input
+              type="text"
+              placeholder="Entreprise / Organisation"
+              value={company}
+              onChange={(e) => setCompany(e.target.value)}
+              disabled={success}
+            />
+            
+            <textarea
+              placeholder="Votre projet, besoins, commentaires..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              disabled={success}
+              rows={3}
+            />
+          </div>
+          
+          <button type="submit" disabled={loading || success} className="submit-btn">
+            {loading ? "Inscription en cours..." : success ? "Inscription réussie !" : "✅ S'inscrire"}
+          </button>
+          
+          <p className="form-footer">
+            * Champs obligatoires • Vos données sont sécurisées
+          </p>
+        </form>
       </div>
     );
   }
 
   // Si actions configurées mais pas de formulaire → Actions uniquement
-  if (hasActions && !showForm && !actionsCompleted) {
+  if (hasActions && !actionsCompleted) {
     return (
       <div className="register-client-container">
         <div className="download-only-container">
@@ -605,7 +711,7 @@ const RegisterClient = () => {
   }
 
   // Si actions terminées sans formulaire → Message de fin
-  if (hasActions && actionsCompleted && !showForm) {
+  if (hasActions && actionsCompleted) {
     return (
       <div className="register-client-container">
         <div className="actions-completed">
@@ -624,43 +730,17 @@ const RegisterClient = () => {
     );
   }
 
-  // Affichage du formulaire (SEULEMENT si action form configurée)
+  // ✅ CORRECTION: Cas par défaut - afficher le formulaire
   return (
     <div className="register-client-container">
       <form onSubmit={handleRegister} className="register-form">
         <h2>📝 Inscription Prospect</h2>
         <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
         
-        {/* Bouton de téléchargement manuel si données disponibles */}
-        {businessCardData && (
-          <div className="manual-download-section">
-            <button 
-              type="button"
-              onClick={handleManualDownload}
-              className="manual-download-btn"
-              disabled={loading || success}
-            >
-              📥 Télécharger la carte de visite
-            </button>
-            <p className="download-help">Cliquez pour télécharger votre carte de visite avec QR code</p>
-          </div>
-        )}
-        
-        {finalRedirectUrl && (
-          <div className="redirect-notice">
-            <span className="redirect-icon">🌐</span>
-            <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
-          </div>
-        )}
-        
         {error && <div className="error-message">{error}</div>}
         {success && (
           <div className="success-message">
-            ✅ Inscription réussie ! 
-            {finalRedirectUrl 
-              ? ` Redirection vers ${finalRedirectUrl} dans 2 secondes...` 
-              : ' Redirection vers Google dans 2 secondes...'
-            }
+            ✅ Inscription réussie ! Merci pour votre inscription.
           </div>
         )}
         
