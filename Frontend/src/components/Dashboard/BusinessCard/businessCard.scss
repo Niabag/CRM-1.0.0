@@ -506,6 +506,38 @@
   box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
 }
 
+/* ✅ NOUVEAU: Styles pour l'affichage du fichier */
+.file-display-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.file-display-field {
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  color: #2d3748;
+  font-weight: 500;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.file-display-field::before {
+  content: '📄';
+  font-size: 1rem;
+}
+
+.file-help-text {
+  color: #718096;
+  font-size: 0.8rem;
+  font-style: italic;
+  line-height: 1.4;
+}
+
 /* Aperçu de la carte */
 .card-preview {
   background: white;
