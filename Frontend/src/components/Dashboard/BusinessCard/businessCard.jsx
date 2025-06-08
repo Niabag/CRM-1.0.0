@@ -5,10 +5,10 @@ import './businessCard.scss';
 
 const BusinessCard = ({ userId, user }) => {
   const [cardConfig, setCardConfig] = useState({
-    cardImage: '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg', // ✅ Image par défaut
+    cardImage: '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg',
     showQR: true,
-    qrPosition: 'top-right', // ✅ Position par défaut en haut à droite
-    qrSize: 100, // ✅ Taille par défaut 100px
+    qrPosition: 'top-right',
+    qrSize: 100,
     actions: []
   });
   
@@ -57,7 +57,7 @@ const BusinessCard = ({ userId, user }) => {
         setCardConfig(prev => ({
           ...prev,
           ...savedCard.cardConfig,
-          cardImage: savedCard.cardImage || prev.cardImage // ✅ Garde l'image par défaut si pas d'image sauvée
+          cardImage: savedCard.cardImage || prev.cardImage
         }));
       }
       
@@ -75,7 +75,7 @@ const BusinessCard = ({ userId, user }) => {
     
     try {
       const redirectAction = cardConfig.actions.find(action => 
-        action.active && (action.type === 'redirect' || action.type === 'website')
+        action.active && action.type === 'website'
       );
       
       let targetUrl;
@@ -236,8 +236,8 @@ const BusinessCard = ({ userId, user }) => {
         showQR: Boolean(configToSave.showQR !== undefined ? configToSave.showQR : true),
         qrPosition: ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(configToSave.qrPosition) 
           ? configToSave.qrPosition 
-          : 'top-right', // ✅ Position par défaut en haut à droite
-        qrSize: Math.max(50, Math.min(200, Number(configToSave.qrSize) || 100)), // ✅ Taille par défaut 100px
+          : 'top-right',
+        qrSize: Math.max(50, Math.min(200, Number(configToSave.qrSize) || 100)),
         actions: Array.isArray(configToSave.actions) ? configToSave.actions : []
       };
       
@@ -323,13 +323,11 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ FONCTION MODIFIÉE: Téléchargement de l'aperçu avec QR code intégré
   const downloadBusinessCard = async () => {
     try {
       setLoading(true);
       console.log('📥 Génération de la carte de visite avec QR code intégré...');
       
-      // ✅ NOUVEAU: Capturer directement l'aperçu de la carte avec QR code
       const cardUrl = await captureCardPreviewWithQR();
       
       if (cardUrl) {
@@ -348,19 +346,15 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Capturer l'aperçu avec QR code intégré
   const captureCardPreviewWithQR = async () => {
     return new Promise(async (resolve) => {
       try {
-        // Importer html2canvas dynamiquement
         const { default: html2canvas } = await import('html2canvas');
         
-        // Trouver l'élément de l'aperçu de la carte
         const previewElement = document.querySelector('.business-card-preview');
         
         if (!previewElement) {
           console.error('❌ Élément d\'aperçu non trouvé');
-          // Fallback vers la génération manuelle
           const fallbackUrl = await generateBusinessCardWithQR();
           resolve(fallbackUrl);
           return;
@@ -368,9 +362,8 @@ const BusinessCard = ({ userId, user }) => {
 
         console.log('📸 Capture de l\'aperçu de la carte avec QR code...');
 
-        // Capturer l'élément avec html2canvas
         const canvas = await html2canvas(previewElement, {
-          scale: 3, // Haute qualité
+          scale: 3,
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
@@ -379,41 +372,34 @@ const BusinessCard = ({ userId, user }) => {
           logging: false
         });
 
-        // Convertir en URL de données
         const dataUrl = canvas.toDataURL('image/png');
         console.log('✅ Aperçu de carte avec QR code capturé avec succès');
         resolve(dataUrl);
         
       } catch (error) {
         console.error('❌ Erreur lors de la capture:', error);
-        // Fallback vers la génération manuelle
         const fallbackUrl = await generateBusinessCardWithQR();
         resolve(fallbackUrl);
       }
     });
   };
 
-  // ✅ FONCTION DE FALLBACK: Génération manuelle si la capture échoue
   const generateBusinessCardWithQR = async () => {
     return new Promise(async (resolve) => {
       try {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
         
-        // Dimensions de carte de visite standard
         canvas.width = 1012;
         canvas.height = 638;
         
-        // Si une image personnalisée existe
         if (cardConfig.cardImage && cardConfig.cardImage !== '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg') {
           try {
             await new Promise((resolveImage, rejectImage) => {
               const cardImage = new Image();
               cardImage.onload = async () => {
-                // Dessiner l'image de carte de visite
                 ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
                 
-                // Ajouter le QR code si configuré
                 if (cardConfig.showQR && qrValue) {
                   await addQRCodeToCanvas(ctx, canvas);
                 }
@@ -428,11 +414,9 @@ const BusinessCard = ({ userId, user }) => {
               cardImage.src = cardConfig.cardImage;
             });
           } catch (imageError) {
-            // Fallback vers carte par défaut
             await generateDefaultCard(ctx, canvas);
           }
         } else {
-          // Générer une carte par défaut
           await generateDefaultCard(ctx, canvas);
         }
         
@@ -445,13 +429,11 @@ const BusinessCard = ({ userId, user }) => {
     });
   };
 
-  // ✅ FONCTION: Ajouter QR code au canvas
   const addQRCodeToCanvas = async (ctx, canvas) => {
     try {
       const qrSize = cardConfig.qrSize || 100;
       const position = cardConfig.qrPosition || 'top-right';
       
-      // Calculer la position
       let qrX, qrY;
       const margin = 20;
       
@@ -477,7 +459,6 @@ const BusinessCard = ({ userId, user }) => {
           qrY = margin;
       }
       
-      // Générer le QR code
       try {
         const QRCode = await import('qrcode');
         const qrDataUrl = await QRCode.default.toDataURL(qrValue, {
@@ -492,11 +473,9 @@ const BusinessCard = ({ userId, user }) => {
         await new Promise((resolve) => {
           const qrImage = new Image();
           qrImage.onload = () => {
-            // Fond blanc pour le QR code
             ctx.fillStyle = 'white';
             ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
             
-            // Dessiner le QR code
             ctx.drawImage(qrImage, qrX, qrY, qrSize, qrSize);
             resolve();
           };
@@ -505,7 +484,6 @@ const BusinessCard = ({ userId, user }) => {
         
       } catch (qrError) {
         console.log('⚠️ Erreur QRCode, utilisation du fallback');
-        // QR code de fallback
         ctx.fillStyle = 'white';
         ctx.fillRect(qrX - 5, qrY - 5, qrSize + 10, qrSize + 10);
         ctx.fillStyle = 'black';
@@ -520,34 +498,28 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ FONCTION: Générer une carte par défaut
   const generateDefaultCard = async (ctx, canvas) => {
-    // Fond dégradé
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#667eea');
     gradient.addColorStop(1, '#764ba2');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Titre principal
     ctx.fillStyle = 'white';
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
     
-    // Informations utilisateur
     ctx.font = '32px Arial';
     ctx.fillText(user?.name || 'Votre Nom', canvas.width / 2, 140);
     
     ctx.font = '24px Arial';
     ctx.fillText(user?.email || 'votre.email@exemple.com', canvas.width / 2, 180);
     
-    // Ajouter le QR code si configuré
     if (cardConfig.showQR && qrValue) {
       await addQRCodeToCanvas(ctx, canvas);
     }
     
-    // Texte d'instruction
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '18px Arial';
     ctx.textAlign = 'left';
@@ -555,14 +527,12 @@ const BusinessCard = ({ userId, user }) => {
     ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
   };
 
-  // ✅ NOUVELLE FONCTION: Télécharger l'image seule (sans QR code)
   const downloadCardImageOnly = async () => {
     try {
       setLoading(true);
       console.log('📥 Téléchargement de l\'image de carte seule...');
       
       if (cardConfig.cardImage && cardConfig.cardImage !== '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg') {
-        // Télécharger l'image personnalisée
         const link = document.createElement('a');
         link.download = 'carte-de-visite-image.png';
         link.href = cardConfig.cardImage;
@@ -601,7 +571,6 @@ const BusinessCard = ({ userId, user }) => {
     switch (type) {
       case 'download': return '📥';
       case 'form': return '📝';
-      case 'redirect': return '🔗';
       case 'website': return '🌐';
       default: return '❓';
     }
@@ -611,7 +580,6 @@ const BusinessCard = ({ userId, user }) => {
     switch (type) {
       case 'download': return 'Téléchargement';
       case 'form': return 'Formulaire';
-      case 'redirect': return 'Redirection';
       case 'website': return 'Site web';
       default: return 'Inconnu';
     }
@@ -697,7 +665,6 @@ const BusinessCard = ({ userId, user }) => {
                 <p className="save-status">✅ Image sauvegardée en base de données</p>
               )}
               
-              {/* ✅ NOUVEAU: Boutons de téléchargement dans le design */}
               <div className="download-buttons">
                 <button 
                   onClick={downloadCardImageOnly}
@@ -784,7 +751,7 @@ const BusinessCard = ({ userId, user }) => {
                       </div>
                       <div className="action-details">
                         {action.type === 'download' && getFileDisplayName(action.file)}
-                        {(action.type === 'redirect' || action.type === 'website') && action.url}
+                        {action.type === 'website' && action.url}
                         {action.type === 'form' && 'Formulaire d\'inscription'}
                       </div>
                     </div>
@@ -965,7 +932,6 @@ const BusinessCard = ({ userId, user }) => {
                 >
                   <option value="download">📥 Téléchargement</option>
                   <option value="form">📝 Formulaire</option>
-                  <option value="redirect">🔗 Redirection</option>
                   <option value="website">🌐 Site web</option>
                 </select>
               </div>
@@ -984,7 +950,7 @@ const BusinessCard = ({ userId, user }) => {
                 </div>
               )}
 
-              {(newAction.type === 'redirect' || newAction.type === 'website') && (
+              {newAction.type === 'website' && (
                 <div className="form-group">
                   <label>URL de destination :</label>
                   <input

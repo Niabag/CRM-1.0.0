@@ -19,17 +19,17 @@ const RegisterClient = () => {
   const [loading, setLoading] = useState(false);
   const actionsExecutedRef = useRef(false);
   
-  // ✅ NOUVEAU: Gestion de la redirection finale
+  // Gestion de la redirection finale
   const [finalRedirectUrl, setFinalRedirectUrl] = useState('');
   const [businessCardActions, setBusinessCardActions] = useState([]);
   const [businessCardData, setBusinessCardData] = useState(null);
   
-  // ✅ AJOUT: État pour contrôler l'affichage
+  // États pour contrôler l'affichage
   const [showForm, setShowForm] = useState(true);
   const [actionsCompleted, setActionsCompleted] = useState(false);
   const [hasActions, setHasActions] = useState(false);
 
-  // ✅ CORRECTION: Récupérer les VRAIES actions configurées
+  // Récupérer les VRAIES actions configurées
   useEffect(() => {
     const detectRedirectAndActions = async () => {
       // Extraire la destination de l'URL
@@ -42,16 +42,15 @@ const RegisterClient = () => {
         console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
       }
       
-      // ✅ CORRECTION: Récupérer les VRAIES données de carte de visite
+      // Récupérer les VRAIES données de carte de visite
       try {
         const actualUserId = userId || '507f1f77bcf86cd799439011';
         console.log('🔍 Récupération des données de carte pour userId:', actualUserId);
         
-        // ✅ NOUVEAU: Essayer de récupérer les données avec authentification
+        // Essayer de récupérer les données avec authentification
         const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards`, {
           headers: {
             'Content-Type': 'application/json',
-            // Pas d'auth pour l'instant, mais on récupère les données publiques
           }
         });
         
@@ -68,7 +67,7 @@ const RegisterClient = () => {
             
             console.log('✅ Actions actives trouvées:', activeActions);
             
-            // ✅ NOUVEAU: Déterminer si on affiche le formulaire
+            // Déterminer si on affiche le formulaire
             const hasFormAction = activeActions.some(action => action.type === 'form');
             setShowForm(hasFormAction);
             
@@ -95,7 +94,7 @@ const RegisterClient = () => {
     detectRedirectAndActions();
   }, [userId]);
 
-  // ✅ CORRECTION: Exécuter les actions SEULEMENT si elles existent
+  // Exécuter les actions SEULEMENT si elles existent
   useEffect(() => {
     if (hasActions && businessCardActions.length > 0 && !actionsExecutedRef.current) {
       actionsExecutedRef.current = true;
@@ -109,7 +108,7 @@ const RegisterClient = () => {
     }
   }, [hasActions, businessCardActions]);
 
-  // ✅ CORRECTION: Exécuter SEULEMENT les actions configurées
+  // Exécuter SEULEMENT les actions configurées
   const executeBusinessCardActions = async () => {
     if (!hasActions || businessCardActions.length === 0) {
       console.log('ℹ️ Aucune action à exécuter');
@@ -141,7 +140,6 @@ const RegisterClient = () => {
             console.log('📝 Action formulaire - affichage du formulaire');
             setShowForm(true);
             break;
-          case 'redirect':
           case 'website':
             console.log(`🌐 Action de redirection vers: ${action.url}`);
             if (action.url) {
@@ -160,7 +158,7 @@ const RegisterClient = () => {
     
     setActionsCompleted(true);
     
-    // ✅ CORRECTION: Si redirection finale, rediriger après les actions
+    // Si redirection finale, rediriger après les actions
     if (finalRedirectUrl) {
       setTimeout(() => {
         console.log('🌐 Redirection automatique vers:', finalRedirectUrl);
@@ -169,7 +167,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ FONCTION: Téléchargement avec les vraies données
+  // Téléchargement avec les vraies données
   const executeDownloadAction = async (action) => {
     try {
       console.log('📥 Génération de la carte de visite pour téléchargement...');
@@ -209,7 +207,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ FONCTION: Génération basée sur les vraies données de la carte
+  // Génération basée sur les vraies données de la carte
   const generateBusinessCardFromData = async () => {
     return new Promise(async (resolve) => {
       try {
@@ -222,7 +220,7 @@ const RegisterClient = () => {
         
         console.log('🖼️ Démarrage de la génération de carte...');
         
-        // ✅ CORRECTION: Utiliser les vraies données de la carte
+        // Utiliser les vraies données de la carte
         if (businessCardData && businessCardData.cardImage) {
           console.log('🖼️ Chargement de l\'image de carte configurée');
           
@@ -234,7 +232,7 @@ const RegisterClient = () => {
                 // Dessiner l'image de carte de visite
                 ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
                 
-                // ✅ Ajouter le QR code si configuré
+                // Ajouter le QR code si configuré
                 if (businessCardData.cardConfig && businessCardData.cardConfig.showQR) {
                   await addQRCodeToCard(ctx, canvas, businessCardData.cardConfig);
                 }
@@ -269,7 +267,7 @@ const RegisterClient = () => {
     });
   };
 
-  // ✅ FONCTION: Ajouter le QR code sur la carte
+  // Ajouter le QR code sur la carte
   const addQRCodeToCard = async (ctx, canvas, config) => {
     try {
       const qrSize = config.qrSize || 100;
@@ -343,7 +341,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ FONCTION: Dessiner un QR code de fallback
+  // Dessiner un QR code de fallback
   const drawFallbackQR = (ctx, x, y, size) => {
     // Fond blanc
     ctx.fillStyle = 'white';
@@ -374,7 +372,7 @@ const RegisterClient = () => {
     console.log('✅ QR code fallback ajouté');
   };
 
-  // ✅ FONCTION: Générer une carte par défaut
+  // Générer une carte par défaut
   const generateFallbackCard = async (ctx, canvas) => {
     // Fond dégradé
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
@@ -410,13 +408,13 @@ const RegisterClient = () => {
     ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
   };
 
-  // ✅ NOUVEAU: Fonction de téléchargement manuel
+  // Fonction de téléchargement manuel
   const handleManualDownload = async () => {
     console.log('📥 Téléchargement manuel demandé');
     await executeDownloadAction({ type: 'download', file: 'carte-apercu' });
   };
 
-  // ✅ NOUVEAU: Afficher le message de téléchargement
+  // Afficher le message de téléchargement
   const showDownloadMessage = () => {
     const messageDiv = document.createElement('div');
     messageDiv.innerHTML = `
@@ -496,7 +494,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ NOUVEAU: Affichage conditionnel selon les actions configurées
+  // Affichage conditionnel selon les actions configurées
   if (hasActions && !showForm && !actionsCompleted) {
     return (
       <div className="register-client-container">
@@ -546,14 +544,14 @@ const RegisterClient = () => {
     );
   }
 
-  // ✅ Affichage du formulaire (par défaut ou si action form configurée)
+  // Affichage du formulaire (par défaut ou si action form configurée)
   return (
     <div className="register-client-container">
       <form onSubmit={handleRegister} className="register-form">
         <h2>📝 Inscription Prospect</h2>
         <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
         
-        {/* ✅ Bouton de téléchargement manuel si données disponibles */}
+        {/* Bouton de téléchargement manuel si données disponibles */}
         {businessCardData && (
           <div className="manual-download-section">
             <button 
