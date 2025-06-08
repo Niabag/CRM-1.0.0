@@ -66,7 +66,7 @@ const Navbar = () => {
         <div className={`navbar-menu ${isMenuOpen ? 'active' : ''}`}>
           {!user ? (
             <>
-              <Link to="/" className="nav-link" onClick={closeMenu}>
+              <Link to="/\" className="nav-link\" onClick={closeMenu}>
                 <span>🏠</span> Accueil
               </Link>
               <Link to="/login" className="nav-link login-btn" onClick={closeMenu}>
