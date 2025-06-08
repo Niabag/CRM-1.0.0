@@ -228,6 +228,60 @@
   box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
 }
 
+/* ✅ NOUVEAU: Boutons de téléchargement dans le design */
+.download-buttons {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.download-image-btn,
+.download-with-qr-btn {
+  padding: 0.6rem 1.2rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 120px;
+  justify-content: center;
+}
+
+.download-image-btn {
+  background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+  color: white;
+}
+
+.download-image-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(237, 137, 54, 0.3);
+}
+
+.download-with-qr-btn {
+  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  color: white;
+}
+
+.download-with-qr-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
+}
+
+.download-image-btn:disabled,
+.download-with-qr-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+  opacity: 0.6;
+}
+
 /* ✅ NOUVEAU: Styles pour la gestion des actions */
 .actions-list {
   display: flex;
@@ -862,6 +916,15 @@
   .btn-cancel,
   .btn-save {
     width: 100%;
+  }
+
+  .download-buttons {
+    flex-direction: column;
+  }
+
+  .download-image-btn,
+  .download-with-qr-btn {
+    min-width: auto;
   }
 }
 

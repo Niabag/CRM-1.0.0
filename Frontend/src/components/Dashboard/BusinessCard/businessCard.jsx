@@ -21,7 +21,7 @@ const BusinessCard = ({ userId, user }) => {
   const [editingAction, setEditingAction] = useState(null);
   const [newAction, setNewAction] = useState({
     type: 'download',
-    file: 'carte-apercu', // ✅ NOUVEAU: Indique que c'est l'aperçu
+    file: 'carte-apercu',
     url: '',
     delay: 0,
     active: true
@@ -143,7 +143,7 @@ const BusinessCard = ({ userId, user }) => {
     
     setNewAction({
       type: 'download',
-      file: 'carte-apercu', // ✅ NOUVEAU: Valeur par défaut
+      file: 'carte-apercu',
       url: '',
       delay: 0,
       active: true
@@ -174,7 +174,7 @@ const BusinessCard = ({ userId, user }) => {
     setEditingAction(null);
     setNewAction({
       type: 'download',
-      file: 'carte-apercu', // ✅ NOUVEAU: Valeur par défaut
+      file: 'carte-apercu',
       url: '',
       delay: 0,
       active: true
@@ -323,22 +323,22 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ FONCTION MODIFIÉE: Téléchargement de l'image de l'aperçu avec QR code
+  // ✅ FONCTION MODIFIÉE: Téléchargement de l'aperçu avec QR code intégré
   const downloadBusinessCard = async () => {
     try {
       setLoading(true);
-      console.log('📥 Génération de la carte de visite pour téléchargement...');
+      console.log('📥 Génération de la carte de visite avec QR code intégré...');
       
-      // ✅ NOUVEAU: Capturer directement l'aperçu de la carte
-      const cardUrl = await captureCardPreview();
+      // ✅ NOUVEAU: Capturer directement l'aperçu de la carte avec QR code
+      const cardUrl = await captureCardPreviewWithQR();
       
       if (cardUrl) {
         const link = document.createElement('a');
-        link.download = 'carte-de-visite-qr.png';
+        link.download = 'carte-de-visite-avec-qr.png';
         link.href = cardUrl;
         link.click();
         
-        showSuccessMessage('✅ Carte téléchargée !');
+        showSuccessMessage('✅ Carte avec QR code téléchargée !');
       }
     } catch (error) {
       console.error('❌ Erreur téléchargement:', error);
@@ -348,8 +348,8 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVELLE FONCTION: Capturer l'aperçu de la carte depuis le DOM
-  const captureCardPreview = async () => {
+  // ✅ NOUVELLE FONCTION: Capturer l'aperçu avec QR code intégré
+  const captureCardPreviewWithQR = async () => {
     return new Promise(async (resolve) => {
       try {
         // Importer html2canvas dynamiquement
@@ -360,26 +360,28 @@ const BusinessCard = ({ userId, user }) => {
         
         if (!previewElement) {
           console.error('❌ Élément d\'aperçu non trouvé');
-          resolve(null);
+          // Fallback vers la génération manuelle
+          const fallbackUrl = await generateBusinessCardWithQR();
+          resolve(fallbackUrl);
           return;
         }
 
-        console.log('📸 Capture de l\'aperçu de la carte...');
+        console.log('📸 Capture de l\'aperçu de la carte avec QR code...');
 
         // Capturer l'élément avec html2canvas
         const canvas = await html2canvas(previewElement, {
-          scale: 2, // Haute qualité
+          scale: 3, // Haute qualité
           useCORS: true,
           allowTaint: true,
           backgroundColor: '#ffffff',
           width: previewElement.offsetWidth,
           height: previewElement.offsetHeight,
-          logging: false // Désactiver les logs
+          logging: false
         });
 
         // Convertir en URL de données
         const dataUrl = canvas.toDataURL('image/png');
-        console.log('✅ Aperçu de carte capturé avec succès');
+        console.log('✅ Aperçu de carte avec QR code capturé avec succès');
         resolve(dataUrl);
         
       } catch (error) {
@@ -553,6 +555,31 @@ const BusinessCard = ({ userId, user }) => {
     ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
   };
 
+  // ✅ NOUVELLE FONCTION: Télécharger l'image seule (sans QR code)
+  const downloadCardImageOnly = async () => {
+    try {
+      setLoading(true);
+      console.log('📥 Téléchargement de l\'image de carte seule...');
+      
+      if (cardConfig.cardImage && cardConfig.cardImage !== '/images/default-business-card.png') {
+        // Télécharger l'image personnalisée
+        const link = document.createElement('a');
+        link.download = 'carte-de-visite-image.png';
+        link.href = cardConfig.cardImage;
+        link.click();
+        
+        showSuccessMessage('✅ Image de carte téléchargée !');
+      } else {
+        showErrorMessage('❌ Aucune image personnalisée à télécharger');
+      }
+    } catch (error) {
+      console.error('❌ Erreur téléchargement image:', error);
+      showErrorMessage('❌ Erreur lors du téléchargement');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const copyQRLink = () => {
     if (qrValue) {
       navigator.clipboard.writeText(qrValue);
@@ -590,16 +617,15 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ FONCTION MODIFIÉE: Affichage du fichier pour l'action de téléchargement
   const getFileDisplayName = (filePath) => {
     if (!filePath) return '';
     
     if (filePath === 'carte-apercu') {
-      return 'Carte de visite (aperçu avec QR code)';
+      return 'Carte de visite';
     }
     
     if (filePath === '/images/carte-de-visite.png') {
-      return 'Carte de visite (aperçu)';
+      return 'Carte de visite';
     }
     
     const fileName = filePath.split('/').pop();
@@ -670,6 +696,26 @@ const BusinessCard = ({ userId, user }) => {
               {savedCardData && (
                 <p className="save-status">✅ Image sauvegardée en base de données</p>
               )}
+              
+              {/* ✅ NOUVEAU: Boutons de téléchargement dans le design */}
+              <div className="download-buttons">
+                <button 
+                  onClick={downloadCardImageOnly}
+                  className="download-image-btn"
+                  disabled={loading || !cardConfig.cardImage || cardConfig.cardImage === '/images/default-business-card.png'}
+                  title="Télécharger l'image seule"
+                >
+                  📷 Image seule
+                </button>
+                <button 
+                  onClick={downloadBusinessCard}
+                  className="download-with-qr-btn"
+                  disabled={loading}
+                  title="Télécharger avec QR code"
+                >
+                  📥 Avec QR code
+                </button>
+              </div>
             </div>
 
             <div className="form-group">
@@ -824,7 +870,7 @@ const BusinessCard = ({ userId, user }) => {
 
             <div className="preview-actions">
               <button onClick={downloadBusinessCard} className="btn-download" disabled={loading}>
-                {loading ? '⏳ Génération...' : '💾 Télécharger la carte'}
+                {loading ? '⏳ Génération...' : '💾 Télécharger avec QR code'}
               </button>
             </div>
           </div>
@@ -932,7 +978,7 @@ const BusinessCard = ({ userId, user }) => {
                       {getFileDisplayName(newAction.file)}
                     </div>
                     <small className="file-help-text">
-                      ✅ La carte de visite sera générée automatiquement avec votre design et QR code depuis l'aperçu
+                      ✅ La carte de visite sera générée automatiquement avec votre design et QR code
                     </small>
                   </div>
                 </div>
