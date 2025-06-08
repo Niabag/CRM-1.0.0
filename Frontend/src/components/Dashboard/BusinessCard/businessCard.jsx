@@ -323,13 +323,14 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVEAU: Fonction de téléchargement manuel de la carte
+  // ✅ FONCTION MODIFIÉE: Téléchargement de l'image de l'aperçu avec QR code
   const downloadBusinessCard = async () => {
     try {
       setLoading(true);
       console.log('📥 Génération de la carte de visite pour téléchargement...');
       
-      const cardUrl = await generateBusinessCardWithQR();
+      // Capturer l'aperçu de la carte directement depuis le DOM
+      const cardUrl = await captureCardPreview();
       
       if (cardUrl) {
         const link = document.createElement('a');
@@ -347,7 +348,47 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVEAU: Génération de carte de visite avec QR code
+  // ✅ NOUVELLE FONCTION: Capturer l'aperçu de la carte depuis le DOM
+  const captureCardPreview = async () => {
+    return new Promise(async (resolve) => {
+      try {
+        // Importer html2canvas dynamiquement
+        const { default: html2canvas } = await import('html2canvas');
+        
+        // Trouver l'élément de l'aperçu de la carte
+        const previewElement = document.querySelector('.business-card-preview');
+        
+        if (!previewElement) {
+          console.error('❌ Élément d\'aperçu non trouvé');
+          resolve(null);
+          return;
+        }
+
+        // Capturer l'élément avec html2canvas
+        const canvas = await html2canvas(previewElement, {
+          scale: 2, // Haute qualité
+          useCORS: true,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+          width: previewElement.offsetWidth,
+          height: previewElement.offsetHeight
+        });
+
+        // Convertir en URL de données
+        const dataUrl = canvas.toDataURL('image/png');
+        console.log('✅ Aperçu de carte capturé avec succès');
+        resolve(dataUrl);
+        
+      } catch (error) {
+        console.error('❌ Erreur lors de la capture:', error);
+        // Fallback vers la génération manuelle
+        const fallbackUrl = await generateBusinessCardWithQR();
+        resolve(fallbackUrl);
+      }
+    });
+  };
+
+  // ✅ FONCTION DE FALLBACK: Génération manuelle si la capture échoue
   const generateBusinessCardWithQR = async () => {
     return new Promise(async (resolve) => {
       try {
@@ -550,7 +591,7 @@ const BusinessCard = ({ userId, user }) => {
     if (!filePath) return '';
     
     if (filePath === '/images/carte-de-visite.png') {
-      return 'Carte de visite';
+      return 'Carte de visite (aperçu)';
     }
     
     const fileName = filePath.split('/').pop();
@@ -883,7 +924,7 @@ const BusinessCard = ({ userId, user }) => {
                       {getFileDisplayName(newAction.file)}
                     </div>
                     <small className="file-help-text">
-                      Le fichier "Carte de visite" sera généré automatiquement avec votre design et QR code
+                      La carte de visite sera générée automatiquement avec votre design et QR code depuis l'aperçu
                     </small>
                   </div>
                 </div>

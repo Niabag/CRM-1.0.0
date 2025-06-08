@@ -176,13 +176,13 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ CORRECTION: Fonction de téléchargement améliorée
+  // ✅ FONCTION MODIFIÉE: Téléchargement de l'image de l'aperçu
   const executeDownloadAction = async (action) => {
     try {
       console.log('📥 Génération de la carte de visite pour téléchargement...');
       
       // Générer la carte de visite avec les vraies données
-      const cardImageData = await generateBusinessCardWithQR();
+      const cardImageData = await generateBusinessCardFromData();
       
       if (cardImageData) {
         // Télécharger l'image générée
@@ -203,8 +203,8 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ CORRECTION: Génération de carte de visite améliorée
-  const generateBusinessCardWithQR = async () => {
+  // ✅ FONCTION MODIFIÉE: Génération basée sur les données de la carte
+  const generateBusinessCardFromData = async () => {
     return new Promise(async (resolve) => {
       try {
         const canvas = document.createElement('canvas');
@@ -216,7 +216,7 @@ const RegisterClient = () => {
         
         console.log('🖼️ Démarrage de la génération de carte...');
         
-        // ✅ ÉTAPE 1: Charger l'image de carte de visite si disponible
+        // ✅ ÉTAPE 1: Utiliser l'image personnalisée si disponible
         if (businessCardData && businessCardData.cardImage) {
           console.log('🖼️ Chargement de l\'image de carte personnalisée');
           
