@@ -5,10 +5,10 @@ import './businessCard.scss';
 
 const BusinessCard = ({ userId, user }) => {
   const [cardConfig, setCardConfig] = useState({
-    cardImage: '/images/default-business-card.png',
+    cardImage: '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg', // ✅ Image par défaut
     showQR: true,
-    qrPosition: 'bottom-right',
-    qrSize: 150,
+    qrPosition: 'top-right', // ✅ Position par défaut en haut à droite
+    qrSize: 100, // ✅ Taille par défaut 100px
     actions: []
   });
   
@@ -57,13 +57,13 @@ const BusinessCard = ({ userId, user }) => {
         setCardConfig(prev => ({
           ...prev,
           ...savedCard.cardConfig,
-          cardImage: savedCard.cardImage || prev.cardImage
+          cardImage: savedCard.cardImage || prev.cardImage // ✅ Garde l'image par défaut si pas d'image sauvée
         }));
       }
       
       console.log('✅ Carte de visite chargée depuis la BDD');
     } catch (error) {
-      console.log('ℹ️ Aucune carte de visite sauvegardée trouvée');
+      console.log('ℹ️ Aucune carte de visite sauvegardée trouvée, utilisation des paramètres par défaut');
     }
   };
 
@@ -236,8 +236,8 @@ const BusinessCard = ({ userId, user }) => {
         showQR: Boolean(configToSave.showQR !== undefined ? configToSave.showQR : true),
         qrPosition: ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(configToSave.qrPosition) 
           ? configToSave.qrPosition 
-          : 'bottom-right',
-        qrSize: Math.max(100, Math.min(200, Number(configToSave.qrSize) || 150)),
+          : 'top-right', // ✅ Position par défaut en haut à droite
+        qrSize: Math.max(50, Math.min(200, Number(configToSave.qrSize) || 100)), // ✅ Taille par défaut 100px
         actions: Array.isArray(configToSave.actions) ? configToSave.actions : []
       };
       
@@ -405,7 +405,7 @@ const BusinessCard = ({ userId, user }) => {
         canvas.height = 638;
         
         // Si une image personnalisée existe
-        if (cardConfig.cardImage && cardConfig.cardImage !== '/images/default-business-card.png') {
+        if (cardConfig.cardImage && cardConfig.cardImage !== '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg') {
           try {
             await new Promise((resolveImage, rejectImage) => {
               const cardImage = new Image();
@@ -448,8 +448,8 @@ const BusinessCard = ({ userId, user }) => {
   // ✅ FONCTION: Ajouter QR code au canvas
   const addQRCodeToCanvas = async (ctx, canvas) => {
     try {
-      const qrSize = cardConfig.qrSize || 150;
-      const position = cardConfig.qrPosition || 'bottom-right';
+      const qrSize = cardConfig.qrSize || 100;
+      const position = cardConfig.qrPosition || 'top-right';
       
       // Calculer la position
       let qrX, qrY;
@@ -474,7 +474,7 @@ const BusinessCard = ({ userId, user }) => {
           break;
         default:
           qrX = canvas.width - qrSize - margin;
-          qrY = canvas.height - qrSize - margin;
+          qrY = margin;
       }
       
       // Générer le QR code
@@ -561,7 +561,7 @@ const BusinessCard = ({ userId, user }) => {
       setLoading(true);
       console.log('📥 Téléchargement de l\'image de carte seule...');
       
-      if (cardConfig.cardImage && cardConfig.cardImage !== '/images/default-business-card.png') {
+      if (cardConfig.cardImage && cardConfig.cardImage !== '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg') {
         // Télécharger l'image personnalisée
         const link = document.createElement('a');
         link.download = 'carte-de-visite-image.png';
@@ -570,7 +570,7 @@ const BusinessCard = ({ userId, user }) => {
         
         showSuccessMessage('✅ Image de carte téléchargée !');
       } else {
-        showErrorMessage('❌ Aucune image personnalisée à télécharger');
+        showErrorMessage('❌ Utilisez l\'image par défaut ou importez votre propre image');
       }
     } catch (error) {
       console.error('❌ Erreur téléchargement image:', error);
@@ -702,7 +702,7 @@ const BusinessCard = ({ userId, user }) => {
                 <button 
                   onClick={downloadCardImageOnly}
                   className="download-image-btn"
-                  disabled={loading || !cardConfig.cardImage || cardConfig.cardImage === '/images/default-business-card.png'}
+                  disabled={loading}
                   title="Télécharger l'image seule"
                 >
                   📷 Image seule
@@ -737,10 +737,10 @@ const BusinessCard = ({ userId, user }) => {
                     value={cardConfig.qrPosition}
                     onChange={(e) => handleConfigChange('qrPosition', e.target.value)}
                   >
-                    <option value="bottom-right">Bas droite</option>
-                    <option value="bottom-left">Bas gauche</option>
                     <option value="top-right">Haut droite</option>
                     <option value="top-left">Haut gauche</option>
+                    <option value="bottom-right">Bas droite</option>
+                    <option value="bottom-left">Bas gauche</option>
                   </select>
                 </div>
 
@@ -748,7 +748,7 @@ const BusinessCard = ({ userId, user }) => {
                   <label>Taille du QR code :</label>
                   <input
                     type="range"
-                    min="100"
+                    min="50"
                     max="200"
                     value={cardConfig.qrSize}
                     onChange={(e) => handleConfigChange('qrSize', parseInt(e.target.value))}
