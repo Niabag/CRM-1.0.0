@@ -8,15 +8,12 @@
 
 /* Statistiques en haut de page */
 .stats-header {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 2rem;
   margin-bottom: 3rem;
 }
 
 .stats-overview {
   display: grid;
-  grid-template-columns: repeat(5, 1fr); /* ✅ MODIFIÉ: 5 colonnes pour le nouvel indicateur */
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
 }
 
@@ -78,58 +75,11 @@
   font-weight: 500;
 }
 
-/* ✅ NOUVEAU: Style pour l'indicateur de sauvegarde */
 .save-status {
   margin-top: 0.5rem;
   font-size: 0.8rem;
   color: #48bb78;
   font-weight: 500;
-  font-style: italic;
-}
-
-.recent-activity {
-  background: white;
-  border-radius: 16px;
-  padding: 1.5rem;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-}
-
-.recent-activity h4 {
-  margin: 0 0 1rem 0;
-  color: #2d3748;
-  font-size: 1.1rem;
-  font-weight: 600;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 0.5rem;
-}
-
-.activity-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.activity-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  font-size: 0.8rem;
-}
-
-.activity-time {
-  font-weight: 600;
-  color: #667eea;
-}
-
-.activity-location {
-  color: #4a5568;
-}
-
-.activity-device {
-  color: #718096;
   font-style: italic;
 }
 
@@ -159,7 +109,7 @@
   font-weight: 500;
 }
 
-/* ✅ Layout en colonnes fixes */
+/* Layout en colonnes */
 .card-main-content {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -196,13 +146,6 @@
   font-weight: 600;
   border-bottom: 2px solid #e2e8f0;
   padding-bottom: 0.5rem;
-}
-
-.section-description {
-  margin: 0 0 1.5rem 0;
-  color: #718096;
-  font-size: 0.9rem;
-  font-style: italic;
 }
 
 .form-group {
@@ -245,164 +188,6 @@
   margin-right: 10px;
 }
 
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-}
-
-/* Actions multiples */
-.actions-list {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.action-item {
-  border: 2px solid #e2e8f0;
-  border-radius: 12px;
-  padding: 1rem;
-  background: #f8f9fa;
-  transition: all 0.3s ease;
-}
-
-.action-item.disabled {
-  opacity: 0.6;
-  background: #f1f3f4;
-}
-
-.action-item:hover {
-  border-color: #667eea;
-  background: white;
-}
-
-.action-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1rem;
-}
-
-.action-order {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-}
-
-.action-controls {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-move,
-.btn-remove {
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-}
-
-.btn-move {
-  background: #e2e8f0;
-  color: #4a5568;
-}
-
-.btn-move:hover:not(:disabled) {
-  background: #cbd5e0;
-}
-
-.btn-move:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-remove {
-  background: #fed7d7;
-  color: #c53030;
-}
-
-.btn-remove:hover {
-  background: #feb2b2;
-}
-
-.action-config {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.btn-add-action {
-  padding: 1rem;
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  color: white;
-  border: none;
-  border-radius: 8px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
-.btn-add-action:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(72, 187, 120, 0.3);
-}
-
-/* ✅ NOUVEAU: Style pour la checkbox carte de visite */
-.checkbox-option {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
-  color: white;
-  border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-weight: 500;
-  border: none;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.checkbox-option:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(159, 122, 234, 0.3);
-}
-
-.checkbox-option input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  margin: 0;
-  accent-color: white;
-}
-
-/* Options de téléchargement */
-.download-options {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
 /* Upload de fichiers */
 .file-upload {
   position: relative;
@@ -429,11 +214,6 @@
   border: none;
   text-align: center;
   white-space: nowrap;
-}
-
-.upload-btn.small {
-  padding: 0.5rem 1rem;
-  font-size: 0.8rem;
 }
 
 .upload-btn:hover {
@@ -516,7 +296,6 @@
   margin-bottom: 2rem;
 }
 
-.btn-preview,
 .btn-download {
   padding: 0.75rem 1.5rem;
   border: none;
@@ -527,19 +306,10 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-}
-
-.btn-preview {
-  background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
-  color: white;
-}
-
-.btn-download {
   background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
   color: white;
 }
 
-.btn-preview:hover,
 .btn-download:hover:not(:disabled) {
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
@@ -550,65 +320,6 @@
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
-}
-
-/* Aperçu des actions */
-.actions-preview {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1.5rem;
-}
-
-.actions-preview h4 {
-  margin: 0 0 1rem 0;
-  color: #2d3748;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.actions-timeline {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.timeline-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.timeline-marker {
-  width: 30px;
-  height: 30px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.9rem;
-  flex-shrink: 0;
-}
-
-.timeline-content {
-  flex: 1;
-  padding: 0.75rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-  border-left: 3px solid #667eea;
-}
-
-.timeline-action {
-  font-weight: 600;
-  color: #2d3748;
-  margin-bottom: 0.25rem;
-}
-
-.timeline-delay {
-  font-size: 0.8rem;
-  color: #718096;
-  font-style: italic;
 }
 
 /* Section QR Code */
@@ -647,7 +358,6 @@
   justify-content: center;
 }
 
-/* ✅ NOUVEAU: Placeholder pour QR code */
 .qr-placeholder {
   text-align: center;
   color: #718096;
@@ -681,61 +391,15 @@
   gap: 1.5rem;
 }
 
-.qr-details h4 {
-  margin: 0 0 1rem 0;
-  color: #2d3748;
-  font-size: 1.1rem;
-  font-weight: 600;
-}
-
-.action-info {
-  margin-bottom: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.action-summary {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem;
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-.action-number {
-  background: #667eea;
-  color: white;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  font-weight: 600;
-  flex-shrink: 0;
-}
-
-.action-type {
-  flex: 1;
-  font-weight: 500;
-  color: #2d3748;
-}
-
-.action-timing {
-  font-size: 0.8rem;
-  color: #718096;
-  font-style: italic;
-}
-
-.qr-link {
+.qr-details {
   background: #f8f9fa;
   padding: 1rem;
   border-radius: 8px;
   border-left: 4px solid #48bb78;
+}
+
+.qr-link {
+  margin-top: 1rem;
 }
 
 .qr-link a {
@@ -800,47 +464,14 @@
   box-shadow: none;
 }
 
-/* États vides */
-.no-data {
-  text-align: center;
-  color: #718096;
-  font-style: italic;
-  padding: 2rem;
-}
-
-/* Loading */
-.notifications-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem;
-  text-align: center;
-}
-
-.loading-spinner {
-  font-size: 3rem;
-  margin-bottom: 1rem;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 /* Responsive */
 @media (max-width: 1200px) {
   .business-card-container {
     padding: 1.5rem;
   }
   
-  .stats-header {
-    grid-template-columns: 1fr;
-  }
-  
   .stats-overview {
-    grid-template-columns: repeat(3, 1fr); /* ✅ MODIFIÉ: 3 colonnes sur tablette */
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .card-main-content {
@@ -862,7 +493,7 @@
   }
   
   .stats-overview {
-    grid-template-columns: repeat(2, 1fr); /* ✅ MODIFIÉ: 2 colonnes sur mobile */
+    grid-template-columns: 1fr;
   }
   
   .qr-display {
@@ -875,14 +506,6 @@
   }
   
   .preview-actions {
-    flex-direction: column;
-  }
-  
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-  
-  .download-options {
     flex-direction: column;
   }
 }
@@ -904,16 +527,6 @@
   
   .qr-actions {
     flex-direction: column;
-  }
-  
-  .action-summary {
-    flex-direction: column;
-    text-align: center;
-    gap: 0.5rem;
-  }
-
-  .stats-overview {
-    grid-template-columns: 1fr; /* ✅ MODIFIÉ: 1 colonne sur très petit écran */
   }
 }
 
@@ -942,14 +555,6 @@
 
 .stat-card:nth-child(3) {
   animation-delay: 0.2s;
-}
-
-.stat-card:nth-child(4) {
-  animation-delay: 0.3s;
-}
-
-.stat-card:nth-child(5) { /* ✅ NOUVEAU: Animation pour le 5ème indicateur */
-  animation-delay: 0.4s;
 }
 
 .config-section:nth-child(2) {

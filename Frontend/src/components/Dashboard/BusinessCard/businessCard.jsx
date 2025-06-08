@@ -6,36 +6,23 @@ import './businessCard.scss';
 const BusinessCard = ({ userId, user }) => {
   const [cardConfig, setCardConfig] = useState({
     cardImage: '/images/default-business-card.png',
-    downloadImage: '/images/welcome.png',
-    redirectType: 'form',
-    websiteUrl: '',
     showQR: true,
     qrPosition: 'bottom-right',
     qrSize: 150,
-    actions: [
-      { id: 1, type: 'download', file: '/images/welcome.png', delay: 0, active: true },
-      { id: 2, type: 'form', url: '', delay: 1000, active: true },
-      { id: 3, type: 'redirect', url: 'https://google.com', delay: 3000, active: true }
-    ]
+    actions: []
   });
   
   const [qrValue, setQrValue] = useState("");
-  const [previewMode, setPreviewMode] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [generatedCardUrl, setGeneratedCardUrl] = useState(null);
   const [savedCardData, setSavedCardData] = useState(null);
   
   const [stats, setStats] = useState({
     scansToday: 0,
     scansThisMonth: 0,
     totalScans: 0,
-    conversions: 0,
-    conversionRate: 0,
-    topHours: [],
-    recentScans: []
+    conversions: 0
   });
 
-  // ✅ CORRECTION: Générer le QR code automatiquement et charger la carte sauvegardée
   useEffect(() => {
     if (userId) {
       generateQRCode();
@@ -44,20 +31,17 @@ const BusinessCard = ({ userId, user }) => {
     }
   }, [userId]);
 
-  // ✅ EFFET SÉPARÉ: Régénérer le QR code quand les actions changent
   useEffect(() => {
     if (userId && cardConfig.actions) {
       generateQRCode();
     }
   }, [cardConfig.actions, userId]);
 
-  // ✅ NOUVELLE FONCTION: Charger la carte de visite sauvegardée
   const loadSavedBusinessCard = async () => {
     try {
       const savedCard = await apiRequest(API_ENDPOINTS.BUSINESS_CARDS.BASE);
       setSavedCardData(savedCard);
       
-      // Appliquer la configuration sauvegardée
       if (savedCard.cardConfig) {
         setCardConfig(prev => ({
           ...prev,
@@ -72,7 +56,7 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ FONCTION CORRIGÉE: Générer le QR code
+  // ✅ CORRECTION: Générer un QR code simple sans trop de données
   const generateQRCode = () => {
     if (!userId) {
       console.error("❌ userId manquant pour générer le QR code");
@@ -80,14 +64,22 @@ const BusinessCard = ({ userId, user }) => {
     }
     
     try {
-      const activeActions = cardConfig.actions.filter(a => a.active);
-      const actionsData = encodeURIComponent(JSON.stringify(activeActions));
-      const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}?actions=${actionsData}`;
+      // ✅ QR CODE SIMPLE: Juste l'URL d'inscription
+      const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
       
-      setQrValue(targetUrl);
+      // ✅ VÉRIFICATION: S'assurer que l'URL n'est pas trop longue
+      if (targetUrl.length > 200) {
+        console.error("❌ URL trop longue pour le QR code");
+        setQrValue(`${window.location.origin}/register-client/${userId}`);
+      } else {
+        setQrValue(targetUrl);
+      }
+      
       console.log("✅ QR code généré:", targetUrl);
     } catch (error) {
       console.error("❌ Erreur lors de la génération du QR code:", error);
+      // ✅ FALLBACK: URL simple en cas d'erreur
+      setQrValue(`${window.location.origin}/register-client/${userId}`);
     }
   };
 
@@ -97,20 +89,7 @@ const BusinessCard = ({ userId, user }) => {
         scansToday: Math.floor(Math.random() * 50) + 10,
         scansThisMonth: Math.floor(Math.random() * 500) + 100,
         totalScans: Math.floor(Math.random() * 2000) + 500,
-        conversions: Math.floor(Math.random() * 100) + 20,
-        conversionRate: Math.floor(Math.random() * 30) + 15,
-        topHours: [
-          { hour: '14h', scans: 12 },
-          { hour: '16h', scans: 8 },
-          { hour: '10h', scans: 6 },
-          { hour: '18h', scans: 5 }
-        ],
-        recentScans: [
-          { time: '14:32', location: 'Paris', device: 'Mobile' },
-          { time: '13:45', location: 'Lyon', device: 'Desktop' },
-          { time: '12:18', location: 'Marseille', device: 'Mobile' },
-          { time: '11:22', location: 'Toulouse', device: 'Tablet' }
-        ]
+        conversions: Math.floor(Math.random() * 100) + 20
       };
       
       setStats(mockStats);
@@ -119,7 +98,6 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ FONCTION MODIFIÉE: Sauvegarder l'image en BDD
   const handleCardImageUpload = async (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -127,92 +105,37 @@ const BusinessCard = ({ userId, user }) => {
       reader.onloadend = async () => {
         const imageData = reader.result;
         
-        // Mettre à jour l'état local
         setCardConfig(prev => ({
           ...prev,
           cardImage: imageData
         }));
         
-        // Sauvegarder en BDD
         await saveBusinessCardToDB(imageData);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  // ✅ FONCTION CORRIGÉE: Sauvegarder en base de données avec validation stricte
   const saveBusinessCardToDB = async (cardImage = null, config = null) => {
     try {
       setLoading(true);
       
-      // ✅ VALIDATION STRICTE des données avant envoi
       const configToSave = config || cardConfig;
       
-      // ✅ NETTOYAGE ET VALIDATION des actions
-      const cleanedActions = Array.isArray(configToSave.actions) 
-        ? configToSave.actions
-            .filter(action => {
-              // Filtrer les actions valides
-              const isValid = action && 
-                             typeof action === 'object' && 
-                             action.type && 
-                             ['download', 'form', 'redirect', 'website'].includes(action.type) &&
-                             typeof action.id === 'number' &&
-                             action.id > 0;
-              
-              if (!isValid) {
-                console.warn('⚠️ Action invalide filtrée:', action);
-              }
-              
-              return isValid;
-            })
-            .map((action, index) => {
-              // Nettoyer et valider chaque action
-              const cleanAction = {
-                id: Number(action.id) || (Date.now() + index),
-                type: String(action.type),
-                file: String(action.file || ''),
-                url: String(action.url || ''),
-                delay: Number(action.delay) || 0,
-                active: Boolean(action.active !== undefined ? action.active : true)
-              };
-              
-              // Validation supplémentaire
-              if (!['download', 'form', 'redirect', 'website'].includes(cleanAction.type)) {
-                cleanAction.type = 'download';
-              }
-              
-              if (cleanAction.delay < 0) {
-                cleanAction.delay = 0;
-              }
-              
-              return cleanAction;
-            })
-        : [];
-
-      // ✅ CONFIGURATION NETTOYÉE avec validation
+      // ✅ NETTOYAGE: Configuration simple
       const cleanedConfig = {
         showQR: Boolean(configToSave.showQR !== undefined ? configToSave.showQR : true),
         qrPosition: ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(configToSave.qrPosition) 
           ? configToSave.qrPosition 
           : 'bottom-right',
         qrSize: Math.max(100, Math.min(200, Number(configToSave.qrSize) || 150)),
-        actions: cleanedActions
+        actions: Array.isArray(configToSave.actions) ? configToSave.actions : []
       };
       
       const dataToSave = {
         cardImage: cardImage || cardConfig.cardImage,
         cardConfig: cleanedConfig
       };
-      
-      console.log("💾 Données validées à sauvegarder:", {
-        hasCardImage: !!dataToSave.cardImage,
-        configKeys: Object.keys(dataToSave.cardConfig),
-        actionsCount: dataToSave.cardConfig.actions.length,
-        actionsValid: dataToSave.cardConfig.actions.every(a => 
-          a.id && a.type && ['download', 'form', 'redirect', 'website'].includes(a.type)
-        )
-      });
       
       const response = await apiRequest(API_ENDPOINTS.BUSINESS_CARDS.BASE, {
         method: 'POST',
@@ -222,7 +145,6 @@ const BusinessCard = ({ userId, user }) => {
       setSavedCardData(response.businessCard);
       console.log('✅ Carte de visite sauvegardée en BDD');
       
-      // Afficher un message de succès discret
       showSuccessMessage('✅ Carte sauvegardée');
       
     } catch (error) {
@@ -233,7 +155,6 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ NOUVELLES FONCTIONS: Messages de feedback
   const showSuccessMessage = (message) => {
     const successMsg = document.createElement('div');
     successMsg.textContent = message;
@@ -280,20 +201,6 @@ const BusinessCard = ({ userId, user }) => {
     }, 3000);
   };
 
-  const handleDownloadImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setCardConfig(prev => ({
-          ...prev,
-          downloadImage: reader.result
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const handleConfigChange = async (field, value) => {
     const newConfig = {
       ...cardConfig,
@@ -302,154 +209,59 @@ const BusinessCard = ({ userId, user }) => {
     
     setCardConfig(newConfig);
     
-    // Sauvegarder automatiquement la configuration si une carte existe
     if (savedCardData) {
       await saveBusinessCardToDB(null, newConfig);
     }
   };
 
-  const addAction = async () => {
-    const newAction = {
-      id: Date.now(),
-      type: 'download',
-      file: '/images/welcome.png',
-      url: '',
-      delay: 0,
-      active: true
-    };
-    
-    const newConfig = {
-      ...cardConfig,
-      actions: [...cardConfig.actions, newAction]
-    };
-    
-    setCardConfig(newConfig);
-    
-    // Sauvegarder automatiquement
-    if (savedCardData) {
-      await saveBusinessCardToDB(null, newConfig);
-    }
-  };
-
-  const updateAction = async (actionId, field, value) => {
-    const newConfig = {
-      ...cardConfig,
-      actions: cardConfig.actions.map(action => 
-        action.id === actionId 
-          ? { ...action, [field]: value }
-          : action
-      )
-    };
-    
-    setCardConfig(newConfig);
-    
-    // Sauvegarder automatiquement
-    if (savedCardData) {
-      await saveBusinessCardToDB(null, newConfig);
-    }
-  };
-
-  const removeAction = async (actionId) => {
-    const newConfig = {
-      ...cardConfig,
-      actions: cardConfig.actions.filter(action => action.id !== actionId)
-    };
-    
-    setCardConfig(newConfig);
-    
-    // Sauvegarder automatiquement
-    if (savedCardData) {
-      await saveBusinessCardToDB(null, newConfig);
-    }
-  };
-
-  const moveAction = async (actionId, direction) => {
-    const currentIndex = cardConfig.actions.findIndex(a => a.id === actionId);
-    if (
-      (direction === 'up' && currentIndex === 0) ||
-      (direction === 'down' && currentIndex === cardConfig.actions.length - 1)
-    ) return;
-
-    const newActions = [...cardConfig.actions];
-    const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
-    
-    [newActions[currentIndex], newActions[targetIndex]] = [newActions[targetIndex], newActions[currentIndex]];
-    
-    const newConfig = {
-      ...cardConfig,
-      actions: newActions
-    };
-    
-    setCardConfig(newConfig);
-    
-    // Sauvegarder automatiquement
-    if (savedCardData) {
-      await saveBusinessCardToDB(null, newConfig);
-    }
-  };
-
-  // ✅ NOUVELLE FONCTION: Générer la carte de visite avec QR code
   const generateBusinessCard = async () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
-    // Dimensions optimales pour carte de visite
     canvas.width = 800;
     canvas.height = 500;
     
-    // Fond dégradé
     const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
     gradient.addColorStop(0, '#667eea');
     gradient.addColorStop(1, '#764ba2');
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
-    // Titre
     ctx.fillStyle = 'white';
     ctx.font = 'bold 48px Arial';
     ctx.textAlign = 'center';
     ctx.fillText('CARTE DE VISITE NUMÉRIQUE', canvas.width / 2, 80);
     
-    // Informations utilisateur
     ctx.font = '32px Arial';
     ctx.fillText(user?.name || 'Votre Nom', canvas.width / 2, 140);
     
     ctx.font = '24px Arial';
     ctx.fillText(user?.email || 'votre.email@exemple.com', canvas.width / 2, 180);
     
-    // QR Code (simulé avec un carré)
     if (cardConfig.showQR && qrValue) {
       const qrSize = 120;
       const qrX = canvas.width - qrSize - 40;
       const qrY = canvas.height - qrSize - 40;
       
-      // Fond blanc pour QR
       ctx.fillStyle = 'white';
       ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
       
-      // QR simulé
       ctx.fillStyle = 'black';
       ctx.fillRect(qrX, qrY, qrSize, qrSize);
       
-      // Texte QR
       ctx.fillStyle = 'white';
       ctx.font = '14px Arial';
       ctx.textAlign = 'center';
       ctx.fillText('SCANNEZ-MOI', qrX + qrSize/2, qrY + qrSize/2);
     }
     
-    // Instructions
     ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
     ctx.font = '18px Arial';
     ctx.textAlign = 'left';
     ctx.fillText('📱 Scannez le QR code pour vous inscrire', 40, canvas.height - 80);
     ctx.fillText('💼 Recevez automatiquement nos informations', 40, canvas.height - 50);
     
-    // Convertir en URL
     const dataUrl = canvas.toDataURL('image/png');
-    setGeneratedCardUrl(dataUrl);
-    
-    // ✅ NOUVEAU: Sauvegarder automatiquement la carte générée
     await saveBusinessCardToDB(dataUrl);
     
     return dataUrl;
@@ -462,16 +274,6 @@ const BusinessCard = ({ userId, user }) => {
     link.download = 'carte-de-visite-numerique.png';
     link.href = cardUrl;
     link.click();
-  };
-
-  // ✅ FONCTION MODIFIÉE: Utiliser la carte générée pour les téléchargements
-  const handleUseGeneratedCard = async (actionId, useCard) => {
-    if (useCard) {
-      const cardUrl = await generateBusinessCard();
-      updateAction(actionId, 'file', cardUrl);
-    } else {
-      updateAction(actionId, 'file', '/images/welcome.png');
-    }
   };
 
   const copyQRLink = () => {
@@ -488,16 +290,6 @@ const BusinessCard = ({ userId, user }) => {
       window.open(qrValue, '_blank');
     } else {
       showErrorMessage('❌ Aucun QR code généré');
-    }
-  };
-
-  const getActionTypeLabel = (type) => {
-    switch (type) {
-      case 'download': return '📥 Téléchargement';
-      case 'form': return '📝 Formulaire';
-      case 'redirect': return '🌐 Redirection';
-      case 'website': return '🌐 Site web';
-      default: return type;
     }
   };
 
@@ -529,41 +321,19 @@ const BusinessCard = ({ userId, user }) => {
             <div className="stat-content">
               <h3>{stats.conversions}</h3>
               <p>Conversions</p>
-              <span className="stat-trend">{stats.conversionRate}% taux</span>
+              <span className="stat-trend">Prospects inscrits</span>
             </div>
-          </div>
-          
-          <div className="stat-card">
-            <div className="stat-icon">⏰</div>
-            <div className="stat-content">
-              <h3>{stats.topHours[0]?.hour || '--'}</h3>
-              <p>Heure de pic</p>
-              <span className="stat-trend">{stats.topHours[0]?.scans || 0} scans</span>
-            </div>
-          </div>
-        </div>
-        
-        <div className="recent-activity">
-          <h4>🕒 Activité récente</h4>
-          <div className="activity-list">
-            {stats.recentScans.map((scan, index) => (
-              <div key={index} className="activity-item">
-                <span className="activity-time">{scan.time}</span>
-                <span className="activity-location">{scan.location}</span>
-                <span className="activity-device">{scan.device}</span>
-              </div>
-            ))}
           </div>
         </div>
       </div>
 
-      {/* ✅ EN-TÊTE REMIS EN HAUT */}
+      {/* En-tête */}
       <div className="card-header">
         <h2>💼 Carte de Visite Numérique</h2>
-        <p>Créez et personnalisez votre carte de visite avec QR code et actions multiples</p>
+        <p>Créez et personnalisez votre carte de visite avec QR code</p>
       </div>
 
-      {/* ✅ Layout en colonnes fixes */}
+      {/* Layout en colonnes */}
       <div className="card-main-content">
         {/* Colonne de gauche - Configuration */}
         <div className="card-config-column">
@@ -629,124 +399,9 @@ const BusinessCard = ({ userId, user }) => {
               </>
             )}
           </div>
-
-          {/* Actions après scan */}
-          <div className="config-section">
-            <h3>🎯 Actions après scan</h3>
-            <p className="section-description">
-              Configurez plusieurs actions qui se déclencheront dans l'ordre après le scan du QR code
-            </p>
-            
-            <div className="actions-list">
-              {cardConfig.actions.map((action, index) => (
-                <div key={action.id} className={`action-item ${!action.active ? 'disabled' : ''}`}>
-                  <div className="action-header">
-                    <div className="action-order">#{index + 1}</div>
-                    <div className="action-controls">
-                      <button 
-                        onClick={() => moveAction(action.id, 'up')}
-                        disabled={index === 0}
-                        className="btn-move"
-                        title="Monter"
-                      >
-                        ↑
-                      </button>
-                      <button 
-                        onClick={() => moveAction(action.id, 'down')}
-                        disabled={index === cardConfig.actions.length - 1}
-                        className="btn-move"
-                        title="Descendre"
-                      >
-                        ↓
-                      </button>
-                      <button 
-                        onClick={() => removeAction(action.id)}
-                        className="btn-remove"
-                        title="Supprimer"
-                      >
-                        🗑️
-                      </button>
-                    </div>
-                  </div>
-                  
-                  <div className="action-config">
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label>Type d'action :</label>
-                        <select
-                          value={action.type}
-                          onChange={(e) => updateAction(action.id, 'type', e.target.value)}
-                        >
-                          <option value="download">📥 Téléchargement</option>
-                          <option value="form">📝 Formulaire</option>
-                          <option value="redirect">🌐 Redirection</option>
-                          <option value="website">🌐 Site web</option>
-                        </select>
-                      </div>
-                      
-                      <div className="form-group">
-                        <label>Délai (ms) :</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="500"
-                          value={action.delay}
-                          onChange={(e) => updateAction(action.id, 'delay', parseInt(e.target.value))}
-                        />
-                      </div>
-                    </div>
-                    
-                    {(action.type === 'redirect' || action.type === 'website') && (
-                      <div className="form-group">
-                        <label>URL :</label>
-                        <input
-                          type="url"
-                          placeholder="https://monsite.com"
-                          value={action.url || ''}
-                          onChange={(e) => updateAction(action.id, 'url', e.target.value)}
-                        />
-                      </div>
-                    )}
-                    
-                    {action.type === 'download' && (
-                      <div className="form-group">
-                        <label>Fichier à télécharger :</label>
-                        <div className="download-options">
-                          {/* ✅ CHECKBOX CARTE DE VISITE */}
-                          <label className="checkbox-option">
-                            <input
-                              type="checkbox"
-                              checked={action.file && action.file.startsWith('data:image')}
-                              onChange={(e) => handleUseGeneratedCard(action.id, e.target.checked)}
-                            />
-                            💼 Carte de visite
-                          </label>
-                        </div>
-                      </div>
-                    )}
-                    
-                    <div className="form-group">
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={action.active}
-                          onChange={(e) => updateAction(action.id, 'active', e.target.checked)}
-                        />
-                        Action active
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            
-            <button onClick={addAction} className="btn-add-action">
-              ➕ Ajouter une action
-            </button>
-          </div>
         </div>
 
-        {/* Colonne de droite - Aperçu fixe */}
+        {/* Colonne de droite - Aperçu */}
         <div className="card-preview-column">
           <div className="card-preview">
             <h3>👁️ Aperçu de la carte</h3>
@@ -773,35 +428,9 @@ const BusinessCard = ({ userId, user }) => {
             </div>
 
             <div className="preview-actions">
-              <button onClick={() => setPreviewMode(!previewMode)} className="btn-preview">
-                {previewMode ? '📝 Mode édition' : '👁️ Mode aperçu'}
-              </button>
-              
               <button onClick={downloadBusinessCard} className="btn-download" disabled={loading}>
                 {loading ? '⏳ Génération...' : '💾 Télécharger la carte'}
               </button>
-            </div>
-            
-            {/* Aperçu des actions */}
-            <div className="actions-preview">
-              <h4>🎬 Séquence d'actions</h4>
-              <div className="actions-timeline">
-                {cardConfig.actions
-                  .filter(action => action.active)
-                  .map((action, index) => (
-                  <div key={action.id} className="timeline-item">
-                    <div className="timeline-marker">{index + 1}</div>
-                    <div className="timeline-content">
-                      <div className="timeline-action">
-                        {getActionTypeLabel(action.type)}
-                      </div>
-                      <div className="timeline-delay">
-                        {action.delay > 0 ? `Après ${action.delay}ms` : 'Immédiat'}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
 
@@ -830,21 +459,6 @@ const BusinessCard = ({ userId, user }) => {
               
               <div className="qr-info">
                 <div className="qr-details">
-                  <h4>Actions configurées :</h4>
-                  <div className="action-info">
-                    {cardConfig.actions
-                      .filter(action => action.active)
-                      .map((action, index) => (
-                      <div key={action.id} className="action-summary">
-                        <span className="action-number">#{index + 1}</span>
-                        <span className="action-type">{getActionTypeLabel(action.type)}</span>
-                        <span className="action-timing">
-                          {action.delay > 0 ? `+${action.delay}ms` : 'Immédiat'}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  
                   {qrValue && (
                     <div className="qr-link">
                       <strong>Lien :</strong>
