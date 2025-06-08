@@ -1,15 +1,31 @@
-import { useEffect, useState } from "react";
-import QRCode from "react-qr-code";
-import Devis from "../../components/Dashboard/Devis/devisPage";
-import DevisListPage from "../../components/Dashboard/Devis/devisListPage";
-import ProspectsPage from "../../components/Dashboard/Prospects/prospectsPage";
-import Analytics from "../../components/Dashboard/Analytics/analytics";
-import Settings from "../../components/Dashboard/Settings/settings";
-import Notifications from "../../components/Dashboard/Notifications/notifications";
-import BusinessCard from "../../components/Dashboard/BusinessCard/businessCard";
+import { useEffect, useState, lazy, Suspense } from "react";
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from "../../config/api";
 import { useNavigate } from "react-router-dom";
 import "./dashboard.scss";
+
+// Lazy load dashboard components
+const Analytics = lazy(() => import("../../components/Dashboard/Analytics/analytics"));
+const ProspectsPage = lazy(() => import("../../components/Dashboard/Prospects/prospectsPage"));
+const DevisListPage = lazy(() => import("../../components/Dashboard/Devis/devisListPage"));
+const Devis = lazy(() => import("../../components/Dashboard/Devis/devisPage"));
+const Notifications = lazy(() => import("../../components/Dashboard/Notifications/notifications"));
+const Settings = lazy(() => import("../../components/Dashboard/Settings/settings"));
+const BusinessCard = lazy(() => import("../../components/Dashboard/BusinessCard/businessCard"));
+
+// Loading component
+const ComponentLoader = () => (
+  <div style={{ 
+    display: 'flex', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    height: '50vh',
+    flexDirection: 'column',
+    gap: '1rem'
+  }}>
+    <div style={{ fontSize: '2rem' }}>⏳</div>
+    <p>Chargement du module...</p>
+  </div>
+);
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -80,16 +96,6 @@ const Dashboard = () => {
     fetchClients();
   }, []);
 
-  const generateQRCode = () => {
-    if (userId) {
-      const generatedLink = FRONTEND_ROUTES.CLIENT_REGISTER(userId);
-      setQrValue(generatedLink);
-      setError(null);
-    } else {
-      setError("L'ID utilisateur n'est pas encore disponible.");
-    }
-  };
-
   const handleViewClientDevis = (client) => {
     setSelectedClientForDevis(client);
     setActiveTab("devis-creation");
@@ -120,6 +126,83 @@ const Dashboard = () => {
     { id: "carte", icon: "💼", label: "Carte de visite" },
     { id: "settings", icon: "⚙️", label: "Paramètres" }
   ];
+
+  // Render the active component based on the selected tab
+  const renderActiveComponent = () => {
+    switch (activeTab) {
+      case "dashboard":
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <Analytics />
+          </Suspense>
+        );
+      case "clients":
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <ProspectsPage 
+              clients={clients}
+              onRefresh={fetchClients}
+              onViewClientDevis={handleViewClientDevis}
+            />
+          </Suspense>
+        );
+      case "devis":
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <DevisListPage 
+              clients={clients}
+              onEditDevis={handleEditDevisFromList}
+              onCreateDevis={handleCreateNewDevis}
+            />
+          </Suspense>
+        );
+      case "devis-creation":
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <Devis 
+              clients={clients}
+              initialDevisFromClient={editingDevis}
+              selectedClientId={selectedClientForDevis?._id}
+              onBack={selectedClientForDevis ? () => {
+                setSelectedClientForDevis(null);
+                setEditingDevis(null);
+                setActiveTab("clients");
+              } : editingDevis ? () => {
+                setEditingDevis(null);
+                setActiveTab("devis");
+              } : null}
+            />
+          </Suspense>
+        );
+      case "notifications":
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <Notifications />
+          </Suspense>
+        );
+      case "settings":
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <Settings />
+          </Suspense>
+        );
+      case "carte":
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <BusinessCard 
+              userId={userId} 
+              user={user}
+            />
+          </Suspense>
+        );
+      default:
+        return (
+          <Suspense fallback={<ComponentLoader />}>
+            <Analytics />
+          </Suspense>
+        );
+    }
+  };
 
   return (
     <div className="dashboard-layout">
@@ -196,48 +279,7 @@ const Dashboard = () => {
 
         {/* Main Content */}
         <main className="main-content">
-          {activeTab === "dashboard" && <Analytics />}
-
-          {activeTab === "clients" && (
-            <ProspectsPage 
-              clients={clients}
-              onRefresh={fetchClients}
-              onViewClientDevis={handleViewClientDevis}
-            />
-          )}
-
-          {activeTab === "devis" && (
-            <DevisListPage 
-              clients={clients}
-              onEditDevis={handleEditDevisFromList}
-              onCreateDevis={handleCreateNewDevis}
-            />
-          )}
-
-          {activeTab === "devis-creation" && (
-            <Devis 
-              clients={clients}
-              initialDevisFromClient={editingDevis}
-              selectedClientId={selectedClientForDevis?._id}
-              onBack={selectedClientForDevis ? () => {
-                setSelectedClientForDevis(null);
-                setEditingDevis(null);
-                setActiveTab("clients");
-              } : editingDevis ? () => {
-                setEditingDevis(null);
-                setActiveTab("devis");
-              } : null}
-            />
-          )}
-
-          {activeTab === "notifications" && <Notifications />}
-          {activeTab === "settings" && <Settings />}
-          {activeTab === "carte" && (
-            <BusinessCard 
-              userId={userId} 
-              user={user}
-            />
-          )}
+          {renderActiveComponent()}
         </main>
       </div>
     </div>

@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import QRCode from "react-qr-code";
 import { API_ENDPOINTS, FRONTEND_ROUTES, apiRequest } from '../../../config/api';
 import './businessCard.scss';
+
+// Lazy load QRCode component
+const QRCode = React.lazy(() => import('react-qr-code'));
 
 const BusinessCard = ({ userId, user }) => {
   const [cardConfig, setCardConfig] = useState({
@@ -328,16 +330,49 @@ const BusinessCard = ({ userId, user }) => {
       setLoading(true);
       console.log('📥 Génération de la carte de visite avec QR code intégré...');
       
-      const cardUrl = await captureCardPreviewWithQR();
+      // Dynamically import html2canvas only when needed
+      const html2canvas = (await import('html2canvas')).default;
       
-      if (cardUrl) {
-        const link = document.createElement('a');
-        link.download = 'carte-de-visite-avec-qr.png';
-        link.href = cardUrl;
-        link.click();
+      const previewElement = document.querySelector('.business-card-preview');
+      
+      if (!previewElement) {
+        console.error('❌ Élément d\'aperçu non trouvé');
+        const fallbackUrl = await generateBusinessCardWithQR();
         
-        showSuccessMessage('✅ Carte avec QR code téléchargée !');
+        if (fallbackUrl) {
+          const link = document.createElement('a');
+          link.download = 'carte-de-visite-avec-qr.png';
+          link.href = fallbackUrl;
+          link.click();
+          
+          showSuccessMessage('✅ Carte avec QR code téléchargée !');
+        }
+        
+        setLoading(false);
+        return;
       }
+
+      console.log('📸 Capture de l\'aperçu de la carte avec QR code...');
+
+      const canvas = await html2canvas(previewElement, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        width: previewElement.offsetWidth,
+        height: previewElement.offsetHeight,
+        logging: false
+      });
+
+      const dataUrl = canvas.toDataURL('image/png');
+      console.log('✅ Aperçu de carte avec QR code capturé avec succès');
+      
+      const link = document.createElement('a');
+      link.download = 'carte-de-visite-avec-qr.png';
+      link.href = dataUrl;
+      link.click();
+      
+      showSuccessMessage('✅ Carte avec QR code téléchargée !');
     } catch (error) {
       console.error('❌ Erreur téléchargement:', error);
       showErrorMessage('❌ Erreur lors du téléchargement');
@@ -346,87 +381,47 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  const captureCardPreviewWithQR = async () => {
-    return new Promise(async (resolve) => {
-      try {
-        const { default: html2canvas } = await import('html2canvas');
-        
-        const previewElement = document.querySelector('.business-card-preview');
-        
-        if (!previewElement) {
-          console.error('❌ Élément d\'aperçu non trouvé');
-          const fallbackUrl = await generateBusinessCardWithQR();
-          resolve(fallbackUrl);
-          return;
-        }
-
-        console.log('📸 Capture de l\'aperçu de la carte avec QR code...');
-
-        const canvas = await html2canvas(previewElement, {
-          scale: 3,
-          useCORS: true,
-          allowTaint: true,
-          backgroundColor: '#ffffff',
-          width: previewElement.offsetWidth,
-          height: previewElement.offsetHeight,
-          logging: false
-        });
-
-        const dataUrl = canvas.toDataURL('image/png');
-        console.log('✅ Aperçu de carte avec QR code capturé avec succès');
-        resolve(dataUrl);
-        
-      } catch (error) {
-        console.error('❌ Erreur lors de la capture:', error);
-        const fallbackUrl = await generateBusinessCardWithQR();
-        resolve(fallbackUrl);
-      }
-    });
-  };
-
   const generateBusinessCardWithQR = async () => {
-    return new Promise(async (resolve) => {
-      try {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        
-        canvas.width = 1012;
-        canvas.height = 638;
-        
-        if (cardConfig.cardImage && cardConfig.cardImage !== '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg') {
-          try {
-            await new Promise((resolveImage, rejectImage) => {
-              const cardImage = new Image();
-              cardImage.onload = async () => {
-                ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
-                
-                if (cardConfig.showQR && qrValue) {
-                  await addQRCodeToCanvas(ctx, canvas);
-                }
-                
-                resolveImage();
-              };
+    try {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      canvas.width = 1012;
+      canvas.height = 638;
+      
+      if (cardConfig.cardImage && cardConfig.cardImage !== '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg') {
+        try {
+          await new Promise((resolveImage, rejectImage) => {
+            const cardImage = new Image();
+            cardImage.onload = async () => {
+              ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
               
-              cardImage.onerror = () => {
-                rejectImage();
-              };
+              if (cardConfig.showQR && qrValue) {
+                await addQRCodeToCanvas(ctx, canvas);
+              }
               
-              cardImage.src = cardConfig.cardImage;
-            });
-          } catch (imageError) {
-            await generateDefaultCard(ctx, canvas);
-          }
-        } else {
+              resolveImage();
+            };
+            
+            cardImage.onerror = () => {
+              rejectImage();
+            };
+            
+            cardImage.src = cardConfig.cardImage;
+          });
+        } catch (imageError) {
           await generateDefaultCard(ctx, canvas);
         }
-        
-        resolve(canvas.toDataURL('image/png'));
-        
-      } catch (error) {
-        console.error('❌ Erreur génération carte:', error);
-        resolve(null);
+      } else {
+        await generateDefaultCard(ctx, canvas);
       }
-    });
+      
+      return canvas.toDataURL('image/png');
+      
+    } catch (error) {
+      console.error('❌ Erreur génération carte:', error);
+      return null;
+    }
   };
 
   const addQRCodeToCanvas = async (ctx, canvas) => {
@@ -460,8 +455,9 @@ const BusinessCard = ({ userId, user }) => {
       }
       
       try {
-        const QRCode = await import('qrcode');
-        const qrDataUrl = await QRCode.default.toDataURL(qrValue, {
+        // Dynamically import QRCode only when needed
+        const QRCode = (await import('qrcode')).default;
+        const qrDataUrl = await QRCode.toDataURL(qrValue, {
           width: qrSize,
           margin: 1,
           color: {
@@ -824,12 +820,14 @@ const BusinessCard = ({ userId, user }) => {
                 
                 {cardConfig.showQR && qrValue && (
                   <div className={`qr-overlay ${cardConfig.qrPosition}`}>
-                    <QRCode 
-                      value={qrValue} 
-                      size={cardConfig.qrSize * 0.6}
-                      bgColor="white"
-                      fgColor="black"
-                    />
+                    <React.Suspense fallback={<div>Chargement QR...</div>}>
+                      <QRCode 
+                        value={qrValue} 
+                        size={cardConfig.qrSize * 0.6}
+                        bgColor="white"
+                        fgColor="black"
+                      />
+                    </React.Suspense>
                   </div>
                 )}
               </div>
@@ -849,12 +847,14 @@ const BusinessCard = ({ userId, user }) => {
             <div className="qr-display">
               <div className="qr-code-wrapper">
                 {qrValue ? (
-                  <QRCode 
-                    value={qrValue} 
-                    size={200}
-                    bgColor="white"
-                    fgColor="black"
-                  />
+                  <React.Suspense fallback={<div>Chargement QR...</div>}>
+                    <QRCode 
+                      value={qrValue} 
+                      size={200}
+                      bgColor="white"
+                      fgColor="black"
+                    />
+                  </React.Suspense>
                 ) : (
                   <div className="qr-placeholder">
                     <p>⏳ Génération du QR code...</p>

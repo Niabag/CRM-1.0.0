@@ -181,17 +181,9 @@ input, textarea, select {
 }
 
 /* Utility classes */
-.text-center {
-  text-align: center;
-}
-
-.text-left {
-  text-align: left;
-}
-
-.text-right {
-  text-align: right;
-}
+.text-center { text-align: center; }
+.text-left { text-align: left; }
+.text-right { text-align: right; }
 
 .mb-1 { margin-bottom: 0.25rem; }
 .mb-2 { margin-bottom: 0.5rem; }
@@ -268,12 +260,8 @@ input, textarea, select {
 
 /* Animations globales */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 @keyframes fadeInUp {
@@ -285,34 +273,6 @@ input, textarea, select {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Smooth transitions pour tous les éléments interactifs */
-* {
-  transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, 
-              box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 /* Focus states pour l'accessibilité */

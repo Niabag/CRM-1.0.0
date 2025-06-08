@@ -1,8 +1,23 @@
-import { useEffect, useState } from "react";
-import DevisPreview from "./devisPreview";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { API_ENDPOINTS, apiRequest } from "../../../config/api";
 import { DEFAULT_DEVIS } from "./constants";
 import "./devis.scss";
+
+// Lazy load the DevisPreview component
+const DevisPreview = lazy(() => import("./devisPreview"));
+
+const LoadingPreview = () => (
+  <div style={{ 
+    padding: '2rem', 
+    textAlign: 'center',
+    background: '#f8f9fa',
+    borderRadius: '12px',
+    marginTop: '2rem'
+  }}>
+    <div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div>
+    <p>Chargement de l'aperçu du devis...</p>
+  </div>
+);
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "";
@@ -180,12 +195,17 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ GÉNÉRATION PDF AVEC COUPURES AU NIVEAU DES LIGNES DE TABLEAU
   const handleDownloadPDF = async (devis) => {
     try {
       setLoading(true);
       
-      // Créer un élément temporaire
+      // Dynamically import required libraries
+      const [html2canvas, jsPDF] = await Promise.all([
+        import('html2canvas').then(module => module.default),
+        import('jspdf').then(module => module.default)
+      ]);
+      
+      // Create a temporary div for rendering
       const tempDiv = document.createElement('div');
       tempDiv.style.position = 'absolute';
       tempDiv.style.left = '-9999px';
@@ -199,19 +219,13 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
       tempDiv.style.lineHeight = '1.4';
       document.body.appendChild(tempDiv);
 
-      // Importer les modules nécessaires
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import('html2canvas'),
-        import('jspdf')
-      ]);
-
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pageWidth = 210;
       const pageHeight = 297;
       const margin = 10;
       let currentY = margin;
 
-      // ✅ FONCTION POUR AJOUTER UNE SECTION AU PDF
+      // Function to add a section to the PDF
       const addSectionToPDF = async (htmlContent, isFirstPage = false) => {
         tempDiv.innerHTML = htmlContent;
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -227,7 +241,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         const imgWidth = pageWidth - (margin * 2);
         const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
-        // Vérifier si on a besoin d'une nouvelle page
+        // Check if we need a new page
         if (currentY + imgHeight > pageHeight - margin && !isFirstPage) {
           pdf.addPage();
           currentY = margin;
@@ -239,22 +253,13 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         return imgHeight;
       };
 
-      // ✅ 1. EN-TÊTE
+      // Generate PDF sections
       await addSectionToPDF(generateHeaderHTML(devis), true);
-
-      // ✅ 2. INFORMATIONS PARTIES
       await addSectionToPDF(generatePartiesHTML(devis));
-
-      // ✅ 3. MÉTADONNÉES
       await addSectionToPDF(generateMetadataHTML(devis));
-
-      // ✅ 4. TABLEAU - TRAITEMENT LIGNE PAR LIGNE
-      const clientInfo = clients.find(c => c._id === devis.clientId) || {};
-      
-      // En-tête du tableau
       await addSectionToPDF(generateTableHeaderHTML());
 
-      // ✅ TRAITER CHAQUE LIGNE INDIVIDUELLEMENT
+      // Process each article row individually
       for (let i = 0; i < devis.articles.length; i++) {
         const article = devis.articles[i];
         const price = parseFloat(article.unitPrice || "0");
@@ -280,21 +285,16 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         await addSectionToPDF(rowHTML);
       }
 
-      // ✅ 5. TOTAUX
       await addSectionToPDF(generateTotalsHTML(devis));
-
-      // ✅ 6. CONDITIONS
       await addSectionToPDF(generateConditionsHTML(devis));
 
-      // Télécharger le PDF
+      // Generate filename and save
       const fileName = devis.title?.replace(/[^a-zA-Z0-9]/g, '-') || `devis-${devis._id}`;
       pdf.save(`${fileName}.pdf`);
 
-      // Nettoyer
+      // Clean up
       document.body.removeChild(tempDiv);
       
-      console.log("✅ PDF généré avec coupures au niveau des lignes");
-
     } catch (error) {
       console.error('❌ Erreur génération PDF:', error);
       alert('❌ Erreur lors de la génération du PDF: ' + error.message);
@@ -303,7 +303,7 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
     }
   };
 
-  // ✅ FONCTIONS POUR GÉNÉRER CHAQUE SECTION HTML
+  // HTML generation functions for PDF
   const generateHeaderHTML = (devis) => `
     <div style="margin-bottom: 30px; padding-bottom: 20px; border-bottom: 3px solid #e2e8f0;">
       <div style="display: flex; justify-content: space-between; align-items: flex-start;">
@@ -649,15 +649,17 @@ const Devis = ({ clients = [], initialDevisFromClient = null, onBack, selectedCl
         </div>
 
         {currentDevis && (
-          <DevisPreview
-            devisData={currentDevis}
-            totalTTC={totalTTC}
-            onFieldChange={handleFieldChange}
-            onAddArticle={handleAddArticle}
-            onRemoveArticle={handleRemoveArticle}
-            onReset={handleReset}
-            clients={clients}
-          />
+          <Suspense fallback={<LoadingPreview />}>
+            <DevisPreview
+              devisData={currentDevis}
+              totalTTC={totalTTC}
+              onFieldChange={handleFieldChange}
+              onAddArticle={handleAddArticle}
+              onRemoveArticle={handleRemoveArticle}
+              onReset={handleReset}
+              clients={clients}
+            />
+          </Suspense>
         )}
       </div>
     </div>

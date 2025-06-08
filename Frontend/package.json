@@ -10,12 +10,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "html2canvas": "^1.4.1",
-    "jspdf": "^3.0.1",
-    "qrcode": "^1.5.3",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
-    "react-qr-code": "^2.0.15",
     "react-router-dom": "^6.26.0"
   },
   "devDependencies": {
@@ -29,5 +25,11 @@
     "globals": "^15.15.0",
     "sass-embedded": "^1.85.1",
     "vite": "^6.3.5"
+  },
+  "optionalDependencies": {
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
+    "qrcode": "^1.5.3",
+    "react-qr-code": "^2.0.15"
   }
 }

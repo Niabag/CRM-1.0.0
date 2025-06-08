@@ -1,4 +1,4 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar";
@@ -6,11 +6,21 @@ import Home from "./pages/Home/Index";
 import Login from "./pages/Login/Index";
 import RegisterUser from "./pages/RegisterUser/Index";
 import RegisterClient from "./pages/RegisterClient/Index";
-import Dashboard from "./pages/Dashboard/Index";
-import ProspectEditPage from "./components/Dashboard/Prospects/prospectEditPage";
 import Error from "./pages/Error/Index";
 import ProtectedRoute from "./components/ProtectedRoute/Index";
 import "./utils/styles/global.scss";
+
+// Lazy load components that aren't needed on initial load
+const Dashboard = lazy(() => import("./pages/Dashboard/Index"));
+const ProspectEditPage = lazy(() => import("./components/Dashboard/Prospects/prospectEditPage"));
+
+// Loading fallback
+const LoadingFallback = () => (
+  <div className="loading-container">
+    <div className="loading-spinner">⏳</div>
+    <p className="loading-text">Chargement en cours...</p>
+  </div>
+);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -26,22 +36,26 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/register-client/:userId" element={<RegisterClient />} />
           <Route path="/login" element={<Login />} />
           
-          {/* Routes protégées */}
+          {/* Routes protégées avec lazy loading */}
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <Dashboard />
+                <Suspense fallback={<LoadingFallback />}>
+                  <Dashboard />
+                </Suspense>
               </ProtectedRoute>
             }
           />
           
-          {/* Route de modification des prospects */}
+          {/* Route de modification des prospects avec lazy loading */}
           <Route
             path="/prospect/edit/:id"
             element={
               <ProtectedRoute>
-                <ProspectEditPage />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ProspectEditPage />
+                </Suspense>
               </ProtectedRoute>
             }
           />
