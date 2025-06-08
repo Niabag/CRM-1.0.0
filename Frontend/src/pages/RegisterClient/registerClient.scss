@@ -32,7 +32,33 @@
   font-size: 1rem;
 }
 
-/* ✅ NOUVEAU: Container pour téléchargement uniquement */
+/* ✅ NOUVEAU: Container pour aucune action */
+.no-actions-container {
+  background: white;
+  border-radius: 20px;
+  padding: 40px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+  width: 100%;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.no-actions-message h2 {
+  color: #2d3748;
+  margin: 0 0 20px 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+}
+
+.no-actions-message p {
+  color: #718096;
+  margin: 0 0 30px 0;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+/* Container pour téléchargement uniquement */
 .download-only-container {
   background: white;
   border-radius: 20px;
@@ -58,7 +84,7 @@
   line-height: 1.6;
 }
 
-/* ✅ NOUVEAU: Container pour actions terminées */
+/* Container pour actions terminées */
 .actions-completed {
   background: white;
   border-radius: 20px;
@@ -99,7 +125,7 @@
   color: #2b6cb0;
 }
 
-/* ✅ NOUVEAU: Section de téléchargement manuel */
+/* Section de téléchargement manuel */
 .manual-download-section {
   background: linear-gradient(135deg, #e6fffa 0%, #b2f5ea 100%);
   border: 2px solid #38b2ac;
@@ -162,26 +188,6 @@
 }
 
 .redirect-icon {
-  font-size: 1.2rem;
-}
-
-/* Notice de téléchargement */
-.download-notice {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #c6f6d5 0%, #9ae6b4 100%);
-  color: #22543d;
-  padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 20px;
-  border: 1px solid #68d391;
-  font-weight: 500;
-  text-align: center;
-  justify-content: center;
-}
-
-.download-icon {
   font-size: 1.2rem;
 }
 
@@ -315,13 +321,15 @@
   
   .register-form,
   .download-only-container,
-  .actions-completed {
+  .actions-completed,
+  .no-actions-container {
     padding: 30px 20px;
   }
   
   .register-form h2,
   .download-message h2,
-  .completion-message h2 {
+  .completion-message h2,
+  .no-actions-message h2 {
     font-size: 1.5rem;
   }
   
@@ -354,13 +362,15 @@
 @media (max-width: 480px) {
   .register-form,
   .download-only-container,
-  .actions-completed {
+  .actions-completed,
+  .no-actions-container {
     padding: 25px 15px;
   }
   
   .register-form h2,
   .download-message h2,
-  .completion-message h2 {
+  .completion-message h2,
+  .no-actions-message h2 {
     font-size: 1.3rem;
   }
   
@@ -388,17 +398,17 @@
 
 .register-form,
 .download-only-container,
-.actions-completed {
+.actions-completed,
+.no-actions-container {
   animation: fadeInUp 0.6s ease-out;
 }
 
 .redirect-notice,
-.download-notice,
 .manual-download-section {
   animation: fadeInUp 0.4s ease-out;
 }
 
-/* ✅ NOUVEAU: Animation pour le bouton de téléchargement */
+/* Animation pour le bouton de téléchargement */
 .manual-download-btn {
   position: relative;
   overflow: hidden;

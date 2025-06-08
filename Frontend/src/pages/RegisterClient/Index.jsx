@@ -24,8 +24,8 @@ const RegisterClient = () => {
   const [businessCardActions, setBusinessCardActions] = useState([]);
   const [businessCardData, setBusinessCardData] = useState(null);
   
-  // États pour contrôler l'affichage
-  const [showForm, setShowForm] = useState(true);
+  // ✅ NOUVEAU: États pour contrôler l'affichage
+  const [showForm, setShowForm] = useState(false); // ✅ Par défaut FALSE
   const [actionsCompleted, setActionsCompleted] = useState(false);
   const [hasActions, setHasActions] = useState(false);
 
@@ -67,27 +67,29 @@ const RegisterClient = () => {
             
             console.log('✅ Actions actives trouvées:', activeActions);
             
-            // Déterminer si on affiche le formulaire
+            // ✅ CORRECTION: Déterminer si on affiche le formulaire
             const hasFormAction = activeActions.some(action => action.type === 'form');
             setShowForm(hasFormAction);
+            
+            console.log(`📝 Affichage du formulaire: ${hasFormAction ? 'OUI' : 'NON'}`);
             
           } else {
             console.log('ℹ️ Aucune action configurée');
             setBusinessCardActions([]);
             setHasActions(false);
-            setShowForm(true); // Afficher le formulaire par défaut
+            setShowForm(false); // ✅ PAS DE FORMULAIRE sans action
           }
         } else {
           console.log('ℹ️ Impossible de récupérer les données de carte');
           setBusinessCardActions([]);
           setHasActions(false);
-          setShowForm(true); // Afficher le formulaire par défaut
+          setShowForm(false); // ✅ PAS DE FORMULAIRE sans action
         }
       } catch (error) {
         console.log('ℹ️ Erreur lors de la récupération des données de carte:', error);
         setBusinessCardActions([]);
         setHasActions(false);
-        setShowForm(true); // Afficher le formulaire par défaut
+        setShowForm(false); // ✅ PAS DE FORMULAIRE sans action
       }
     };
 
@@ -104,9 +106,21 @@ const RegisterClient = () => {
         executeBusinessCardActions();
       }, 500);
     } else if (!hasActions) {
-      console.log('ℹ️ Aucune action configurée - affichage du formulaire uniquement');
+      console.log('ℹ️ Aucune action configurée - pas d\'affichage');
+      // ✅ NOUVEAU: Redirection immédiate si pas d'actions
+      if (finalRedirectUrl) {
+        setTimeout(() => {
+          console.log('🌐 Redirection immédiate vers:', finalRedirectUrl);
+          window.location.href = finalRedirectUrl;
+        }, 2000);
+      } else {
+        setTimeout(() => {
+          console.log('🌐 Redirection par défaut vers Google');
+          window.location.href = 'https://google.com';
+        }, 2000);
+      }
     }
-  }, [hasActions, businessCardActions]);
+  }, [hasActions, businessCardActions, finalRedirectUrl]);
 
   // Exécuter SEULEMENT les actions configurées
   const executeBusinessCardActions = async () => {
@@ -159,7 +173,7 @@ const RegisterClient = () => {
     setActionsCompleted(true);
     
     // Si redirection finale, rediriger après les actions
-    if (finalRedirectUrl) {
+    if (finalRedirectUrl && !showForm) {
       setTimeout(() => {
         console.log('🌐 Redirection automatique vers:', finalRedirectUrl);
         window.location.href = finalRedirectUrl;
@@ -494,7 +508,33 @@ const RegisterClient = () => {
     }
   };
 
-  // Affichage conditionnel selon les actions configurées
+  // ✅ NOUVEAU: Affichage conditionnel selon les actions configurées
+  
+  // Si aucune action configurée → Redirection directe
+  if (!hasActions && !showForm) {
+    return (
+      <div className="register-client-container">
+        <div className="no-actions-container">
+          <div className="no-actions-message">
+            <h2>🌐 Redirection en cours...</h2>
+            <p>Aucune action configurée. Redirection automatique.</p>
+            
+            {finalRedirectUrl ? (
+              <div className="redirect-info">
+                <p>Redirection vers <strong>{finalRedirectUrl}</strong>...</p>
+              </div>
+            ) : (
+              <div className="redirect-info">
+                <p>Redirection vers <strong>Google</strong>...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Si actions configurées mais pas de formulaire → Actions uniquement
   if (hasActions && !showForm && !actionsCompleted) {
     return (
       <div className="register-client-container">
@@ -525,6 +565,7 @@ const RegisterClient = () => {
     );
   }
 
+  // Si actions terminées sans formulaire → Message de fin
   if (hasActions && actionsCompleted && !showForm) {
     return (
       <div className="register-client-container">
@@ -544,7 +585,7 @@ const RegisterClient = () => {
     );
   }
 
-  // Affichage du formulaire (par défaut ou si action form configurée)
+  // Affichage du formulaire (SEULEMENT si action form configurée)
   return (
     <div className="register-client-container">
       <form onSubmit={handleRegister} className="register-form">
