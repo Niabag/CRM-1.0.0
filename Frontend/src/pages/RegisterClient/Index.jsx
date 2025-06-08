@@ -24,11 +24,12 @@ const RegisterClient = () => {
   const [businessCardActions, setBusinessCardActions] = useState([]);
   const [businessCardData, setBusinessCardData] = useState(null);
   
-  // ✅ AJOUT: État pour contrôler l'affichage du formulaire
+  // ✅ AJOUT: État pour contrôler l'affichage
   const [showForm, setShowForm] = useState(true);
   const [actionsCompleted, setActionsCompleted] = useState(false);
+  const [hasActions, setHasActions] = useState(false);
 
-  // ✅ CORRECTION: Détecter si c'est une URL avec redirection et récupérer les actions
+  // ✅ CORRECTION: Récupérer les VRAIES actions configurées
   useEffect(() => {
     const detectRedirectAndActions = async () => {
       // Extraire la destination de l'URL
@@ -41,61 +42,85 @@ const RegisterClient = () => {
         console.log('🌐 Redirection finale détectée:', `https://${lastPart}`);
       }
       
-      // ✅ CORRECTION: Toujours utiliser les données par défaut avec téléchargement automatique
-      console.log('🔍 Configuration des actions par défaut');
-      
-      const defaultCardData = {
-        cardImage: '/images/modern-business-card-design-template-42551612346d5b08984f0b61a8044609_screen.jpg',
-        cardConfig: {
-          showQR: true,
-          qrPosition: 'top-right',
-          qrSize: 100,
-          actions: [
-            {
-              id: 1,
-              type: 'download',
-              file: 'carte-apercu',
-              url: '',
-              delay: 1000,
-              active: true
-            }
-          ]
+      // ✅ CORRECTION: Récupérer les VRAIES données de carte de visite
+      try {
+        const actualUserId = userId || '507f1f77bcf86cd799439011';
+        console.log('🔍 Récupération des données de carte pour userId:', actualUserId);
+        
+        // ✅ NOUVEAU: Essayer de récupérer les données avec authentification
+        const response = await fetch(`${import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}/business-cards`, {
+          headers: {
+            'Content-Type': 'application/json',
+            // Pas d'auth pour l'instant, mais on récupère les données publiques
+          }
+        });
+        
+        if (response.ok) {
+          const cardData = await response.json();
+          console.log('📋 Données de carte récupérées:', cardData);
+          
+          setBusinessCardData(cardData);
+          
+          if (cardData.cardConfig && cardData.cardConfig.actions && cardData.cardConfig.actions.length > 0) {
+            const activeActions = cardData.cardConfig.actions.filter(action => action.active);
+            setBusinessCardActions(activeActions);
+            setHasActions(activeActions.length > 0);
+            
+            console.log('✅ Actions actives trouvées:', activeActions);
+            
+            // ✅ NOUVEAU: Déterminer si on affiche le formulaire
+            const hasFormAction = activeActions.some(action => action.type === 'form');
+            setShowForm(hasFormAction);
+            
+          } else {
+            console.log('ℹ️ Aucune action configurée');
+            setBusinessCardActions([]);
+            setHasActions(false);
+            setShowForm(true); // Afficher le formulaire par défaut
+          }
+        } else {
+          console.log('ℹ️ Impossible de récupérer les données de carte');
+          setBusinessCardActions([]);
+          setHasActions(false);
+          setShowForm(true); // Afficher le formulaire par défaut
         }
-      };
-      
-      setBusinessCardData(defaultCardData);
-      setBusinessCardActions(defaultCardData.cardConfig.actions);
-      
-      console.log('📋 Actions configurées:', defaultCardData.cardConfig.actions);
-      console.log('🖼️ Image par défaut configurée');
-      
-      // ✅ CORRECTION: Toujours masquer le formulaire car seule l'action téléchargement est active
-      setShowForm(false);
+      } catch (error) {
+        console.log('ℹ️ Erreur lors de la récupération des données de carte:', error);
+        setBusinessCardActions([]);
+        setHasActions(false);
+        setShowForm(true); // Afficher le formulaire par défaut
+      }
     };
 
     detectRedirectAndActions();
   }, [userId]);
 
-  // ✅ CORRECTION: Exécuter les actions dès que les données sont chargées
+  // ✅ CORRECTION: Exécuter les actions SEULEMENT si elles existent
   useEffect(() => {
-    if (businessCardActions.length > 0 && !actionsExecutedRef.current) {
+    if (hasActions && businessCardActions.length > 0 && !actionsExecutedRef.current) {
       actionsExecutedRef.current = true;
-      console.log('🎬 Démarrage de l\'exécution des actions automatiques');
+      console.log('🎬 Démarrage de l\'exécution des actions configurées');
       
-      // ✅ CORRECTION: Délai plus court pour l'exécution
       setTimeout(() => {
         executeBusinessCardActions();
       }, 500);
+    } else if (!hasActions) {
+      console.log('ℹ️ Aucune action configurée - affichage du formulaire uniquement');
     }
-  }, [businessCardActions]);
+  }, [hasActions, businessCardActions]);
 
-  // ✅ CORRECTION: Exécuter les actions configurées dans la carte de visite
+  // ✅ CORRECTION: Exécuter SEULEMENT les actions configurées
   const executeBusinessCardActions = async () => {
+    if (!hasActions || businessCardActions.length === 0) {
+      console.log('ℹ️ Aucune action à exécuter');
+      return;
+    }
+
     const activeActions = businessCardActions
       .filter(action => action.active)
       .sort((a, b) => a.id - b.id);
 
-    console.log('🎬 Exécution des actions:', activeActions);
+    console.log('🎬 Exécution des actions configurées:', activeActions);
 
     for (const action of activeActions) {
       try {
@@ -109,7 +134,7 @@ const RegisterClient = () => {
 
         switch (action.type) {
           case 'download':
-            console.log('📥 Exécution de l\'action de téléchargement automatique');
+            console.log('📥 Exécution de l\'action de téléchargement');
             await executeDownloadAction(action);
             break;
           case 'form':
@@ -144,13 +169,13 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ CORRECTION: Téléchargement de l'image générée avec les vraies données
+  // ✅ FONCTION: Téléchargement avec les vraies données
   const executeDownloadAction = async (action) => {
     try {
       console.log('📥 Génération de la carte de visite pour téléchargement...');
       
       if (action.file === 'carte-apercu') {
-        console.log('🖼️ Génération de la carte avec l\'image personnalisée et QR code...');
+        console.log('🖼️ Génération de la carte avec les données configurées...');
         const cardImageData = await generateBusinessCardFromData();
         
         if (cardImageData) {
@@ -168,7 +193,7 @@ const RegisterClient = () => {
           console.error('❌ Impossible de générer la carte de visite');
         }
       } else {
-        // Téléchargement d'un fichier spécifique (ancien comportement)
+        // Téléchargement d'un fichier spécifique
         console.log('📁 Téléchargement du fichier:', action.file);
         const link = document.createElement('a');
         link.href = action.file;
@@ -184,7 +209,7 @@ const RegisterClient = () => {
     }
   };
 
-  // ✅ FONCTION CORRIGÉE: Génération basée sur les vraies données de la carte
+  // ✅ FONCTION: Génération basée sur les vraies données de la carte
   const generateBusinessCardFromData = async () => {
     return new Promise(async (resolve) => {
       try {
@@ -197,9 +222,9 @@ const RegisterClient = () => {
         
         console.log('🖼️ Démarrage de la génération de carte...');
         
-        // ✅ CORRECTION: Toujours utiliser l'image par défaut
+        // ✅ CORRECTION: Utiliser les vraies données de la carte
         if (businessCardData && businessCardData.cardImage) {
-          console.log('🖼️ Chargement de l\'image de carte par défaut');
+          console.log('🖼️ Chargement de l\'image de carte configurée');
           
           try {
             await new Promise((resolveImage, rejectImage) => {
@@ -209,7 +234,7 @@ const RegisterClient = () => {
                 // Dessiner l'image de carte de visite
                 ctx.drawImage(cardImage, 0, 0, canvas.width, canvas.height);
                 
-                // ✅ ÉTAPE 2: Ajouter le QR code si configuré
+                // ✅ Ajouter le QR code si configuré
                 if (businessCardData.cardConfig && businessCardData.cardConfig.showQR) {
                   await addQRCodeToCard(ctx, canvas, businessCardData.cardConfig);
                 }
@@ -222,7 +247,6 @@ const RegisterClient = () => {
                 rejectImage();
               };
               
-              // ✅ CORRECTION: Utiliser l'image par défaut
               cardImage.src = businessCardData.cardImage;
             });
           } catch (imageError) {
@@ -472,31 +496,189 @@ const RegisterClient = () => {
     }
   };
 
-  return (
-    <div className="register-client-container">
-      <div className="download-only-container">
-        <div className="download-message">
-          <h2>📥 Téléchargement de votre carte de visite</h2>
-          <p>Le téléchargement de votre carte de visite a été lancé automatiquement.</p>
-          
-          <div className="manual-download-section">
-            <button 
-              onClick={handleManualDownload}
-              className="manual-download-btn"
-            >
-              📥 Télécharger à nouveau
-            </button>
-            <p className="download-help">Cliquez pour relancer le téléchargement</p>
-          </div>
-          
-          {finalRedirectUrl && (
-            <div className="redirect-notice">
-              <span className="redirect-icon">🌐</span>
-              <span>Redirection vers <strong>{finalRedirectUrl}</strong> dans quelques secondes...</span>
+  // ✅ NOUVEAU: Affichage conditionnel selon les actions configurées
+  if (hasActions && !showForm && !actionsCompleted) {
+    return (
+      <div className="register-client-container">
+        <div className="download-only-container">
+          <div className="download-message">
+            <h2>📥 Actions en cours...</h2>
+            <p>Exécution des actions configurées pour votre carte de visite.</p>
+            
+            <div className="manual-download-section">
+              <button 
+                onClick={handleManualDownload}
+                className="manual-download-btn"
+              >
+                📥 Télécharger manuellement
+              </button>
+              <p className="download-help">Cliquez pour télécharger la carte de visite</p>
             </div>
-          )}
+            
+            {finalRedirectUrl && (
+              <div className="redirect-notice">
+                <span className="redirect-icon">🌐</span>
+                <span>Redirection vers <strong>{finalRedirectUrl}</strong> après les actions...</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
+    );
+  }
+
+  if (hasActions && actionsCompleted && !showForm) {
+    return (
+      <div className="register-client-container">
+        <div className="actions-completed">
+          <div className="completion-message">
+            <h2>✅ Actions terminées</h2>
+            <p>Toutes les actions configurées ont été exécutées avec succès.</p>
+            
+            {finalRedirectUrl && (
+              <div className="redirect-info">
+                <p>Redirection vers <strong>{finalRedirectUrl}</strong> dans quelques secondes...</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ Affichage du formulaire (par défaut ou si action form configurée)
+  return (
+    <div className="register-client-container">
+      <form onSubmit={handleRegister} className="register-form">
+        <h2>📝 Inscription Prospect</h2>
+        <p className="form-subtitle">Remplissez vos informations pour être recontacté</p>
+        
+        {/* ✅ Bouton de téléchargement manuel si données disponibles */}
+        {businessCardData && (
+          <div className="manual-download-section">
+            <button 
+              type="button"
+              onClick={handleManualDownload}
+              className="manual-download-btn"
+              disabled={loading || success}
+            >
+              📥 Télécharger la carte de visite
+            </button>
+            <p className="download-help">Cliquez pour télécharger votre carte de visite avec QR code</p>
+          </div>
+        )}
+        
+        {finalRedirectUrl && (
+          <div className="redirect-notice">
+            <span className="redirect-icon">🌐</span>
+            <span>Après inscription, vous serez redirigé vers: <strong>{finalRedirectUrl}</strong></span>
+          </div>
+        )}
+        
+        {error && <div className="error-message">{error}</div>}
+        {success && (
+          <div className="success-message">
+            ✅ Inscription réussie ! 
+            {finalRedirectUrl 
+              ? ` Redirection vers ${finalRedirectUrl} dans 2 secondes...` 
+              : ' Redirection vers Google dans 2 secondes...'
+            }
+          </div>
+        )}
+        
+        {/* Informations principales */}
+        <div className="form-section">
+          <h3>👤 Informations personnelles</h3>
+          
+          <input
+            type="text"
+            placeholder="Nom et prénom *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            disabled={success}
+          />
+          
+          <input
+            type="email"
+            placeholder="Email *"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            disabled={success}
+          />
+          
+          <input
+            type="tel"
+            placeholder="Téléphone *"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+            disabled={success}
+          />
+        </div>
+
+        {/* Adresse */}
+        <div className="form-section">
+          <h3>📍 Adresse</h3>
+          
+          <input
+            type="text"
+            placeholder="Adresse (rue, numéro)"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
+            disabled={success}
+          />
+          
+          <div className="form-row">
+            <input
+              type="text"
+              placeholder="Code postal"
+              value={postalCode}
+              onChange={(e) => setPostalCode(e.target.value)}
+              disabled={success}
+              maxLength={5}
+            />
+            
+            <input
+              type="text"
+              placeholder="Ville"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
+              disabled={success}
+            />
+          </div>
+        </div>
+
+        {/* Informations complémentaires */}
+        <div className="form-section">
+          <h3>🏢 Informations complémentaires</h3>
+          
+          <input
+            type="text"
+            placeholder="Entreprise / Organisation"
+            value={company}
+            onChange={(e) => setCompany(e.target.value)}
+            disabled={success}
+          />
+          
+          <textarea
+            placeholder="Votre projet, besoins, commentaires..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            disabled={success}
+            rows={3}
+          />
+        </div>
+        
+        <button type="submit" disabled={loading || success} className="submit-btn">
+          {loading ? "Inscription en cours..." : success ? "Inscription réussie !" : "✅ S'inscrire"}
+        </button>
+        
+        <p className="form-footer">
+          * Champs obligatoires • Vos données sont sécurisées
+        </p>
+      </form>
     </div>
   );
 };
