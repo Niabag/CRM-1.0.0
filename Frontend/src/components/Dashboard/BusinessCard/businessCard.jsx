@@ -16,9 +16,8 @@ const BusinessCard = ({ userId, user }) => {
   const [loading, setLoading] = useState(false);
   const [savedCardData, setSavedCardData] = useState(null);
   
-  // ✅ NOUVEAU: État pour gérer les actions
-  const [editingAction, setEditingAction] = useState(null);
-  const [showActionForm, setShowActionForm] = useState(false);
+  // ✅ NOUVEAU: État simplifié pour l'action carte de visite
+  const [enableBusinessCardAction, setEnableBusinessCardAction] = useState(true);
   
   const [stats, setStats] = useState({
     scansToday: 0,
@@ -52,6 +51,12 @@ const BusinessCard = ({ userId, user }) => {
           ...savedCard.cardConfig,
           cardImage: savedCard.cardImage || prev.cardImage
         }));
+        
+        // ✅ Vérifier si l'action carte de visite est activée
+        const hasBusinessCardAction = savedCard.cardConfig.actions?.some(
+          action => action.type === 'download' && action.file.includes('carte')
+        );
+        setEnableBusinessCardAction(hasBusinessCardAction);
       }
       
       console.log('✅ Carte de visite chargée depuis la BDD');
@@ -110,6 +115,48 @@ const BusinessCard = ({ userId, user }) => {
         await saveBusinessCardToDB(imageData);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  // ✅ NOUVEAU: Gérer l'activation/désactivation de l'action carte de visite
+  const handleBusinessCardActionToggle = async (enabled) => {
+    setEnableBusinessCardAction(enabled);
+    
+    let updatedActions = [...cardConfig.actions];
+    
+    if (enabled) {
+      // ✅ Ajouter l'action carte de visite si elle n'existe pas
+      const hasBusinessCardAction = updatedActions.some(
+        action => action.type === 'download' && action.file.includes('carte')
+      );
+      
+      if (!hasBusinessCardAction) {
+        const businessCardAction = {
+          id: Date.now(),
+          type: 'download',
+          file: '/images/carte-de-visite.png',
+          url: '',
+          delay: 0,
+          active: true
+        };
+        updatedActions.push(businessCardAction);
+      }
+    } else {
+      // ✅ Supprimer l'action carte de visite
+      updatedActions = updatedActions.filter(
+        action => !(action.type === 'download' && action.file.includes('carte'))
+      );
+    }
+    
+    const newConfig = {
+      ...cardConfig,
+      actions: updatedActions
+    };
+    
+    setCardConfig(newConfig);
+    
+    if (savedCardData) {
+      await saveBusinessCardToDB(null, newConfig);
     }
   };
 
@@ -205,59 +252,6 @@ const BusinessCard = ({ userId, user }) => {
     
     setCardConfig(newConfig);
     
-    if (savedCardData) {
-      await saveBusinessCardToDB(null, newConfig);
-    }
-  };
-
-  // ✅ NOUVEAU: Gestion des actions
-  const handleAddAction = () => {
-    setEditingAction({
-      id: Date.now(),
-      type: 'download',
-      file: '',
-      url: '',
-      delay: 0,
-      active: true
-    });
-    setShowActionForm(true);
-  };
-
-  const handleEditAction = (action) => {
-    setEditingAction({ ...action });
-    setShowActionForm(true);
-  };
-
-  const handleSaveAction = async () => {
-    if (!editingAction) return;
-
-    const updatedActions = cardConfig.actions.some(a => a.id === editingAction.id)
-      ? cardConfig.actions.map(a => a.id === editingAction.id ? editingAction : a)
-      : [...cardConfig.actions, editingAction];
-
-    const newConfig = {
-      ...cardConfig,
-      actions: updatedActions
-    };
-
-    setCardConfig(newConfig);
-    setShowActionForm(false);
-    setEditingAction(null);
-
-    if (savedCardData) {
-      await saveBusinessCardToDB(null, newConfig);
-    }
-  };
-
-  const handleDeleteAction = async (actionId) => {
-    const updatedActions = cardConfig.actions.filter(a => a.id !== actionId);
-    const newConfig = {
-      ...cardConfig,
-      actions: updatedActions
-    };
-
-    setCardConfig(newConfig);
-
     if (savedCardData) {
       await saveBusinessCardToDB(null, newConfig);
     }
@@ -449,61 +443,36 @@ const BusinessCard = ({ userId, user }) => {
             )}
           </div>
 
-          {/* ✅ NOUVEAU: Section Actions */}
+          {/* ✅ NOUVEAU: Section simplifiée pour l'action carte de visite */}
           <div className="config-section">
-            <h3>⚡ Actions après scan</h3>
+            <h3>💼 Action après scan</h3>
             <p className="section-description">
               Configurez ce qui se passe quand quelqu'un scanne votre QR code
             </p>
 
-            <div className="actions-list">
-              {cardConfig.actions.map((action, index) => (
-                <div key={action.id} className="action-item">
-                  <div className="action-info">
-                    <div className="action-type">
-                      {action.type === 'download' && '📥 Téléchargement'}
-                      {action.type === 'form' && '📝 Formulaire'}
-                      {action.type === 'redirect' && '🔗 Redirection'}
-                      {action.type === 'website' && '🌐 Site web'}
-                    </div>
-                    <div className="action-details">
-                      {action.type === 'download' && `Fichier: ${action.file || 'Non défini'}`}
-                      {(action.type === 'redirect' || action.type === 'website') && `URL: ${action.url || 'Non définie'}`}
-                      {action.type === 'form' && 'Affichage du formulaire d\'inscription'}
-                    </div>
-                    <div className="action-timing">
-                      Délai: {action.delay}ms
+            <div className="business-card-action">
+              <label className="checkbox-label">
+                <input
+                  type="checkbox"
+                  checked={enableBusinessCardAction}
+                  onChange={(e) => handleBusinessCardActionToggle(e.target.checked)}
+                />
+                <span className="checkbox-text">
+                  📥 Télécharger automatiquement la carte de visite
+                </span>
+              </label>
+              
+              {enableBusinessCardAction && (
+                <div className="action-details">
+                  <div className="action-preview">
+                    <span className="action-icon">📥</span>
+                    <div className="action-info">
+                      <strong>Téléchargement automatique</strong>
+                      <p>La carte de visite sera téléchargée dès le scan du QR code</p>
                     </div>
                   </div>
-                  <div className="action-controls">
-                    <button 
-                      onClick={() => handleEditAction(action)}
-                      className="btn-edit-action"
-                      title="Modifier"
-                    >
-                      ✏️
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteAction(action.id)}
-                      className="btn-delete-action"
-                      title="Supprimer"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
-
-              {cardConfig.actions.length === 0 && (
-                <div className="no-actions">
-                  <p>Aucune action configurée</p>
-                  <p className="help-text">Les prospects verront seulement le formulaire d'inscription</p>
                 </div>
               )}
-
-              <button onClick={handleAddAction} className="btn-add-action">
-                ➕ Ajouter une action
-              </button>
             </div>
           </div>
         </div>
@@ -575,20 +544,10 @@ const BusinessCard = ({ userId, user }) => {
                       </a>
                     </div>
                   )}
-                  {cardConfig.actions.length > 0 && (
+                  {enableBusinessCardAction && (
                     <div className="qr-actions-info">
-                      <strong>Actions configurées :</strong>
-                      <ul>
-                        {cardConfig.actions.map((action, index) => (
-                          <li key={action.id}>
-                            {index + 1}. {action.type === 'download' ? '📥 Téléchargement' : 
-                                          action.type === 'form' ? '📝 Formulaire' : 
-                                          action.type === 'redirect' ? '🔗 Redirection' : 
-                                          '🌐 Site web'}
-                            {action.delay > 0 && ` (+${action.delay}ms)`}
-                          </li>
-                        ))}
-                      </ul>
+                      <strong>Action configurée :</strong>
+                      <p>📥 Téléchargement automatique de la carte de visite</p>
                     </div>
                   )}
                 </div>
@@ -611,90 +570,6 @@ const BusinessCard = ({ userId, user }) => {
           </div>
         </div>
       </div>
-
-      {/* ✅ NOUVEAU: Modal pour éditer les actions */}
-      {showActionForm && editingAction && (
-        <div className="action-modal-overlay" onClick={() => setShowActionForm(false)}>
-          <div className="action-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>⚡ Configuration de l'action</h3>
-              <button onClick={() => setShowActionForm(false)} className="btn-close-modal">✕</button>
-            </div>
-
-            <div className="modal-content">
-              <div className="form-group">
-                <label>Type d'action :</label>
-                <select
-                  value={editingAction.type}
-                  onChange={(e) => setEditingAction({...editingAction, type: e.target.value})}
-                >
-                  <option value="download">📥 Téléchargement de fichier</option>
-                  <option value="form">📝 Affichage du formulaire</option>
-                  <option value="redirect">🔗 Redirection</option>
-                  <option value="website">🌐 Ouverture de site web</option>
-                </select>
-              </div>
-
-              {editingAction.type === 'download' && (
-                <div className="form-group">
-                  <label>Fichier à télécharger :</label>
-                  <input
-                    type="text"
-                    placeholder="/images/brochure.pdf"
-                    value={editingAction.file}
-                    onChange={(e) => setEditingAction({...editingAction, file: e.target.value})}
-                  />
-                  <small>Chemin vers le fichier (ex: /images/brochure.pdf)</small>
-                </div>
-              )}
-
-              {(editingAction.type === 'redirect' || editingAction.type === 'website') && (
-                <div className="form-group">
-                  <label>URL de destination :</label>
-                  <input
-                    type="url"
-                    placeholder="https://example.com"
-                    value={editingAction.url}
-                    onChange={(e) => setEditingAction({...editingAction, url: e.target.value})}
-                  />
-                </div>
-              )}
-
-              <div className="form-group">
-                <label>Délai d'exécution (millisecondes) :</label>
-                <input
-                  type="number"
-                  min="0"
-                  max="10000"
-                  value={editingAction.delay}
-                  onChange={(e) => setEditingAction({...editingAction, delay: parseInt(e.target.value) || 0})}
-                />
-                <small>0 = immédiat, 1000 = 1 seconde, etc.</small>
-              </div>
-
-              <div className="form-group">
-                <label>
-                  <input
-                    type="checkbox"
-                    checked={editingAction.active}
-                    onChange={(e) => setEditingAction({...editingAction, active: e.target.checked})}
-                  />
-                  Action active
-                </label>
-              </div>
-            </div>
-
-            <div className="modal-actions">
-              <button onClick={() => setShowActionForm(false)} className="btn-cancel">
-                Annuler
-              </button>
-              <button onClick={handleSaveAction} className="btn-save">
-                💾 Sauvegarder
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
