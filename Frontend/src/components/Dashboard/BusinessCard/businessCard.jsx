@@ -16,6 +16,10 @@ const BusinessCard = ({ userId, user }) => {
   const [loading, setLoading] = useState(false);
   const [savedCardData, setSavedCardData] = useState(null);
   
+  // ✅ NOUVEAU: État pour gérer les actions
+  const [editingAction, setEditingAction] = useState(null);
+  const [showActionForm, setShowActionForm] = useState(false);
+  
   const [stats, setStats] = useState({
     scansToday: 0,
     scansThisMonth: 0,
@@ -32,7 +36,7 @@ const BusinessCard = ({ userId, user }) => {
   }, [userId]);
 
   useEffect(() => {
-    if (userId && cardConfig.actions) {
+    if (userId) {
       generateQRCode();
     }
   }, [cardConfig.actions, userId]);
@@ -56,7 +60,7 @@ const BusinessCard = ({ userId, user }) => {
     }
   };
 
-  // ✅ CORRECTION: Générer un QR code simple sans trop de données
+  // ✅ CORRECTION: Générer un QR code simple avec actions encodées dans l'URL
   const generateQRCode = () => {
     if (!userId) {
       console.error("❌ userId manquant pour générer le QR code");
@@ -64,22 +68,27 @@ const BusinessCard = ({ userId, user }) => {
     }
     
     try {
-      // ✅ QR CODE SIMPLE: Juste l'URL d'inscription
-      const targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
+      // ✅ URL de base
+      let targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
       
-      // ✅ VÉRIFICATION: S'assurer que l'URL n'est pas trop longue
-      if (targetUrl.length > 200) {
-        console.error("❌ URL trop longue pour le QR code");
-        setQrValue(`${window.location.origin}/register-client/${userId}`);
-      } else {
-        setQrValue(targetUrl);
+      // ✅ NOUVEAU: Ajouter les actions comme paramètre URL si elles existent
+      if (cardConfig.actions && cardConfig.actions.length > 0) {
+        const actionsParam = encodeURIComponent(JSON.stringify(cardConfig.actions));
+        targetUrl += `?actions=${actionsParam}`;
       }
       
+      // ✅ VÉRIFICATION: Limiter la taille pour éviter l'erreur QR code
+      if (targetUrl.length > 500) {
+        console.warn("⚠️ URL trop longue pour QR code, utilisation de l'URL simple");
+        targetUrl = `${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`;
+      }
+      
+      setQrValue(targetUrl);
       console.log("✅ QR code généré:", targetUrl);
     } catch (error) {
       console.error("❌ Erreur lors de la génération du QR code:", error);
       // ✅ FALLBACK: URL simple en cas d'erreur
-      setQrValue(`${window.location.origin}/register-client/${userId}`);
+      setQrValue(`${FRONTEND_ROUTES.CLIENT_REGISTER(userId)}`);
     }
   };
 
@@ -122,7 +131,6 @@ const BusinessCard = ({ userId, user }) => {
       
       const configToSave = config || cardConfig;
       
-      // ✅ NETTOYAGE: Configuration simple
       const cleanedConfig = {
         showQR: Boolean(configToSave.showQR !== undefined ? configToSave.showQR : true),
         qrPosition: ['bottom-right', 'bottom-left', 'top-right', 'top-left'].includes(configToSave.qrPosition) 
@@ -209,6 +217,59 @@ const BusinessCard = ({ userId, user }) => {
     
     setCardConfig(newConfig);
     
+    if (savedCardData) {
+      await saveBusinessCardToDB(null, newConfig);
+    }
+  };
+
+  // ✅ NOUVEAU: Gestion des actions
+  const handleAddAction = () => {
+    setEditingAction({
+      id: Date.now(),
+      type: 'download',
+      file: '',
+      url: '',
+      delay: 0,
+      active: true
+    });
+    setShowActionForm(true);
+  };
+
+  const handleEditAction = (action) => {
+    setEditingAction({ ...action });
+    setShowActionForm(true);
+  };
+
+  const handleSaveAction = async () => {
+    if (!editingAction) return;
+
+    const updatedActions = cardConfig.actions.some(a => a.id === editingAction.id)
+      ? cardConfig.actions.map(a => a.id === editingAction.id ? editingAction : a)
+      : [...cardConfig.actions, editingAction];
+
+    const newConfig = {
+      ...cardConfig,
+      actions: updatedActions
+    };
+
+    setCardConfig(newConfig);
+    setShowActionForm(false);
+    setEditingAction(null);
+
+    if (savedCardData) {
+      await saveBusinessCardToDB(null, newConfig);
+    }
+  };
+
+  const handleDeleteAction = async (actionId) => {
+    const updatedActions = cardConfig.actions.filter(a => a.id !== actionId);
+    const newConfig = {
+      ...cardConfig,
+      actions: updatedActions
+    };
+
+    setCardConfig(newConfig);
+
     if (savedCardData) {
       await saveBusinessCardToDB(null, newConfig);
     }
@@ -399,6 +460,64 @@ const BusinessCard = ({ userId, user }) => {
               </>
             )}
           </div>
+
+          {/* ✅ NOUVEAU: Section Actions */}
+          <div className="config-section">
+            <h3>⚡ Actions après scan</h3>
+            <p className="section-description">
+              Configurez ce qui se passe quand quelqu'un scanne votre QR code
+            </p>
+
+            <div className="actions-list">
+              {cardConfig.actions.map((action, index) => (
+                <div key={action.id} className="action-item">
+                  <div className="action-info">
+                    <div className="action-type">
+                      {action.type === 'download' && '📥 Téléchargement'}
+                      {action.type === 'form' && '📝 Formulaire'}
+                      {action.type === 'redirect' && '🔗 Redirection'}
+                      {action.type === 'website' && '🌐 Site web'}
+                    </div>
+                    <div className="action-details">
+                      {action.type === 'download' && `Fichier: ${action.file || 'Non défini'}`}
+                      {(action.type === 'redirect' || action.type === 'website') && `URL: ${action.url || 'Non définie'}`}
+                      {action.type === 'form' && 'Affichage du formulaire d\'inscription'}
+                    </div>
+                    <div className="action-timing">
+                      Délai: {action.delay}ms
+                    </div>
+                  </div>
+                  <div className="action-controls">
+                    <button 
+                      onClick={() => handleEditAction(action)}
+                      className="btn-edit-action"
+                      title="Modifier"
+                    >
+                      ✏️
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteAction(action.id)}
+                      className="btn-delete-action"
+                      title="Supprimer"
+                    >
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              ))}
+
+              {cardConfig.actions.length === 0 && (
+                <div className="no-actions">
+                  <p>Aucune action configurée</p>
+                  <p className="help-text">Les prospects verront seulement le formulaire d'inscription</p>
+                </div>
+              )}
+
+              <button onClick={handleAddAction} className="btn-add-action">
+                ➕ Ajouter une action
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Colonne de droite - Aperçu */}
@@ -463,8 +582,24 @@ const BusinessCard = ({ userId, user }) => {
                     <div className="qr-link">
                       <strong>Lien :</strong>
                       <a href={qrValue} target="_blank" rel="noopener noreferrer">
-                        {qrValue}
+                        {qrValue.length > 50 ? qrValue.substring(0, 50) + '...' : qrValue}
                       </a>
+                    </div>
+                  )}
+                  {cardConfig.actions.length > 0 && (
+                    <div className="qr-actions-info">
+                      <strong>Actions configurées :</strong>
+                      <ul>
+                        {cardConfig.actions.map((action, index) => (
+                          <li key={action.id}>
+                            {index + 1}. {action.type === 'download' ? '📥 Téléchargement' : 
+                                          action.type === 'form' ? '📝 Formulaire' : 
+                                          action.type === 'redirect' ? '🔗 Redirection' : 
+                                          '🌐 Site web'}
+                            {action.delay > 0 && ` (+${action.delay}ms)`}
+                          </li>
+                        ))}
+                      </ul>
                     </div>
                   )}
                 </div>
@@ -487,6 +622,90 @@ const BusinessCard = ({ userId, user }) => {
           </div>
         </div>
       </div>
+
+      {/* ✅ NOUVEAU: Modal pour éditer les actions */}
+      {showActionForm && editingAction && (
+        <div className="action-modal-overlay" onClick={() => setShowActionForm(false)}>
+          <div className="action-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>⚡ Configuration de l'action</h3>
+              <button onClick={() => setShowActionForm(false)} className="btn-close-modal">✕</button>
+            </div>
+
+            <div className="modal-content">
+              <div className="form-group">
+                <label>Type d'action :</label>
+                <select
+                  value={editingAction.type}
+                  onChange={(e) => setEditingAction({...editingAction, type: e.target.value})}
+                >
+                  <option value="download">📥 Téléchargement de fichier</option>
+                  <option value="form">📝 Affichage du formulaire</option>
+                  <option value="redirect">🔗 Redirection</option>
+                  <option value="website">🌐 Ouverture de site web</option>
+                </select>
+              </div>
+
+              {editingAction.type === 'download' && (
+                <div className="form-group">
+                  <label>Fichier à télécharger :</label>
+                  <input
+                    type="text"
+                    placeholder="/images/brochure.pdf"
+                    value={editingAction.file}
+                    onChange={(e) => setEditingAction({...editingAction, file: e.target.value})}
+                  />
+                  <small>Chemin vers le fichier (ex: /images/brochure.pdf)</small>
+                </div>
+              )}
+
+              {(editingAction.type === 'redirect' || editingAction.type === 'website') && (
+                <div className="form-group">
+                  <label>URL de destination :</label>
+                  <input
+                    type="url"
+                    placeholder="https://example.com"
+                    value={editingAction.url}
+                    onChange={(e) => setEditingAction({...editingAction, url: e.target.value})}
+                  />
+                </div>
+              )}
+
+              <div className="form-group">
+                <label>Délai d'exécution (millisecondes) :</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="10000"
+                  value={editingAction.delay}
+                  onChange={(e) => setEditingAction({...editingAction, delay: parseInt(e.target.value) || 0})}
+                />
+                <small>0 = immédiat, 1000 = 1 seconde, etc.</small>
+              </div>
+
+              <div className="form-group">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={editingAction.active}
+                    onChange={(e) => setEditingAction({...editingAction, active: e.target.checked})}
+                  />
+                  Action active
+                </label>
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button onClick={() => setShowActionForm(false)} className="btn-cancel">
+                Annuler
+              </button>
+              <button onClick={handleSaveAction} className="btn-save">
+                💾 Sauvegarder
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
